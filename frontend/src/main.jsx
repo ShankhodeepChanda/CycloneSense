@@ -1,12 +1,378 @@
-import React,{useState} from "react";import{createRoot}from"react-dom/client";import{Activity,CloudLightning,Satellite,Upload,Wind}from"lucide-react";import"./styles.css";
-const API=import.meta.env.VITE_API_URL||"http://localhost:8000";
-function App(){const[file,setFile]=useState(null),[pattern,setPattern]=useState(null),[fc,setFc]=useState(null),[loading,setLoading]=useState(false);
-async function analyze(){if(!file)return;setLoading(true);let f=new FormData();f.append("file",file);let r=await fetch(API+"/predict/pattern",{method:"POST",body:f});setPattern(await r.json());setLoading(false)}
-async function forecastDemo(){let r=await fetch(API+"/predict/forecast",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({observations:[{lat:14.2,lon:72.1,wind_kts:45,pressure_hpa:995},{lat:14.7,lon:72.8,wind_kts:52,pressure_hpa:989},{lat:15.1,lon:73.5,wind_kts:58,pressure_hpa:984}]})});setFc(await r.json())}
-return <main><nav><div className="brand">◉ CycloneSense <span>AI</span></div><div className="links"><a href="#analysis">Analysis</a><a href="#forecast">Forecast</a><a href="#platform">Platform</a></div></nav>
-<section className="hero"><div><small>◉ MULTI-SOURCE EARTH OBSERVATION</small><h1>See the storm.<br/><em>Before it moves.</em></h1><p>AI-powered tropical cyclone identification, structural classification and short-term forecasting from satellite observations.</p><a className="cta" href="#analysis">Analyze a satellite image →</a></div><div className="storm"><i></i><i></i><i></i><b></b></div></section>
-<section className="metrics"><div><Satellite/><b>3+</b><span>Satellite families</span></div><div><CloudLightning/><b>7</b><span>Pattern classes</span></div><div><Activity/><b>24/7</b><span>Inference ready</span></div><div><Wind/><b>AI</b><span>Track + intensity</span></div></section>
-<section id="analysis" className="panel"><header><div><small>01 / VISION ANALYSIS</small><h2>Identify cyclone structure</h2></div><span>Upload • Infer • Explain</span></header><div className="grid"><label className="drop"><Upload size={28}/><strong>{file?file.name:"Drop satellite image here"}</strong><span>PNG / JPG • up to 10 MB</span><input type="file" accept="image/*" onChange={e=>setFile(e.target.files[0])}/></label><div className="card"><small>AI CLASSIFICATION</small>{pattern?<><h3>{pattern.pattern.replaceAll("_"," ")}</h3><div className="bar"><i style={{width:(pattern.confidence*100)+"%"}}/></div><p>{Math.round(pattern.confidence*100)}% confidence</p></>:<p className="muted">Your structural pattern will appear here.</p>}<button onClick={analyze} disabled={!file||loading}>{loading?"Analyzing…":"Run AI analysis"}</button></div></div></section>
-<section id="forecast" className="panel dark"><header><div><small>02 / MOTION FORECAST</small><h2>Predict the next move</h2></div><span>Track + intensity</span></header><div className="grid"><div className="map"><div className="line"/><div className="dot d1"/><div className="dot d2"/><div className="dot d3"/></div><div className="card"><small>NEXT POSITION · +6 HOURS</small>{fc?<><h3>{fc.next_lat.toFixed(2)}°N<br/>{fc.next_lon.toFixed(2)}°E</h3><p>Wind: <b>{fc.predicted_wind_kts.toFixed(0)} kt</b></p><p>Intensity: <b>{fc.intensity_class.replaceAll("_"," ")}</b></p><p>Confidence: <b>{Math.round(fc.confidence*100)}%</b></p></>:<p className="muted">Run the demo forecast to verify the API end-to-end.</p>}<button onClick={forecastDemo}>Run forecast demo</button></div></div></section>
-<footer id="platform"><div className="brand">◉ CycloneSense <span>AI</span></div><p>SIH research prototype · AI × Remote Sensing × Disaster Management</p><small>Not an official meteorological warning system.</small></footer></main>}
-createRoot(document.getElementById("root")).render(<App/>);
+import React, { useState } from "react";
+import { createRoot } from "react-dom/client";
+import { Activity, CloudLightning, Satellite, Upload, Wind, AlertCircle, CheckCircle, XCircle } from "lucide-react";
+import "./styles.css";
+
+const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
+
+function App() {
+  const [file, setFile] = useState(null);
+  const [channel, setChannel] = useState("ir");
+  const [result, setResult] = useState(null);
+  const [fc, setFc] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [preview, setPreview] = useState(null);
+
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    if (!selectedFile) return;
+
+    // Validate file type
+    const validTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
+    if (!validTypes.includes(selectedFile.type)) {
+      setError("Invalid file type. Please upload PNG, JPG, or WebP.");
+      setFile(null);
+      setPreview(null);
+      return;
+    }
+
+    // Validate file size (10 MB)
+    if (selectedFile.size > 10 * 1024 * 1024) {
+      setError("File too large. Maximum size is 10 MB.");
+      setFile(null);
+      setPreview(null);
+      return;
+    }
+
+    setFile(selectedFile);
+    setError(null);
+    setResult(null);
+
+    // Generate preview
+    const reader = new FileReader();
+    reader.onload = (evt) => setPreview(evt.target.result);
+    reader.readAsDataURL(selectedFile);
+  };
+
+  async function analyze() {
+    if (!file) return;
+    setLoading(true);
+    setError(null);
+    setResult(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("channel", channel);
+
+      const response = await fetch(`${API}/predict/detect_and_classify?channel=${channel}`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.detail || "Analysis failed");
+      }
+
+      const data = await response.json();
+      setResult(data);
+    } catch (err) {
+      setError(err.message || "Network error. Ensure backend is running.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function forecastDemo() {
+    try {
+      const response = await fetch(`${API}/predict/forecast`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          observations: [
+            { lat: 14.2, lon: 72.1, wind_kts: 45, pressure_hpa: 995 },
+            { lat: 14.7, lon: 72.8, wind_kts: 52, pressure_hpa: 989 },
+            { lat: 15.1, lon: 73.5, wind_kts: 58, pressure_hpa: 984 },
+          ],
+        }),
+      });
+      setFc(await response.json());
+    } catch (err) {
+      console.error("Forecast error:", err);
+    }
+  }
+
+  const isCyclone = result?.is_cyclone === true;
+  const detection = result?.detection;
+  const classification = result?.classification;
+
+  return (
+    <main>
+      <nav>
+        <div className="brand">
+          <div className="logo-ring"></div>
+          <span>CycloneSense</span>
+        </div>
+        <div className="status">
+          <span className="status-dot"></span>
+          <small>System Operational</small>
+        </div>
+      </nav>
+
+      <section className="hero">
+        <div className="hero-content">
+          <small className="badge">MULTI-SPECTRAL EARTH OBSERVATION</small>
+          <h1>
+            AI-Powered Tropical Cyclone
+            <br />
+            <span className="gradient-text">Detection & Analysis</span>
+          </h1>
+          <p className="lead">
+            Real-time identification, morphological classification, and track forecasting from NASA MODIS satellite imagery.
+          </p>
+        </div>
+        <div className="hero-graphic">
+          <div className="orbit orbit-1"></div>
+          <div className="orbit orbit-2"></div>
+          <div className="orbit orbit-3"></div>
+          <div className="core-dot"></div>
+        </div>
+      </section>
+
+      <section className="metrics">
+        <div className="metric-card">
+          <Satellite size={24} />
+          <span className="metric-value">MODIS</span>
+          <span className="metric-label">NASA Terra/Aqua</span>
+        </div>
+        <div className="metric-card">
+          <CloudLightning size={24} />
+          <span className="metric-value">7 Classes</span>
+          <span className="metric-label">Dvorak Patterns</span>
+        </div>
+        <div className="metric-card">
+          <Activity size={24} />
+          <span className="metric-value">PyTorch</span>
+          <span className="metric-label">CNN + LSTM</span>
+        </div>
+        <div className="metric-card">
+          <Wind size={24} />
+          <span className="metric-value">6 Hour</span>
+          <span className="metric-label">Track Forecast</span>
+        </div>
+      </section>
+
+      <section className="analysis-section">
+        <div className="section-header">
+          <div>
+            <small className="section-number">01</small>
+            <h2>Detection & Classification Pipeline</h2>
+          </div>
+        </div>
+
+        <div className="pipeline-container">
+          {/* Upload Panel */}
+          <div className="upload-panel">
+            <label className="file-drop">
+              <Upload size={32} />
+              <strong>{file ? file.name : "Upload Satellite Image"}</strong>
+              <span>PNG, JPG, or WebP • Max 10 MB</span>
+              <input type="file" accept="image/png,image/jpeg,image/jpg,image/webp" onChange={handleFileChange} />
+            </label>
+
+            {/* Channel Selector */}
+            <div className="channel-selector">
+              <label className="selector-label">Satellite Channel</label>
+              <div className="toggle-group">
+                <button
+                  className={`toggle-btn ${channel === "ir" ? "active" : ""}`}
+                  onClick={() => setChannel("ir")}
+                  disabled={loading}
+                >
+                  <span className="toggle-icon">🌡️</span>
+                  <div>
+                    <strong>IR Band 31</strong>
+                    <small>Thermal Infrared (11 µm)</small>
+                  </div>
+                </button>
+                <button
+                  className={`toggle-btn ${channel === "vis" ? "active" : ""}`}
+                  onClick={() => setChannel("vis")}
+                  disabled={loading}
+                >
+                  <span className="toggle-icon">🌍</span>
+                  <div>
+                    <strong>True Color</strong>
+                    <small>Visible Composite (RGB)</small>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {preview && (
+              <div className="image-preview">
+                <img src={preview} alt="Uploaded satellite scene" />
+              </div>
+            )}
+
+            <button className="analyze-btn" onClick={analyze} disabled={!file || loading}>
+              {loading ? (
+                <>
+                  <div className="spinner"></div>
+                  Processing...
+                </>
+              ) : (
+                "Run Detection & Classification"
+              )}
+            </button>
+          </div>
+
+          {/* Results Panel */}
+          <div className="results-panel">
+            {error && (
+              <div className="alert alert-error">
+                <XCircle size={20} />
+                <div>
+                  <strong>Error</strong>
+                  <p>{error}</p>
+                </div>
+              </div>
+            )}
+
+            {result && !error && (
+              <>
+                {isCyclone ? (
+                  <div className="alert alert-success">
+                    <CheckCircle size={20} />
+                    <div>
+                      <strong>Tropical Cyclone Detected</strong>
+                      <p>{result.message}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="alert alert-info">
+                    <AlertCircle size={20} />
+                    <div>
+                      <strong>No Cyclone Detected</strong>
+                      <p>{result.message}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Detection Results */}
+                {detection && (
+                  <div className="result-card">
+                    <h3>Detection</h3>
+                    <div className="result-grid">
+                      <div className="result-item">
+                        <span className="label">Bounding Box</span>
+                        <span className="value">[{detection.bbox.join(", ")}]</span>
+                      </div>
+                      <div className="result-item">
+                        <span className="label">Centroid</span>
+                        <span className="value">
+                          ({detection.centroid[0]}, {detection.centroid[1]})
+                        </span>
+                      </div>
+                      <div className="result-item">
+                        <span className="label">Area</span>
+                        <span className="value">{detection.area} px²</span>
+                      </div>
+                      <div className="result-item">
+                        <span className="label">Confidence</span>
+                        <span className="value">{(detection.confidence * 100).toFixed(1)}%</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Classification Results */}
+                {classification && (
+                  <div className="result-card">
+                    <h3>Classification</h3>
+                    <div className="pattern-display">
+                      <span className="pattern-label">{classification.pattern.replace(/_/g, " ").toUpperCase()}</span>
+                      <div className="confidence-bar">
+                        <div className="confidence-fill" style={{ width: `${classification.confidence * 100}%` }}></div>
+                      </div>
+                      <span className="confidence-text">{(classification.confidence * 100).toFixed(1)}% confidence</span>
+                    </div>
+                    <small className="model-info">Model: {classification.model}</small>
+                  </div>
+                )}
+              </>
+            )}
+
+            {!result && !error && !loading && (
+              <div className="empty-state">
+                <CloudLightning size={48} strokeWidth={1.5} />
+                <p>Upload a satellite image and run the pipeline to see detection and classification results.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section className="forecast-section">
+        <div className="section-header">
+          <div>
+            <small className="section-number">02</small>
+            <h2>Track & Intensity Forecast</h2>
+          </div>
+        </div>
+
+        <div className="forecast-container">
+          <div className="forecast-map">
+            <div className="map-grid"></div>
+            <svg className="track-overlay" viewBox="0 0 400 300">
+              <path d="M 80 200 Q 150 180, 220 150 T 340 100" stroke="#00d9ff" strokeWidth="3" fill="none" strokeDasharray="5,5" />
+              <circle cx="80" cy="200" r="6" fill="#00d9ff" />
+              <circle cx="220" cy="150" r="6" fill="#00d9ff" />
+              <circle cx="340" cy="100" r="8" fill="#00ff9d" stroke="#002b1f" strokeWidth="2" />
+            </svg>
+          </div>
+
+          <div className="forecast-results">
+            {fc ? (
+              <>
+                <div className="forecast-card">
+                  <h3>Next Position (+6 Hours)</h3>
+                  <div className="forecast-value">
+                    {fc.next_lat.toFixed(2)}°N, {fc.next_lon.toFixed(2)}°E
+                  </div>
+                </div>
+                <div className="forecast-grid">
+                  <div className="forecast-item">
+                    <span className="label">Wind Speed</span>
+                    <span className="value">{fc.predicted_wind_kts.toFixed(0)} kt</span>
+                  </div>
+                  <div className="forecast-item">
+                    <span className="label">Intensity</span>
+                    <span className="value">{fc.intensity_class.replace(/_/g, " ")}</span>
+                  </div>
+                  <div className="forecast-item">
+                    <span className="label">Confidence</span>
+                    <span className="value">{(fc.confidence * 100).toFixed(0)}%</span>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="empty-state">
+                <Wind size={48} strokeWidth={1.5} />
+                <p>Run the demo forecast to test the LSTM-based track prediction model.</p>
+              </div>
+            )}
+            <button className="forecast-btn" onClick={forecastDemo}>
+              Run Demo Forecast
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <footer>
+        <div className="footer-content">
+          <div className="brand">
+            <div className="logo-ring"></div>
+            <span>CycloneSense</span>
+          </div>
+          <p>Research prototype developed for Smart India Hackathon 2024</p>
+          <small className="disclaimer">Not an official meteorological warning system. For educational and research purposes only.</small>
+        </div>
+      </footer>
+    </main>
+  );
+}
+
+createRoot(document.getElementById("root")).render(<App />);

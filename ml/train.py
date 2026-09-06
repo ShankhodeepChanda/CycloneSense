@@ -177,6 +177,28 @@ def train_vision_model():
         te_loss, te_acc = evaluate(model, test_loader, criterion, device)
         logger.info(f"Final Test Evaluation: Loss: {te_loss:.4f} | Accuracy: {te_acc * 100:.1f}%")
 
+        # Detailed classification metrics
+        from sklearn.metrics import classification_report, confusion_matrix
+        model.eval()
+        all_preds = []
+        all_labels = []
+        with torch.no_grad():
+            for images, labels in test_loader:
+                images = images.to(device)
+                outputs = model(images)
+                _, preds = torch.max(outputs, 1)
+                all_preds.extend(preds.cpu().numpy())
+                all_labels.extend(labels.numpy())
+
+        classes = train_dataset.classes
+        logger.info("\n" + "=" * 60)
+        logger.info("CLASSIFICATION REPORT (Test Set):")
+        logger.info("\n" + classification_report(all_labels, all_preds, target_names=classes, digits=3))
+        logger.info("CONFUSION MATRIX:")
+        cm = confusion_matrix(all_labels, all_preds)
+        logger.info(f"\n{cm}")
+        logger.info("=" * 60)
+
     return CHECKPOINT_PATH
 
 

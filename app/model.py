@@ -5,6 +5,11 @@ from pathlib import Path
 import numpy as np
 from PIL import Image
 
+# Import detection module
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from ml.detection import detect_cyclone_from_bytes
+
 logger = logging.getLogger(__name__)
 
 PATTERNS = [
@@ -174,6 +179,82 @@ def classify_image(data: bytes) -> tuple[str, float, str]:
         logger.warning(f"Inference error with PyTorch model: {exc}. Using baseline.")
         label, conf = classify_demo(data)
         return label, conf, "demo-morphology-baseline"
+
+
+def detect_and_classify(data: bytes, channel: str = "ir") -> dict:
+    """
+    Full pipeline: detect cyclone location, then classify its morphology pattern.
+
+    Args:
+        data: Image bytes
+        channel: 'ir' for thermal infrared or 'vis' for visible channel
+
+    Returns: dict with detection (bbox, centroid, confidence) and classification (pattern, confidence).
+    """
+    # Step 1: Detection
+    detection = detect_cyclone_from_bytes(data, threshold=180, channel=channel)
+
+    # Step 2: Classification (always run to get the pattern label)
+    pattern, conf, model_name = classify_image(data)
+
+    # Step 3: Integrate detection and classification results
+    # If classifier says "clear" with high confidence, override detection and report no cyclone
+    if pattern == "clear" and conf > 0.70:
+        return {
+            "detection": None,
+            "classification": {
+                "pattern": pattern,
+                "confidence": conf,
+                "model": model_name,
+            },
+            "is_cyclone": False,
+            "message": "No tropical cyclone detected. Scene classified as clear/non-cyclonic.",
+        }
+
+    # If detection failed but classification says there's a cyclone pattern (edge case: very weak signal)
+    if detection is None and pattern != "clear":
+        return {
+            "detection": None,
+            "classification": {
+                "pattern": pattern,
+                "confidence": conf,
+                "model": model_name,
+            },
+            "is_cyclone": False,
+            "message": "Cyclonic pattern detected by classifier but localization failed. May be too weak or off-center.",
+        }
+
+    # If detection failed and classifier says clear
+    if detection is None:
+        return {
+            "detection": None,
+            "classification": {
+                "pattern": pattern,
+                "confidence": conf,
+                "model": model_name,
+            },
+            "is_cyclone": False,
+            "message": "No cyclone detected in the image.",
+        }
+
+    # Detection succeeded and classifier identified a cyclone pattern
+    return {
+        "detection": {
+            "bbox": detection["bbox"],
+            "centroid": detection["centroid"],
+            "area": detection["area"],
+            "confidence": detection["confidence"],
+            "channel": detection.get("channel", channel),
+            "method": detection["method"],
+        },
+        "classification": {
+            "pattern": pattern,
+            "confidence": conf,
+            "model": model_name,
+        },
+        "is_cyclone": True,
+        "message": f"Tropical cyclone detected: {pattern.replace('_', ' ')}",
+    }
 
 
 def forecast(obs):

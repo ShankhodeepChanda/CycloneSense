@@ -205,6 +205,28 @@ def train_forecast_model():
             f"Wind MAE: {te_wind_mae:.1f} kts | Intensity Acc: {te_cls_acc * 100:.1f}%"
         )
 
+        # Detailed metrics for intensity classification
+        from sklearn.metrics import classification_report, confusion_matrix
+        model.eval()
+        all_preds = []
+        all_labels = []
+        with torch.no_grad():
+            for bx, _, _, by_cls in test_loader:
+                bx = bx.to(device)
+                _, _, pred_cls = model(bx)
+                pred_lbl = pred_cls.argmax(dim=1)
+                all_preds.extend(pred_lbl.cpu().numpy())
+                all_labels.extend(by_cls.numpy())
+
+        classes = INTENSITY_CLASSES
+        logger.info("\n" + "=" * 60)
+        logger.info("INTENSITY FORECAST CLASSIFICATION REPORT (Test Set):")
+        logger.info("\n" + classification_report(all_labels, all_preds, target_names=classes, digits=3, zero_division=0))
+        logger.info("CONFUSION MATRIX:")
+        cm = confusion_matrix(all_labels, all_preds)
+        logger.info(f"\n{cm}")
+        logger.info("=" * 60)
+
     return CHECKPOINT_PATH
 
 
