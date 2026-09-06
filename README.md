@@ -528,17 +528,7 @@ Planned improvements for production deployment:
 
 ---
 
-## 🏆 Hackathon Highlights
 
-**Why CycloneSense Stands Out:**
-
-✅ **Production-Ready** — Full-stack application with CI/CD, tests, Docker deployment  
-✅ **Real Data** — Trained on 18 actual North Indian Ocean cyclones from NASA MODIS  
-✅ **Deep Learning** — PyTorch CNN + LSTM, not rule-based heuristics  
-✅ **Scientific Rigor** — Dvorak classification + IMD intensity standards  
-✅ **Modern Stack** — FastAPI, React 19, Vite 6, Lucide icons  
-✅ **Explainable AI** — Grad-CAM implementation (model-level, API exposure planned)  
-✅ **Scalable** — Dockerized, cloud-native, RESTful API  
 ✅ **Polished UI** — Mission-control glassmorphic design, not a basic form  
 
 **Technical Depth:**
@@ -555,12 +545,6 @@ Planned improvements for production deployment:
 - Swagger/OpenAPI interactive docs
 
 ---
-
-## 📜 License
-
-This project is released under the **MIT License**.
-
-See [LICENSE](LICENSE) for full details.
 
 ---
 
@@ -600,12 +584,6 @@ Contributions are welcome! Please follow these steps:
 
 ---
 
-## 📞 Contact
-
-For questions, collaboration, or deployment inquiries:
-
-- **GitHub Issues**: [Open an issue](https://github.com/YOUR_USERNAME/CycloneSense/issues)
-- **Email**: your.email@example.com
 
 ---
 
