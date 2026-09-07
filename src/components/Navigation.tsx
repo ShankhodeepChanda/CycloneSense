@@ -6,6 +6,7 @@ import {
   Radio,
   Clock,
   AlertTriangle,
+  FileSpreadsheet,
   Menu,
   X,
 } from "lucide-react";
@@ -46,8 +47,8 @@ export const Navigation: React.FC<NavigationProps> = ({
   const navItems = [
     { id: "radar", label: "Command Radar", icon: Radio, desc: "Real-time satellite & storm fix" },
     { id: "vision", label: "AI Vision & Grad-CAM", icon: Satellite, desc: "Dvorak ViT-B/16 & cloud-top physics" },
-    { id: "trajectory", label: "Track & Intensity", icon: Activity, desc: "Bi-LSTM 72h path projection" },
-    { id: "mlops", label: "MLOps & Python APIs", icon: ShieldCheck, desc: "FastAPI, GeoJSON & WMO export" },
+    { id: "trajectory", label: "Track & Intensity", icon: Activity, desc: "72h path projection & cone" },
+    { id: "advisories", label: "Hazard Advisories & GIS", icon: FileSpreadsheet, desc: "WMO bulletins, GeoJSON GIS & alerts" },
   ];
 
   return (
@@ -79,7 +80,7 @@ export const Navigation: React.FC<NavigationProps> = ({
             <span className="text-slate-300">{istTime}</span>
           </div>
           <span className="bg-[#112a42] text-cyan-300 text-[10px] px-2 py-0.5 rounded border border-cyan-800 hidden sm:inline">
-            FP16 TensorRT · 58ms
+            Real-Time Cyclone Intelligence
           </span>
         </div>
       </div>

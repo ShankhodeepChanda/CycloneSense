@@ -3,18 +3,14 @@ import { Navigation } from "./components/Navigation";
 import { CommandRadar } from "./components/CommandRadar";
 import { VisionStudio } from "./components/VisionStudio";
 import { TrajectoryForecast } from "./components/TrajectoryForecast";
-import { MLOpsHub } from "./components/MLOpsHub";
+import { HazardAdvisoryHub } from "./components/HazardAdvisoryHub";
 import { BENCHMARK_PRESETS } from "./data/presets";
 import { PatternResponse, ForecastResponse, Observation } from "./types";
 import {
   Satellite,
   Activity,
-  Layers,
-  ShieldCheck,
-  ChevronRight,
-  ExternalLink,
-  Flame,
   Radio,
+  FileSpreadsheet,
 } from "lucide-react";
 
 export const App: React.FC = () => {
@@ -96,7 +92,7 @@ export const App: React.FC = () => {
                   OPERATIONAL METEOROLOGICAL INTELLIGENCE SUITE
                 </span>
                 <span className="text-xs font-mono-code text-slate-400 bg-slate-900 px-2.5 py-1 rounded border border-slate-800">
-                  NIO BASIN (BAY OF BENGAL & ARABIAN SEA)
+                  NORTH INDIAN OCEAN BASIN (BAY OF BENGAL & ARABIAN SEA)
                 </span>
               </div>
 
@@ -110,7 +106,7 @@ export const App: React.FC = () => {
 
               <p className="text-sm text-slate-300 leading-relaxed max-w-2xl">
                 Unified meteorological command dashboard combining Vision Transformers (ViT-B/16),
-                recurrent temporal extrapolation (Bi-LSTM), and Explainable AI (Grad-CAM) for real-time
+                recurrent temporal extrapolation, and Explainable AI (Grad-CAM) for real-time
                 cyclogenesis verification, Dvorak T-number estimation, and 72-hour cyclone track and intensity projection.
               </p>
 
@@ -137,13 +133,20 @@ export const App: React.FC = () => {
                   <Activity className="w-4 h-4" />
                   <span>Track & Intensity</span>
                 </button>
+                <button
+                  onClick={() => setActiveTab("advisories")}
+                  className="px-4 py-2 rounded-lg bg-[#0c2236] hover:bg-[#12304d] text-cyan-300 border border-cyan-700/60 font-medium text-xs flex items-center gap-2 transition"
+                >
+                  <FileSpreadsheet className="w-4 h-4" />
+                  <span>Bulletins & Advisories</span>
+                </button>
               </div>
 
               {/* Quick Telemetry Strip */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-[#163654]">
                 <div>
                   <span className="text-[10px] font-mono-code text-slate-400 block">ACTIVE TARGET</span>
-                  <span className="text-xs font-bold text-white font-mono-code">ARB-2026-02</span>
+                  <span className="text-xs font-bold text-white font-mono-code">{currentStormName.split(" / ")[0]}</span>
                 </div>
                 <div>
                   <span className="text-[10px] font-mono-code text-slate-400 block">CURRENT COORDS</span>
@@ -162,7 +165,7 @@ export const App: React.FC = () => {
               </div>
             </div>
 
-            {/* Right Storm Spinning Graphic (with requested cycloneSpin & bioluminescent eyePulse animations) */}
+            {/* Right Storm Spinning Graphic */}
             <div className="lg:col-span-5 flex flex-col items-center justify-center">
               <div className="storm relative">
                 <i></i>
@@ -190,7 +193,7 @@ export const App: React.FC = () => {
               {activeTab === "radar" && "Module A · Live Command Radar & Multispectral Visualizer"}
               {activeTab === "vision" && "Module B · AI Pattern Classifier & Explainability Studio"}
               {activeTab === "trajectory" && "Module C · Trajectory Predictor & Landfall Intercept"}
-              {activeTab === "mlops" && "Module D · System Architecture & Hazard Dissemination"}
+              {activeTab === "advisories" && "Module D · Official Bulletins, GIS Hazard Export & Advisories"}
             </span>
           </div>
 
@@ -218,10 +221,10 @@ export const App: React.FC = () => {
             </button>
             <span>·</span>
             <button
-              onClick={() => setActiveTab("mlops")}
-              className={`px-2 py-0.5 rounded ${activeTab === "mlops" ? "bg-cyan-500 text-slate-950 font-bold" : "hover:text-white"}`}
+              onClick={() => setActiveTab("advisories")}
+              className={`px-2 py-0.5 rounded ${activeTab === "advisories" ? "bg-cyan-500 text-slate-950 font-bold" : "hover:text-white"}`}
             >
-              MLOPS
+              ADVISORIES
             </button>
           </div>
         </div>
@@ -251,7 +254,16 @@ export const App: React.FC = () => {
             />
           )}
 
-          {activeTab === "mlops" && <MLOpsHub />}
+          {activeTab === "advisories" && (
+            <HazardAdvisoryHub
+              stormName={currentStormName}
+              stormLat={stormLat}
+              stormLon={stormLon}
+              windKts={windKts}
+              pressureHpa={pressureHpa}
+              intensityCategory={intensityCategory}
+            />
+          )}
         </section>
 
         {/* Operational Context & Compliance Banner */}
