@@ -1,0 +1,9 @@
+2026-09-06 18:13:26,926 [INFO] Loaded 41 real storm states
+2026-09-06 18:13:27,529 [INFO] Pattern 'clear': train=128, val=4, test=2
+2026-09-06 18:13:28,550 [INFO] Pattern 'developing': train=352, val=8, test=4
+2026-09-06 18:13:29,803 [INFO] Pattern 'curved_band': train=640, val=12, test=6
+2026-09-06 18:13:30,759 [INFO] Pattern 'central_dense_overcast': train=832, val=16, test=8
+2026-09-06 18:13:31,435 [INFO] Pattern 'eye': train=960, val=20, test=10
+2026-09-06 18:13:31,618 [INFO] Pattern 'sheared': train=992, val=24, test=12
+2026-09-06 18:13:32,137 [INFO] Pattern 'dissipating': train=1088, val=28, test=14
+2026-09-06 18:13:32,137 [INFO] Augmented real dataset ready: Total=1130
