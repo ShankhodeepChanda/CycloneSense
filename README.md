@@ -10,6 +10,34 @@
 
 ## 🎯 Overview
 
+```text
+Real Satellite Data
+        ↓
+Data Engineering & Quality Control
+        ↓
+PyTorch Multi-Source Fusion
+        ↓
+Temporal Forecasting
+        ↓
+Pattern + Track + Intensity Prediction
+        ↓
+Grad-CAM Explainability
+        ↓
+Prediction Maps / Storm Cone
+        ↓
+FastAPI Inference API
+        ↓
+PostgreSQL + PostGIS
+        ↓
+React Interactive Dashboard
+        ↓
+Docker + GitHub Actions CI/CD
+        ↓
+GHCR → Cloud Deployment
+        ↓
+Operational Monitoring & Technical Documentation
+```
+
 CycloneSense is an **AI-powered scientific platform** for automated tropical cyclone analysis using satellite imagery. Built with PyTorch deep learning models and real-time satellite data processing, it provides:
 
 - **🔍 Automated Detection** — Classical morphological algorithms with quality filters locate cyclone structures in satellite imagery
@@ -18,6 +46,8 @@ CycloneSense is an **AI-powered scientific platform** for automated tropical cyc
 - **🎨 Mission-Control Interface** — Glassmorphic HUD with real-time telemetry, canvas-based detection overlay, and live metrics
 
 The platform combines **Computer Vision, Time-Series Forecasting, and Remote Sensing** into a production-grade web application with FastAPI backend and React frontend.
+
+> 🛰️ Production-grade operational architecture for tropical cyclone tracking and intensity prognosis.
 
 ---
 
@@ -184,15 +214,16 @@ Swagger docs: `http://localhost:8000/docs`
 
 ### 3. Frontend Setup
 
-Open a new terminal:
+Open a new terminal in the `CycloneSense` repository root:
 
 ```bash
-cd frontend
 npm install
 npm run dev
 ```
 
 Frontend runs at: `http://localhost:5173`
+
+The application runs at: `http://localhost:3000`
 
 ### 4. Test the Application
 
@@ -528,7 +559,6 @@ Planned improvements for production deployment:
 
 ---
 
-
 ✅ **Polished UI** — Mission-control glassmorphic design, not a basic form  
 
 **Technical Depth:**
@@ -543,8 +573,6 @@ Planned improvements for production deployment:
 - Architecture, dataset, model, deployment docs
 - Code comments and type hints
 - Swagger/OpenAPI interactive docs
-
----
 
 ---
 
@@ -581,9 +609,6 @@ Contributions are welcome! Please follow these steps:
 - **India Meteorological Department** — Dvorak classification standards
 - **PyTorch Community** — Deep learning framework
 - **FastAPI** — Modern Python web framework
-
----
-
 
 ---
 
