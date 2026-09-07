@@ -35,7 +35,7 @@ DVORAK_TAXONOMY_MAP = {
 
 def planck_radiance_to_temp_kelvin(radiance_mw: float, wavelength_um: float = 10.8) -> float:
     """Converts Thermal Infrared spectral radiance to Brightness Temperature in Kelvin using Planck's law.
-    
+
     Formula: T = c2 / (lambda * ln(1 + (c1 / (lambda^5 * L))))
     """
     c1 = 1.191042e8  # mW / (m^2 * sr * cm^-4)

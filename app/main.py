@@ -36,7 +36,7 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=False,
 
 @app.get("/health", response_model=HealthResponse)
 def get_health():
-    return HealthResponse(status="ok", service="cyclonesense-api-python", version="1.3.0", uptime_seconds=round(time.time()-START_TIME,1), hardware={"engine":engine.device,"gpu":engine.device,"model_mode":"image-analysis-baseline"}, models_loaded={"image_analyzer":True,"trajectory_engine":True,"gradcam_engine":False}, telemetry={"satellite_sources":["INSAT-3D/3DR VHRR","Himawari-9","GOES-16"],"spatial_coverage":"North Indian Ocean"})
+    return HealthResponse(status="ok", service="cyclonesense-api-python", version="1.3.0", uptime_seconds=round(time.time()-START_TIME,1), hardware={"engine":engine.device,"gpu":engine.device,"model_mode":"image-analysis-baseline"}, models_loaded={"image_analyzer":True,"trajectory_engine":True,"gradcam_engine":False}, telemetry={"satellite_sources":["INSAT-3D/3DR VHRR","Himawai-9","GOES-16"],"spatial_coverage":"North Indian Ocean"})
 
 @app.post("/predict/pattern", response_model=PatternResponse)
 async def predict_cyclone_pattern(file: UploadFile = File(...)):

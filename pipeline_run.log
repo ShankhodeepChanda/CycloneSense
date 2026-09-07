@@ -1,0 +1,140 @@
+2026-09-06 18:00:59,771 [INFO] ============================================================
+2026-09-06 18:00:59,772 [INFO]    CYCLONESENSE AI - REAL DATA & TRAINING PIPELINE
+2026-09-06 18:00:59,772 [INFO] ============================================================
+2026-09-06 18:00:59,772 [INFO] 
+[STEP 1/4] Ingesting Real NOAA IBTrACS Cyclone Data...
+2026-09-06 18:00:59,774 [INFO] Real IBTrACS raw data not found locally. Initiating download...
+2026-09-06 18:00:59,774 [INFO] Downloading from https://www.ncei.noaa.gov/data/international-best-track-archive-for-climate-stewardship-ibtracs/v04r01/access/csv/ibtracs.NI.list.v04r01.csv...
+Progress: 0.1 MB / 26.6 MB (0.2%)Progress: 0.1 MB / 26.6 MB (0.5%)Progress: 0.2 MB / 26.6 MB (0.7%)Progress: 0.2 MB / 26.6 MB (0.9%)Progress: 0.3 MB / 26.6 MB (1.2%)Progress: 0.4 MB / 26.6 MB (1.4%)Progress: 0.4 MB / 26.6 MB (1.6%)Progress: 0.5 MB / 26.6 MB (1.9%)Progress: 0.6 MB / 26.6 MB (2.1%)Progress: 0.6 MB / 26.6 MB (2.4%)Progress: 0.7 MB / 26.6 MB (2.6%)Progress: 0.8 MB / 26.6 MB (2.8%)Progress: 0.8 MB / 26.6 MB (3.1%)Progress: 0.9 MB / 26.6 MB (3.3%)Progress: 0.9 MB / 26.6 MB (3.5%)Progress: 1.0 MB / 26.6 MB (3.8%)Progress: 1.1 MB / 26.6 MB (4.0%)Progress: 1.1 MB / 26.6 MB (4.2%)Progress: 1.2 MB / 26.6 MB (4.5%)Progress: 1.2 MB / 26.6 MB (4.7%)Progress: 1.3 MB / 26.6 MB (4.9%)Progress: 1.4 MB / 26.6 MB (5.2%)Progress: 1.4 MB / 26.6 MB (5.4%)Progress: 1.5 MB / 26.6 MB (5.6%)Progress: 1.6 MB / 26.6 MB (5.9%)Progress: 1.6 MB / 26.6 MB (6.1%)Progress: 1.7 MB / 26.6 MB (6.3%)Progress: 1.8 MB / 26.6 MB (6.6%)Progress: 1.8 MB / 26.6 MB (6.8%)Progress: 1.9 MB / 26.6 MB (7.1%)Progress: 1.9 MB / 26.6 MB (7.3%)Progress: 2.0 MB / 26.6 MB (7.5%)Progress: 2.1 MB / 26.6 MB (7.8%)Progress: 2.1 MB / 26.6 MB (8.0%)Progress: 2.2 MB / 26.6 MB (8.2%)Progress: 2.2 MB / 26.6 MB (8.5%)Progress: 2.3 MB / 26.6 MB (8.7%)Progress: 2.4 MB / 26.6 MB (8.9%)Progress: 2.4 MB / 26.6 MB (9.2%)Progress: 2.5 MB / 26.6 MB (9.4%)Progress: 2.6 MB / 26.6 MB (9.6%)Progress: 2.6 MB / 26.6 MB (9.9%)Progress: 2.7 MB / 26.6 MB (10.1%)Progress: 2.8 MB / 26.6 MB (10.3%)Progress: 2.8 MB / 26.6 MB (10.6%)Progress: 2.9 MB / 26.6 MB (10.8%)Progress: 2.9 MB / 26.6 MB (11.0%)Progress: 3.0 MB / 26.6 MB (11.3%)Progress: 3.1 MB / 26.6 MB (11.5%)Progress: 3.1 MB / 26.6 MB (11.8%)Progress: 3.2 MB / 26.6 MB (12.0%)Progress: 3.2 MB / 26.6 MB (12.2%)Progress: 3.3 MB / 26.6 MB (12.5%)Progress: 3.4 MB / 26.6 MB (12.7%)Progress: 3.4 MB / 26.6 MB (12.9%)Progress: 3.5 MB / 26.6 MB (13.2%)Progress: 3.6 MB / 26.6 MB (13.4%)Progress: 3.6 MB / 26.6 MB (13.6%)Progress: 3.7 MB / 26.6 MB (13.9%)Progress: 3.8 MB / 26.6 MB (14.1%)Progress: 3.8 MB / 26.6 MB (14.3%)Progress: 3.9 MB / 26.6 MB (14.6%)Progress: 3.9 MB / 26.6 MB (14.8%)Progress: 4.0 MB / 26.6 MB (15.0%)Progress: 4.1 MB / 26.6 MB (15.3%)Progress: 4.1 MB / 26.6 MB (15.5%)Progress: 4.2 MB / 26.6 MB (15.8%)Progress: 4.2 MB / 26.6 MB (16.0%)Progress: 4.3 MB / 26.6 MB (16.2%)Progress: 4.4 MB / 26.6 MB (16.5%)Progress: 4.4 MB / 26.6 MB (16.7%)Progress: 4.5 MB / 26.6 MB (16.9%)Progress: 4.6 MB / 26.6 MB (17.2%)Progress: 4.6 MB / 26.6 MB (17.4%)Progress: 4.7 MB / 26.6 MB (17.6%)Progress: 4.8 MB / 26.6 MB (17.9%)Progress: 4.8 MB / 26.6 MB (18.1%)Progress: 4.9 MB / 26.6 MB (18.3%)Progress: 4.9 MB / 26.6 MB (18.6%)Progress: 5.0 MB / 26.6 MB (18.8%)Progress: 5.1 MB / 26.6 MB (19.0%)Progress: 5.1 MB / 26.6 MB (19.3%)Progress: 5.2 MB / 26.6 MB (19.5%)Progress: 5.2 MB / 26.6 MB (19.7%)Progress: 5.3 MB / 26.6 MB (20.0%)Progress: 5.4 MB / 26.6 MB (20.2%)Progress: 5.4 MB / 26.6 MB (20.5%)Progress: 5.5 MB / 26.6 MB (20.7%)Progress: 5.6 MB / 26.6 MB (20.9%)Progress: 5.6 MB / 26.6 MB (21.2%)Progress: 5.7 MB / 26.6 MB (21.4%)Progress: 5.8 MB / 26.6 MB (21.6%)Progress: 5.8 MB / 26.6 MB (21.9%)Progress: 5.9 MB / 26.6 MB (22.1%)Progress: 5.9 MB / 26.6 MB (22.3%)Progress: 6.0 MB / 26.6 MB (22.6%)Progress: 6.1 MB / 26.6 MB (22.8%)Progress: 6.1 MB / 26.6 MB (23.0%)Progress: 6.2 MB / 26.6 MB (23.3%)Progress: 6.2 MB / 26.6 MB (23.5%)Progress: 6.3 MB / 26.6 MB (23.7%)Progress: 6.4 MB / 26.6 MB (24.0%)Progress: 6.4 MB / 26.6 MB (24.2%)Progress: 6.5 MB / 26.6 MB (24.4%)Progress: 6.6 MB / 26.6 MB (24.7%)Progress: 6.6 MB / 26.6 MB (24.9%)Progress: 6.7 MB / 26.6 MB (25.2%)Progress: 6.8 MB / 26.6 MB (25.4%)Progress: 6.8 MB / 26.6 MB (25.6%)Progress: 6.9 MB / 26.6 MB (25.9%)Progress: 6.9 MB / 26.6 MB (26.1%)Progress: 7.0 MB / 26.6 MB (26.3%)Progress: 7.1 MB / 26.6 MB (26.6%)Progress: 7.1 MB / 26.6 MB (26.8%)Progress: 7.2 MB / 26.6 MB (27.0%)Progress: 7.2 MB / 26.6 MB (27.3%)Progress: 7.3 MB / 26.6 MB (27.5%)Progress: 7.4 MB / 26.6 MB (27.7%)Progress: 7.4 MB / 26.6 MB (28.0%)Progress: 7.5 MB / 26.6 MB (28.2%)Progress: 7.6 MB / 26.6 MB (28.4%)Progress: 7.6 MB / 26.6 MB (28.7%)Progress: 7.7 MB / 26.6 MB (28.9%)Progress: 7.8 MB / 26.6 MB (29.2%)Progress: 7.8 MB / 26.6 MB (29.4%)Progress: 7.9 MB / 26.6 MB (29.6%)Progress: 7.9 MB / 26.6 MB (29.9%)Progress: 8.0 MB / 26.6 MB (30.1%)Progress: 8.1 MB / 26.6 MB (30.3%)Progress: 8.1 MB / 26.6 MB (30.6%)Progress: 8.2 MB / 26.6 MB (30.8%)Progress: 8.2 MB / 26.6 MB (31.0%)Progress: 8.3 MB / 26.6 MB (31.3%)Progress: 8.4 MB / 26.6 MB (31.5%)Progress: 8.4 MB / 26.6 MB (31.7%)Progress: 8.5 MB / 26.6 MB (32.0%)Progress: 8.6 MB / 26.6 MB (32.2%)Progress: 8.6 MB / 26.6 MB (32.4%)Progress: 8.7 MB / 26.6 MB (32.7%)Progress: 8.8 MB / 26.6 MB (32.9%)Progress: 8.8 MB / 26.6 MB (33.1%)Progress: 8.9 MB / 26.6 MB (33.4%)Progress: 8.9 MB / 26.6 MB (33.6%)Progress: 9.0 MB / 26.6 MB (33.9%)Progress: 9.1 MB / 26.6 MB (34.1%)Progress: 9.1 MB / 26.6 MB (34.3%)Progress: 9.2 MB / 26.6 MB (34.6%)Progress: 9.2 MB / 26.6 MB (34.8%)Progress: 9.3 MB / 26.6 MB (35.0%)Progress: 9.4 MB / 26.6 MB (35.3%)Progress: 9.4 MB / 26.6 MB (35.5%)Progress: 9.5 MB / 26.6 MB (35.7%)Progress: 9.6 MB / 26.6 MB (36.0%)Progress: 9.6 MB / 26.6 MB (36.2%)Progress: 9.7 MB / 26.6 MB (36.4%)Progress: 9.8 MB / 26.6 MB (36.7%)Progress: 9.8 MB / 26.6 MB (36.9%)Progress: 9.9 MB / 26.6 MB (37.1%)Progress: 9.9 MB / 26.6 MB (37.4%)Progress: 10.0 MB / 26.6 MB (37.6%)Progress: 10.1 MB / 26.6 MB (37.8%)Progress: 10.1 MB / 26.6 MB (38.1%)Progress: 10.2 MB / 26.6 MB (38.3%)Progress: 10.2 MB / 26.6 MB (38.6%)Progress: 10.3 MB / 26.6 MB (38.8%)Progress: 10.4 MB / 26.6 MB (39.0%)Progress: 10.4 MB / 26.6 MB (39.3%)Progress: 10.5 MB / 26.6 MB (39.5%)Progress: 10.6 MB / 26.6 MB (39.7%)Progress: 10.6 MB / 26.6 MB (40.0%)Progress: 10.7 MB / 26.6 MB (40.2%)Progress: 10.8 MB / 26.6 MB (40.4%)Progress: 10.8 MB / 26.6 MB (40.7%)Progress: 10.9 MB / 26.6 MB (40.9%)Progress: 10.9 MB / 26.6 MB (41.1%)Progress: 11.0 MB / 26.6 MB (41.4%)Progress: 11.1 MB / 26.6 MB (41.6%)Progress: 11.1 MB / 26.6 MB (41.8%)Progress: 11.2 MB / 26.6 MB (42.1%)Progress: 11.2 MB / 26.6 MB (42.3%)Progress: 11.3 MB / 26.6 MB (42.6%)Progress: 11.4 MB / 26.6 MB (42.8%)Progress: 11.4 MB / 26.6 MB (43.0%)Progress: 11.5 MB / 26.6 MB (43.3%)Progress: 11.6 MB / 26.6 MB (43.5%)Progress: 11.6 MB / 26.6 MB (43.7%)Progress: 11.7 MB / 26.6 MB (44.0%)Progress: 11.8 MB / 26.6 MB (44.2%)Progress: 11.8 MB / 26.6 MB (44.4%)Progress: 11.9 MB / 26.6 MB (44.7%)Progress: 11.9 MB / 26.6 MB (44.9%)Progress: 12.0 MB / 26.6 MB (45.1%)Progress: 12.1 MB / 26.6 MB (45.4%)Progress: 12.1 MB / 26.6 MB (45.6%)Progress: 12.2 MB / 26.6 MB (45.8%)Progress: 12.2 MB / 26.6 MB (46.1%)Progress: 12.3 MB / 26.6 MB (46.3%)Progress: 12.4 MB / 26.6 MB (46.5%)Progress: 12.4 MB / 26.6 MB (46.8%)Progress: 12.5 MB / 26.6 MB (47.0%)Progress: 12.6 MB / 26.6 MB (47.3%)Progress: 12.6 MB / 26.6 MB (47.5%)Progress: 12.7 MB / 26.6 MB (47.7%)Progress: 12.8 MB / 26.6 MB (48.0%)Progress: 12.8 MB / 26.6 MB (48.2%)Progress: 12.9 MB / 26.6 MB (48.4%)Progress: 12.9 MB / 26.6 MB (48.7%)Progress: 13.0 MB / 26.6 MB (48.9%)Progress: 13.1 MB / 26.6 MB (49.1%)Progress: 13.1 MB / 26.6 MB (49.4%)Progress: 13.2 MB / 26.6 MB (49.6%)Progress: 13.2 MB / 26.6 MB (49.8%)Progress: 13.3 MB / 26.6 MB (50.1%)Progress: 13.4 MB / 26.6 MB (50.3%)Progress: 13.4 MB / 26.6 MB (50.5%)Progress: 13.5 MB / 26.6 MB (50.8%)Progress: 13.6 MB / 26.6 MB (51.0%)Progress: 13.6 MB / 26.6 MB (51.2%)Progress: 13.7 MB / 26.6 MB (51.5%)Progress: 13.8 MB / 26.6 MB (51.7%)Progress: 13.8 MB / 26.6 MB (52.0%)Progress: 13.9 MB / 26.6 MB (52.2%)Progress: 13.9 MB / 26.6 MB (52.4%)Progress: 14.0 MB / 26.6 MB (52.7%)Progress: 14.1 MB / 26.6 MB (52.9%)Progress: 14.1 MB / 26.6 MB (53.1%)Progress: 14.2 MB / 26.6 MB (53.4%)Progress: 14.2 MB / 26.6 MB (53.6%)Progress: 14.3 MB / 26.6 MB (53.8%)Progress: 14.4 MB / 26.6 MB (54.1%)Progress: 14.4 MB / 26.6 MB (54.3%)Progress: 14.5 MB / 26.6 MB (54.5%)Progress: 14.6 MB / 26.6 MB (54.8%)Progress: 14.6 MB / 26.6 MB (55.0%)Progress: 14.7 MB / 26.6 MB (55.2%)Progress: 14.8 MB / 26.6 MB (55.5%)Progress: 14.8 MB / 26.6 MB (55.7%)Progress: 14.9 MB / 26.6 MB (55.9%)Progress: 14.9 MB / 26.6 MB (56.2%)Progress: 15.0 MB / 26.6 MB (56.4%)Progress: 15.1 MB / 26.6 MB (56.7%)Progress: 15.1 MB / 26.6 MB (56.9%)Progress: 15.2 MB / 26.6 MB (57.1%)Progress: 15.2 MB / 26.6 MB (57.4%)Progress: 15.3 MB / 26.6 MB (57.6%)Progress: 15.4 MB / 26.6 MB (57.8%)Progress: 15.4 MB / 26.6 MB (58.1%)Progress: 15.5 MB / 26.6 MB (58.3%)Progress: 15.6 MB / 26.6 MB (58.5%)Progress: 15.6 MB / 26.6 MB (58.8%)Progress: 15.7 MB / 26.6 MB (59.0%)Progress: 15.8 MB / 26.6 MB (59.2%)Progress: 15.8 MB / 26.6 MB (59.5%)Progress: 15.9 MB / 26.6 MB (59.7%)Progress: 15.9 MB / 26.6 MB (59.9%)Progress: 16.0 MB / 26.6 MB (60.2%)Progress: 16.1 MB / 26.6 MB (60.4%)Progress: 16.1 MB / 26.6 MB (60.7%)Progress: 16.2 MB / 26.6 MB (60.9%)Progress: 16.2 MB / 26.6 MB (61.1%)Progress: 16.3 MB / 26.6 MB (61.4%)Progress: 16.4 MB / 26.6 MB (61.6%)Progress: 16.4 MB / 26.6 MB (61.8%)Progress: 16.5 MB / 26.6 MB (62.1%)Progress: 16.6 MB / 26.6 MB (62.3%)Progress: 16.6 MB / 26.6 MB (62.5%)Progress: 16.7 MB / 26.6 MB (62.8%)Progress: 16.8 MB / 26.6 MB (63.0%)Progress: 16.8 MB / 26.6 MB (63.2%)Progress: 16.9 MB / 26.6 MB (63.5%)Progress: 16.9 MB / 26.6 MB (63.7%)Progress: 17.0 MB / 26.6 MB (63.9%)Progress: 17.1 MB / 26.6 MB (64.2%)Progress: 17.1 MB / 26.6 MB (64.4%)Progress: 17.2 MB / 26.6 MB (64.6%)Progress: 17.2 MB / 26.6 MB (64.9%)Progress: 17.3 MB / 26.6 MB (65.1%)Progress: 17.4 MB / 26.6 MB (65.4%)Progress: 17.4 MB / 26.6 MB (65.6%)Progress: 17.5 MB / 26.6 MB (65.8%)Progress: 17.6 MB / 26.6 MB (66.1%)Progress: 17.6 MB / 26.6 MB (66.3%)Progress: 17.7 MB / 26.6 MB (66.5%)Progress: 17.8 MB / 26.6 MB (66.8%)Progress: 17.8 MB / 26.6 MB (67.0%)Progress: 17.9 MB / 26.6 MB (67.2%)Progress: 17.9 MB / 26.6 MB (67.5%)Progress: 18.0 MB / 26.6 MB (67.7%)Progress: 18.1 MB / 26.6 MB (67.9%)Progress: 18.1 MB / 26.6 MB (68.2%)Progress: 18.2 MB / 26.6 MB (68.4%)Progress: 18.2 MB / 26.6 MB (68.6%)Progress: 18.3 MB / 26.6 MB (68.9%)Progress: 18.4 MB / 26.6 MB (69.1%)Progress: 18.4 MB / 26.6 MB (69.3%)Progress: 18.5 MB / 26.6 MB (69.6%)Progress: 18.6 MB / 26.6 MB (69.8%)Progress: 18.6 MB / 26.6 MB (70.1%)Progress: 18.7 MB / 26.6 MB (70.3%)Progress: 18.8 MB / 26.6 MB (70.5%)Progress: 18.8 MB / 26.6 MB (70.8%)Progress: 18.9 MB / 26.6 MB (71.0%)Progress: 18.9 MB / 26.6 MB (71.2%)Progress: 19.0 MB / 26.6 MB (71.5%)Progress: 19.1 MB / 26.6 MB (71.7%)Progress: 19.1 MB / 26.6 MB (71.9%)Progress: 19.2 MB / 26.6 MB (72.2%)Progress: 19.2 MB / 26.6 MB (72.4%)Progress: 19.3 MB / 26.6 MB (72.6%)Progress: 19.4 MB / 26.6 MB (72.9%)Progress: 19.4 MB / 26.6 MB (73.1%)Progress: 19.5 MB / 26.6 MB (73.3%)Progress: 19.6 MB / 26.6 MB (73.6%)Progress: 19.6 MB / 26.6 MB (73.8%)Progress: 19.7 MB / 26.6 MB (74.1%)Progress: 19.8 MB / 26.6 MB (74.3%)Progress: 19.8 MB / 26.6 MB (74.5%)Progress: 19.9 MB / 26.6 MB (74.8%)Progress: 19.9 MB / 26.6 MB (75.0%)Progress: 20.0 MB / 26.6 MB (75.2%)Progress: 20.1 MB / 26.6 MB (75.5%)Progress: 20.1 MB / 26.6 MB (75.7%)Progress: 20.2 MB / 26.6 MB (75.9%)Progress: 20.2 MB / 26.6 MB (76.2%)Progress: 20.3 MB / 26.6 MB (76.4%)Progress: 20.4 MB / 26.6 MB (76.6%)Progress: 20.4 MB / 26.6 MB (76.9%)Progress: 20.5 MB / 26.6 MB (77.1%)Progress: 20.6 MB / 26.6 MB (77.3%)Progress: 20.6 MB / 26.6 MB (77.6%)Progress: 20.7 MB / 26.6 MB (77.8%)Progress: 20.8 MB / 26.6 MB (78.0%)Progress: 20.8 MB / 26.6 MB (78.3%)Progress: 20.9 MB / 26.6 MB (78.5%)Progress: 20.9 MB / 26.6 MB (78.8%)Progress: 21.0 MB / 26.6 MB (79.0%)Progress: 21.1 MB / 26.6 MB (79.2%)Progress: 21.1 MB / 26.6 MB (79.5%)Progress: 21.2 MB / 26.6 MB (79.7%)Progress: 21.2 MB / 26.6 MB (79.9%)Progress: 21.3 MB / 26.6 MB (80.2%)Progress: 21.4 MB / 26.6 MB (80.4%)Progress: 21.4 MB / 26.6 MB (80.6%)Progress: 21.5 MB / 26.6 MB (80.9%)Progress: 21.6 MB / 26.6 MB (81.1%)Progress: 21.6 MB / 26.6 MB (81.3%)Progress: 21.7 MB / 26.6 MB (81.6%)Progress: 21.8 MB / 26.6 MB (81.8%)Progress: 21.8 MB / 26.6 MB (82.0%)Progress: 21.9 MB / 26.6 MB (82.3%)Progress: 21.9 MB / 26.6 MB (82.5%)Progress: 22.0 MB / 26.6 MB (82.7%)Progress: 22.1 MB / 26.6 MB (83.0%)Progress: 22.1 MB / 26.6 MB (83.2%)Progress: 22.2 MB / 26.6 MB (83.5%)Progress: 22.2 MB / 26.6 MB (83.7%)Progress: 22.3 MB / 26.6 MB (83.9%)Progress: 22.4 MB / 26.6 MB (84.2%)Progress: 22.4 MB / 26.6 MB (84.4%)Progress: 22.5 MB / 26.6 MB (84.6%)Progress: 22.6 MB / 26.6 MB (84.9%)Progress: 22.6 MB / 26.6 MB (85.1%)Progress: 22.7 MB / 26.6 MB (85.3%)Progress: 22.8 MB / 26.6 MB (85.6%)Progress: 22.8 MB / 26.6 MB (85.8%)Progress: 22.9 MB / 26.6 MB (86.0%)Progress: 22.9 MB / 26.6 MB (86.3%)Progress: 23.0 MB / 26.6 MB (86.5%)Progress: 23.1 MB / 26.6 MB (86.7%)Progress: 23.1 MB / 26.6 MB (87.0%)Progress: 23.2 MB / 26.6 MB (87.2%)Progress: 23.2 MB / 26.6 MB (87.5%)Progress: 23.3 MB / 26.6 MB (87.7%)Progress: 23.4 MB / 26.6 MB (87.9%)Progress: 23.4 MB / 26.6 MB (88.2%)Progress: 23.5 MB / 26.6 MB (88.4%)Progress: 23.6 MB / 26.6 MB (88.6%)Progress: 23.6 MB / 26.6 MB (88.9%)Progress: 23.7 MB / 26.6 MB (89.1%)Progress: 23.8 MB / 26.6 MB (89.3%)Progress: 23.8 MB / 26.6 MB (89.6%)Progress: 23.9 MB / 26.6 MB (89.8%)Progress: 23.9 MB / 26.6 MB (90.0%)Progress: 24.0 MB / 26.6 MB (90.3%)Progress: 24.1 MB / 26.6 MB (90.5%)Progress: 24.1 MB / 26.6 MB (90.7%)Progress: 24.2 MB / 26.6 MB (91.0%)Progress: 24.2 MB / 26.6 MB (91.2%)Progress: 24.3 MB / 26.6 MB (91.4%)Progress: 24.4 MB / 26.6 MB (91.7%)Progress: 24.4 MB / 26.6 MB (91.9%)Progress: 24.5 MB / 26.6 MB (92.2%)Progress: 24.6 MB / 26.6 MB (92.4%)Progress: 24.6 MB / 26.6 MB (92.6%)Progress: 24.7 MB / 26.6 MB (92.9%)Progress: 24.8 MB / 26.6 MB (93.1%)Progress: 24.8 MB / 26.6 MB (93.3%)Progress: 24.9 MB / 26.6 MB (93.6%)Progress: 24.9 MB / 26.6 MB (93.8%)Progress: 25.0 MB / 26.6 MB (94.0%)Progress: 25.1 MB / 26.6 MB (94.3%)Progress: 25.1 MB / 26.6 MB (94.5%)Progress: 25.2 MB / 26.6 MB (94.7%)Progress: 25.2 MB / 26.6 MB (95.0%)Progress: 25.3 MB / 26.6 MB (95.2%)Progress: 25.4 MB / 26.6 MB (95.4%)Progress: 25.4 MB / 26.6 MB (95.7%)Progress: 25.5 MB / 26.6 MB (95.9%)Progress: 25.6 MB / 26.6 MB (96.1%)Progress: 25.6 MB / 26.6 MB (96.4%)Progress: 25.7 MB / 26.6 MB (96.6%)Progress: 25.8 MB / 26.6 MB (96.9%)Progress: 25.8 MB / 26.6 MB (97.1%)Progress: 25.9 MB / 26.6 MB (97.3%)Progress: 25.9 MB / 26.6 MB (97.6%)Progress: 26.0 MB / 26.6 MB (97.8%)Progress: 26.1 MB / 26.6 MB (98.0%)Progress: 26.1 MB / 26.6 MB (98.3%)Progress: 26.2 MB / 26.6 MB (98.5%)Progress: 26.2 MB / 26.6 MB (98.7%)Progress: 26.3 MB / 26.6 MB (99.0%)Progress: 26.4 MB / 26.6 MB (99.2%)Progress: 26.4 MB / 26.6 MB (99.4%)Progress: 26.5 MB / 26.6 MB (99.7%)Progress: 26.6 MB / 26.6 MB (99.9%)Progress: 26.6 MB / 26.6 MB (100.0%)2026-09-06 18:01:55,251 [INFO] Successfully downloaded to C:\Users\hp\OneDrive - Manipal University Jaipur\Desktop\CycloneSense\data\raw\ibtracs_north_indian_ocean.csv (26.59 MB)
+2026-09-06 18:01:55,252 [INFO] Parsing IBTrACS records from C:\Users\hp\OneDrive - Manipal University Jaipur\Desktop\CycloneSense\data\raw\ibtracs_north_indian_ocean.csv...
+2026-09-06 18:01:56,041 [INFO] Processed 62,848 raw rows. Found 1,858 storms with 62,848 points.
+2026-09-06 18:01:56,041 [INFO] 1,795 storms have >= 4 observations.
+2026-09-06 18:01:56,562 [INFO] Generated C:\Users\hp\OneDrive - Manipal University Jaipur\Desktop\CycloneSense\data\processed\cyclone_tracks.csv with 62,744 sequential points across 1795 storms.
+2026-09-06 18:01:56,578 [INFO] Real data ingestion complete.
+2026-09-06 18:01:56,578 [INFO] 
+[STEP 2/4] Preparing Multi-Modal Datasets (Vision + Temporal)...
+2026-09-06 18:01:56,579 [INFO] Preparing satellite morphology classification dataset...
+2026-09-06 18:01:56,579 [INFO] Storm split: 73 train, 15 val, 17 test.
+2026-09-06 18:02:02,517 [INFO] Morphology images generated: train=574, val=112, test=154 (Total=840)
+2026-09-06 18:02:02,517 [INFO] Loading track records from C:\Users\hp\OneDrive - Manipal University Jaipur\Desktop\CycloneSense\data\processed\cyclone_tracks.csv...
+2026-09-06 18:02:02,802 [INFO] Storm track partitions: 1256 train, 269 val, 270 test.
+2026-09-06 18:02:03,475 [INFO] Forecast sequences: train=38,946, val=7,907, test=8,711
+2026-09-06 18:02:03,498 [INFO] 
+[STEP 3/4] Training PyTorch Satellite Morphology Vision Model...
+2026-09-06 18:02:03,499 [INFO] Using training compute device: cpu (CPU)
+2026-09-06 18:02:03,513 [INFO] Datasets: 574 train, 112 val, 154 test samples.
+2026-09-06 18:02:03,513 [INFO] Class mapping: {'central_dense_overcast': 0, 'clear': 1, 'curved_band': 2, 'developing': 3, 'dissipating': 4, 'eye': 5, 'sheared': 6}
+2026-09-06 18:02:03,551 [INFO] Starting training loop...
+2026-09-06 18:02:18,409 [INFO] Epoch [01/15] Train Loss: 1.0535 | Train Acc: 59.6% | Val Loss: 2.1054 | Val Acc: 38.4%
+2026-09-06 18:02:18,442 [INFO] --> Saved best model checkpoint (Val Acc: 38.4%)
+2026-09-06 18:02:27,419 [INFO] Epoch [02/15] Train Loss: 0.4138 | Train Acc: 86.6% | Val Loss: 1.9319 | Val Acc: 29.5%
+2026-09-06 18:02:27,436 [INFO] --> Saved best model checkpoint (Val Acc: 29.5%)
+2026-09-06 18:02:36,776 [INFO] Epoch [03/15] Train Loss: 0.2204 | Train Acc: 93.9% | Val Loss: 2.5983 | Val Acc: 49.1%
+2026-09-06 18:02:46,052 [INFO] Epoch [04/15] Train Loss: 0.1897 | Train Acc: 93.6% | Val Loss: 0.4196 | Val Acc: 83.9%
+2026-09-06 18:02:46,070 [INFO] --> Saved best model checkpoint (Val Acc: 83.9%)
+2026-09-06 18:02:56,372 [INFO] Epoch [05/15] Train Loss: 0.0944 | Train Acc: 97.0% | Val Loss: 0.3837 | Val Acc: 89.3%
+2026-09-06 18:02:56,394 [INFO] --> Saved best model checkpoint (Val Acc: 89.3%)
+2026-09-06 18:03:07,643 [INFO] Epoch [06/15] Train Loss: 0.0879 | Train Acc: 97.2% | Val Loss: 0.0748 | Val Acc: 99.1%
+2026-09-06 18:03:07,662 [INFO] --> Saved best model checkpoint (Val Acc: 99.1%)
+2026-09-06 18:03:17,958 [INFO] Epoch [07/15] Train Loss: 0.0807 | Train Acc: 97.0% | Val Loss: 0.0181 | Val Acc: 99.1%
+2026-09-06 18:03:17,977 [INFO] --> Saved best model checkpoint (Val Acc: 99.1%)
+2026-09-06 18:03:28,424 [INFO] Epoch [08/15] Train Loss: 0.0844 | Train Acc: 96.7% | Val Loss: 3.2516 | Val Acc: 57.1%
+2026-09-06 18:03:38,910 [INFO] Epoch [09/15] Train Loss: 0.0952 | Train Acc: 96.7% | Val Loss: 0.8437 | Val Acc: 68.8%
+2026-09-06 18:03:50,228 [INFO] Epoch [10/15] Train Loss: 0.0645 | Train Acc: 97.4% | Val Loss: 0.1570 | Val Acc: 93.8%
+2026-09-06 18:04:01,805 [INFO] Epoch [11/15] Train Loss: 0.0773 | Train Acc: 97.0% | Val Loss: 0.9152 | Val Acc: 83.0%
+2026-09-06 18:04:13,110 [INFO] Epoch [12/15] Train Loss: 0.0516 | Train Acc: 99.0% | Val Loss: 0.0227 | Val Acc: 99.1%
+2026-09-06 18:04:23,335 [INFO] Epoch [13/15] Train Loss: 0.0389 | Train Acc: 98.3% | Val Loss: 0.0022 | Val Acc: 100.0%
+2026-09-06 18:04:23,355 [INFO] --> Saved best model checkpoint (Val Acc: 100.0%)
+2026-09-06 18:04:33,540 [INFO] Epoch [14/15] Train Loss: 0.0291 | Train Acc: 98.6% | Val Loss: 0.0225 | Val Acc: 99.1%
+2026-09-06 18:04:44,253 [INFO] Epoch [15/15] Train Loss: 0.0283 | Train Acc: 99.0% | Val Loss: 0.0449 | Val Acc: 99.1%
+2026-09-06 18:04:44,253 [INFO] Training completed in 160.7 seconds.
+2026-09-06 18:04:46,678 [INFO] Final Test Evaluation: Loss: 0.0037 | Accuracy: 100.0%
+2026-09-06 18:04:56,819 [INFO] 
+============================================================
+2026-09-06 18:04:56,819 [INFO] CLASSIFICATION REPORT (Test Set):
+2026-09-06 18:04:56,847 [INFO] 
+                        precision    recall  f1-score   support
+
+central_dense_overcast      1.000     1.000     1.000        22
+                 clear      1.000     1.000     1.000        22
+           curved_band      1.000     1.000     1.000        22
+            developing      1.000     1.000     1.000        22
+           dissipating      1.000     1.000     1.000        22
+                   eye      1.000     1.000     1.000        22
+               sheared      1.000     1.000     1.000        22
+
+              accuracy                          1.000       154
+             macro avg      1.000     1.000     1.000       154
+          weighted avg      1.000     1.000     1.000       154
+
+2026-09-06 18:04:56,847 [INFO] CONFUSION MATRIX:
+2026-09-06 18:04:56,849 [INFO] 
+[[22  0  0  0  0  0  0]
+ [ 0 22  0  0  0  0  0]
+ [ 0  0 22  0  0  0  0]
+ [ 0  0  0 22  0  0  0]
+ [ 0  0  0  0 22  0  0]
+ [ 0  0  0  0  0 22  0]
+ [ 0  0  0  0  0  0 22]]
+2026-09-06 18:04:56,849 [INFO] ============================================================
+2026-09-06 18:04:56,856 [INFO] 
+[STEP 4/4] Training PyTorch Track & Intensity Forecasting Model...
+2026-09-06 18:04:56,923 [INFO] Using compute device: cpu
+2026-09-06 18:04:56,926 [INFO] Starting LSTM forecast training loop...
+2026-09-06 18:05:01,567 [INFO] Epoch [01/20] Loss: 414.4527 | Val Track MAE: 562.6 km | Val Wind MAE: 5.4 kts | Val Class Acc: 85.1%
+2026-09-06 18:05:01,571 [INFO] --> Saved best forecast checkpoint (Track MAE: 562.6 km)
+2026-09-06 18:05:06,549 [INFO] Epoch [02/20] Loss: 21.2699 | Val Track MAE: 89.7 km | Val Wind MAE: 4.8 kts | Val Class Acc: 85.6%
+2026-09-06 18:05:06,553 [INFO] --> Saved best forecast checkpoint (Track MAE: 89.7 km)
+2026-09-06 18:05:11,493 [INFO] Epoch [03/20] Loss: 5.8461 | Val Track MAE: 50.8 km | Val Wind MAE: 4.3 kts | Val Class Acc: 89.0%
+2026-09-06 18:05:11,496 [INFO] --> Saved best forecast checkpoint (Track MAE: 50.8 km)
+2026-09-06 18:05:16,413 [INFO] Epoch [04/20] Loss: 3.7228 | Val Track MAE: 63.1 km | Val Wind MAE: 3.2 kts | Val Class Acc: 92.5%
+2026-09-06 18:05:21,789 [INFO] Epoch [05/20] Loss: 1.6028 | Val Track MAE: 51.0 km | Val Wind MAE: 1.7 kts | Val Class Acc: 94.9%
+2026-09-06 18:05:26,892 [INFO] Epoch [06/20] Loss: 2.1048 | Val Track MAE: 47.6 km | Val Wind MAE: 1.3 kts | Val Class Acc: 94.9%
+2026-09-06 18:05:26,895 [INFO] --> Saved best forecast checkpoint (Track MAE: 47.6 km)
+2026-09-06 18:05:32,033 [INFO] Epoch [07/20] Loss: 0.9394 | Val Track MAE: 67.8 km | Val Wind MAE: 1.2 kts | Val Class Acc: 95.7%
+2026-09-06 18:05:37,102 [INFO] Epoch [08/20] Loss: 0.8401 | Val Track MAE: 62.0 km | Val Wind MAE: 1.2 kts | Val Class Acc: 95.2%
+2026-09-06 18:05:42,056 [INFO] Epoch [09/20] Loss: 0.7505 | Val Track MAE: 36.8 km | Val Wind MAE: 1.0 kts | Val Class Acc: 97.4%
+2026-09-06 18:05:42,059 [INFO] --> Saved best forecast checkpoint (Track MAE: 36.8 km)
+2026-09-06 18:05:47,161 [INFO] Epoch [10/20] Loss: 0.7301 | Val Track MAE: 41.8 km | Val Wind MAE: 1.1 kts | Val Class Acc: 95.7%
+2026-09-06 18:05:52,131 [INFO] Epoch [11/20] Loss: 0.6503 | Val Track MAE: 33.6 km | Val Wind MAE: 1.0 kts | Val Class Acc: 97.9%
+2026-09-06 18:05:52,135 [INFO] --> Saved best forecast checkpoint (Track MAE: 33.6 km)
+2026-09-06 18:05:57,404 [INFO] Epoch [12/20] Loss: 0.6651 | Val Track MAE: 44.8 km | Val Wind MAE: 1.0 kts | Val Class Acc: 97.6%
+2026-09-06 18:06:02,590 [INFO] Epoch [13/20] Loss: 0.5955 | Val Track MAE: 30.1 km | Val Wind MAE: 0.9 kts | Val Class Acc: 97.8%
+2026-09-06 18:06:02,593 [INFO] --> Saved best forecast checkpoint (Track MAE: 30.1 km)
+2026-09-06 18:06:07,674 [INFO] Epoch [14/20] Loss: 0.5873 | Val Track MAE: 51.8 km | Val Wind MAE: 0.9 kts | Val Class Acc: 97.6%
+2026-09-06 18:06:12,733 [INFO] Epoch [15/20] Loss: 0.6914 | Val Track MAE: 37.1 km | Val Wind MAE: 1.0 kts | Val Class Acc: 97.0%
+2026-09-06 18:06:18,081 [INFO] Epoch [16/20] Loss: 0.5348 | Val Track MAE: 52.3 km | Val Wind MAE: 1.0 kts | Val Class Acc: 97.2%
+2026-09-06 18:06:23,633 [INFO] Epoch [17/20] Loss: 0.4202 | Val Track MAE: 24.0 km | Val Wind MAE: 0.9 kts | Val Class Acc: 97.9%
+2026-09-06 18:06:23,636 [INFO] --> Saved best forecast checkpoint (Track MAE: 24.0 km)
+2026-09-06 18:06:29,202 [INFO] Epoch [18/20] Loss: 0.4137 | Val Track MAE: 25.2 km | Val Wind MAE: 0.8 kts | Val Class Acc: 98.2%
+2026-09-06 18:06:34,605 [INFO] Epoch [19/20] Loss: 0.3974 | Val Track MAE: 29.2 km | Val Wind MAE: 0.9 kts | Val Class Acc: 97.8%
+2026-09-06 18:06:40,224 [INFO] Epoch [20/20] Loss: 0.4167 | Val Track MAE: 22.5 km | Val Wind MAE: 0.9 kts | Val Class Acc: 97.9%
+2026-09-06 18:06:40,228 [INFO] --> Saved best forecast checkpoint (Track MAE: 22.5 km)
+2026-09-06 18:06:40,228 [INFO] Forecast model training completed in 103.3 seconds.
+2026-09-06 18:06:40,645 [INFO] Final Test Evaluation: Track MAE: 33.9 km | Wind MAE: 1.1 kts | Intensity Acc: 97.8%
+2026-09-06 18:06:40,985 [INFO] 
+============================================================
+2026-09-06 18:06:40,985 [INFO] INTENSITY FORECAST CLASSIFICATION REPORT (Test Set):
+2026-09-06 18:06:41,004 [INFO] 
+                            precision    recall  f1-score   support
+
+                depression      0.992     0.993     0.992      7420
+            tropical_storm      0.915     0.912     0.914       912
+     severe_cyclonic_storm      0.827     0.755     0.789       196
+very_severe_cyclonic_storm      0.872     0.934     0.902       183
+
+                  accuracy                          0.978      8711
+                 macro avg      0.902     0.899     0.899      8711
+              weighted avg      0.977     0.978     0.977      8711
+
+2026-09-06 18:06:41,004 [INFO] CONFUSION MATRIX:
+2026-09-06 18:06:41,008 [INFO] 
+[[7365   54    1    0]
+ [  62  832   18    0]
+ [   0   23  148   25]
+ [   0    0   12  171]]
+2026-09-06 18:06:41,008 [INFO] ============================================================
+2026-09-06 18:06:41,009 [INFO] ============================================================
+2026-09-06 18:06:41,009 [INFO]    PIPELINE COMPLETE! Total Time: 341.2s
+2026-09-06 18:06:41,009 [INFO] ============================================================
+
