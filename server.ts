@@ -3,6 +3,13 @@ import path from "path";
 import multer from "multer";
 import sharp from "sharp";
 import { createServer as createViteServer } from "vite";
+import { LIVE_SATELLITE_FEEDS, LIVE_ACTIVE_CYCLONES } from "./src/data/liveSatelliteData";
+import {
+  getFullKaggleCycloneDataset,
+  RAW_KAGGLE_SATELLITE_BENCHMARK,
+  convertToCSV,
+  generateKaggleMetadataJSON,
+} from "./src/data/kaggleDataset";
 
 const PATTERNS = [
   "clear",
@@ -533,6 +540,50 @@ async function startServer() {
 
   app.post("/predict/forecast", handleForecast);
   app.post("/api/predict/forecast", handleForecast);
+
+  // Live Satellite Feeds & Active Cyclones API
+  app.get("/api/satellite/live-feeds", (_req: Request, res: Response) => {
+    res.json({
+      status: "success",
+      timestamp_utc: new Date().toISOString(),
+      feeds: LIVE_SATELLITE_FEEDS,
+    });
+  });
+
+  app.get("/api/satellite/active-storms", (_req: Request, res: Response) => {
+    res.json({
+      status: "success",
+      count: LIVE_ACTIVE_CYCLONES.length,
+      storms: LIVE_ACTIVE_CYCLONES,
+    });
+  });
+
+  // Kaggle Dataset Direct Download Endpoints
+  app.get("/api/dataset/tracks-csv", (_req: Request, res: Response) => {
+    const dataset = getFullKaggleCycloneDataset();
+    const csv = convertToCSV(dataset);
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader(
+      "Content-Disposition",
+      'attachment; filename="cyclonesense_cyclone_tracks_1990_2025.csv"'
+    );
+    res.send(csv);
+  });
+
+  app.get("/api/dataset/satellite-csv", (_req: Request, res: Response) => {
+    const csv = convertToCSV(RAW_KAGGLE_SATELLITE_BENCHMARK);
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader(
+      "Content-Disposition",
+      'attachment; filename="satellite_dvorak_annotated_benchmark.csv"'
+    );
+    res.send(csv);
+  });
+
+  app.get("/api/dataset/metadata", (_req: Request, res: Response) => {
+    res.setHeader("Content-Type", "application/json");
+    res.send(generateKaggleMetadataJSON());
+  });
 
   // Vite middleware setup
   if (process.env.NODE_ENV !== "production") {

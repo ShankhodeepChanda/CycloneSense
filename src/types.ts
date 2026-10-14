@@ -99,3 +99,81 @@ export interface BenchmarkPreset {
   description: string;
   sampleObservations: Observation[];
 }
+
+export interface LiveSatelliteFeed {
+  id: string;
+  name: string;
+  agency: string;
+  platform: string;
+  coverage: string;
+  resolution: string;
+  refreshRateMin: number;
+  lastCaptureUtc: string;
+  imageUrl: string;
+  fallbackGradient: string;
+  band: SpectralBand;
+  status: "ONLINE" | "STANDBY" | "RAPID_SCAN";
+  description: string;
+  sampleTempKelvin: number;
+  centerCoords: { lat: number; lon: number };
+}
+
+export interface ActiveCyclone {
+  id: string;
+  name: string;
+  basin: string;
+  lat: number;
+  lon: number;
+  windKts: number;
+  pressureHpa: number;
+  category: string;
+  speedKmh: number;
+  heading: string;
+  status: "ACTIVE" | "INTENSIFYING" | "WEAKENING" | "LANDFALL_ALERT";
+  nearestCoast: string;
+  distToCoastKm: number;
+  satelliteFeedId: string;
+  lastUpdated: string;
+}
+
+export interface KaggleCycloneRecord {
+  storm_id: string;
+  season: number;
+  storm_name: string;
+  basin: string;
+  datetime_iso: string;
+  lat: number;
+  lon: number;
+  nature_of_storm: string;
+  vmax_kts: number;
+  vmax_kmh: number;
+  pmin_hpa: number;
+  rmw_km: number;
+  eye_diameter_km: number;
+  dvorak_t_number: string;
+  sst_celsius: number;
+  vertical_wind_shear_kts: number;
+  translation_speed_kmh: number;
+  translation_direction_deg: number;
+  landfall_flag: 0 | 1;
+  landfall_region: string;
+  damage_usd_millions: number;
+  fatalities: number;
+}
+
+export interface KaggleSatelliteSample {
+  sample_id: string;
+  storm_name: string;
+  basin: string;
+  satellite_platform: string;
+  spectral_band: string;
+  timestamp_utc: string;
+  dvorak_pattern: PatternClass;
+  confidence_score: number;
+  cloud_top_brightness_temp_k: number;
+  estimated_wind_kts: number;
+  estimated_pressure_hpa: number;
+  rmw_km: number;
+  rapid_intensification_flag: 0 | 1;
+  gradcam_saliency_hash: string;
+}

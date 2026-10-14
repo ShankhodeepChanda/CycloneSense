@@ -135,18 +135,18 @@ WMO GTS STANDARD / REGIONAL SPECIALIZED METEOROLOGICAL CENTRE (RSMC) COMPLIANT`;
   ];
 
   return (
-    <div className="bg-[#081524] border border-[#183652] rounded-xl overflow-hidden shadow-2xl space-y-6">
+    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm space-y-6">
       {/* Title Header */}
-      <div className="p-4 sm:p-5 bg-[#0a1b2d] border-b border-[#183652] flex flex-wrap items-center justify-between gap-4">
+      <div className="p-4 sm:p-5 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+          <div className="p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-600">
             <Radio className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+            <h2 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
               Official Bulletins, GIS Hazard Export & Disaster Advisories
             </h2>
-            <p className="text-xs text-slate-400 font-mono-code">
+            <p className="text-xs text-slate-500 font-mono-code">
               WMO GTS Telemetry Compliant · GeoJSON Spatial Layers · Coastal Evacuation Readiness
             </p>
           </div>
@@ -155,14 +155,14 @@ WMO GTS STANDARD / REGIONAL SPECIALIZED METEOROLOGICAL CENTRE (RSMC) COMPLIANT`;
         <div className="flex items-center gap-2">
           <button
             onClick={handleDownloadGeoJSON}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0c263d] hover:bg-[#123656] text-cyan-300 border border-cyan-700/60 text-xs font-mono-code transition"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 text-xs font-mono-code transition cursor-pointer shadow-2xs"
           >
-            <Download className="w-3.5 h-3.5" />
+            <Download className="w-3.5 h-3.5 text-sky-600" />
             <span>Export GeoJSON GIS</span>
           </button>
           <button
             onClick={handleDownloadBulletin}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold font-mono-code transition"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold font-mono-code transition cursor-pointer shadow-xs"
           >
             <FileText className="w-3.5 h-3.5" />
             <span>Download Bulletin</span>
@@ -172,49 +172,49 @@ WMO GTS STANDARD / REGIONAL SPECIALIZED METEOROLOGICAL CENTRE (RSMC) COMPLIANT`;
 
       <div className="p-4 sm:p-6 space-y-6">
         {/* Top Emergency Status Bar */}
-        <div className="bg-gradient-to-r from-red-950/40 via-[#0a1e33] to-[#071728] border border-red-500/40 p-4 rounded-xl flex flex-wrap items-center justify-between gap-4">
+        <div className="bg-gradient-to-r from-red-50 via-amber-50 to-orange-50 border border-red-300 p-4 rounded-xl flex flex-wrap items-center justify-between gap-4 shadow-2xs">
           <div className="space-y-1">
-            <div className="flex items-center gap-2 text-red-400 text-xs font-mono-code font-bold">
-              <ShieldAlert className="w-4 h-4 text-red-400 animate-pulse" />
+            <div className="flex items-center gap-2 text-red-700 text-xs font-mono-code font-bold">
+              <ShieldAlert className="w-4 h-4 text-red-600 animate-pulse" />
               <span>OFFICIAL DISASTER MANAGEMENT DISPATCH · RSMC PROTOCOL</span>
             </div>
-            <h3 className="text-base font-bold text-white">
+            <h3 className="text-base font-bold text-slate-900">
               {stormName} — {intensityCategory}
             </h3>
-            <p className="text-xs text-slate-300">
-              Current Center Fix: <strong className="text-cyan-300 font-mono-code">{stormLat}°N, {stormLon}°E</strong> · Sustained Winds: <strong className="text-teal-300 font-mono-code">{windKts} kts ({Math.round(windKts * 1.852)} km/h)</strong> · Central Pressure: <strong className="text-amber-300 font-mono-code">{pressureHpa} hPa</strong>.
+            <p className="text-xs text-slate-700">
+              Current Center Fix: <strong className="text-sky-800 font-mono-code">{stormLat}°N, {stormLon}°E</strong> · Sustained Winds: <strong className="text-teal-700 font-mono-code">{windKts} kts ({Math.round(windKts * 1.852)} km/h)</strong> · Central Pressure: <strong className="text-amber-700 font-mono-code">{pressureHpa} hPa</strong>.
             </p>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="bg-emerald-950 text-emerald-300 text-xs font-mono-code px-3 py-1.5 rounded-lg border border-emerald-800 flex items-center gap-1.5">
-              <Check className="w-3.5 h-3.5" />
+            <span className="bg-emerald-50 text-emerald-800 text-xs font-mono-code px-3 py-1.5 rounded-lg border border-emerald-300 flex items-center gap-1.5 font-bold">
+              <Check className="w-3.5 h-3.5 text-emerald-600" />
               NDMA / COAST GUARD SYNCED
             </span>
           </div>
         </div>
 
         {/* Official Bulletin Telegraph Box */}
-        <div className="bg-[#061220] border border-[#183652] p-4 rounded-xl space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#183652] pb-3">
+        <div className="bg-white border border-slate-200 p-4 rounded-xl space-y-3 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
             <div>
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <FileText className="w-4 h-4 text-cyan-400" />
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <FileText className="w-4 h-4 text-sky-600" />
                 Standard WMO / IMD Cyclone Warning Bulletin (Telegraph Format)
               </h3>
-              <p className="text-xs text-slate-400 font-mono-code">
+              <p className="text-xs text-slate-500 font-mono-code">
                 Formatted for operational release to shipping vessels, aviation towers, and regional disaster command centers.
               </p>
             </div>
 
             <button
               onClick={() => handleCopy(bulletinText, "bulletin")}
-              className="flex items-center gap-1.5 px-3 py-1 rounded bg-[#0a1e33] border border-cyan-700 text-cyan-300 text-xs font-mono-code hover:bg-cyan-900/50 transition"
+              className="flex items-center gap-1.5 px-3 py-1 rounded bg-slate-50 border border-slate-200 text-slate-700 text-xs font-mono-code hover:bg-slate-100 transition cursor-pointer"
             >
               {copiedKey === "bulletin" ? (
                 <>
-                  <Check className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className="text-emerald-400">Copied to Clipboard!</span>
+                  <Check className="w-3.5 h-3.5 text-emerald-600" />
+                  <span className="text-emerald-700 font-bold">Copied to Clipboard!</span>
                 </>
               ) : (
                 <>
@@ -225,7 +225,7 @@ WMO GTS STANDARD / REGIONAL SPECIALIZED METEOROLOGICAL CENTRE (RSMC) COMPLIANT`;
             </button>
           </div>
 
-          <pre className="bg-[#040a14] border border-[#12283e] p-4 rounded-lg text-xs font-mono-code text-cyan-200/90 overflow-x-auto whitespace-pre leading-relaxed">
+          <pre className="bg-slate-900 border border-slate-800 p-4 rounded-lg text-xs font-mono-code text-sky-200 overflow-x-auto whitespace-pre leading-relaxed">
             {bulletinText}
           </pre>
         </div>
@@ -233,41 +233,41 @@ WMO GTS STANDARD / REGIONAL SPECIALIZED METEOROLOGICAL CENTRE (RSMC) COMPLIANT`;
         {/* 2-Column: Coastal Hazard Advisories & IMD Classification Scale */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Coastal Impact Protocols */}
-          <div className="lg:col-span-6 bg-[#061220] border border-[#183652] p-4 rounded-xl space-y-4">
-            <div className="flex items-center gap-2 border-b border-[#183652] pb-2">
-              <Waves className="w-4 h-4 text-amber-400" />
-              <h3 className="text-sm font-bold text-white font-mono-code">
+          <div className="lg:col-span-6 bg-white border border-slate-200 p-4 rounded-xl space-y-4 shadow-sm">
+            <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
+              <Waves className="w-4 h-4 text-amber-600" />
+              <h3 className="text-sm font-bold text-slate-900 font-mono-code">
                 COASTAL HAZARD & EVACUATION PROTOCOLS
               </h3>
             </div>
 
             <div className="space-y-3 text-xs">
-              <div className="bg-[#081829] border border-amber-600/40 p-3 rounded-lg space-y-1">
-                <span className="text-amber-300 font-bold font-mono-code flex items-center gap-1.5">
-                  <AlertTriangle className="w-3.5 h-3.5" />
+              <div className="bg-amber-50/70 border border-amber-200 p-3 rounded-lg space-y-1">
+                <span className="text-amber-900 font-bold font-mono-code flex items-center gap-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
                   Storm Surge Inundation Warning
                 </span>
-                <p className="text-slate-300 leading-relaxed">
+                <p className="text-slate-700 leading-relaxed">
                   Tidal wave heights of 3.0 to 4.5 meters expected near landfall zone. Low-lying villages and agricultural belts within 5 km of coast must be evacuated into reinforced cyclone shelters.
                 </p>
               </div>
 
-              <div className="bg-[#081829] border border-red-600/40 p-3 rounded-lg space-y-1">
-                <span className="text-red-300 font-bold font-mono-code flex items-center gap-1.5">
-                  <ShieldAlert className="w-3.5 h-3.5" />
+              <div className="bg-red-50/70 border border-red-200 p-3 rounded-lg space-y-1">
+                <span className="text-red-900 font-bold font-mono-code flex items-center gap-1.5">
+                  <ShieldAlert className="w-3.5 h-3.5 text-red-600" />
                   Fishermen Offshore Ban
                 </span>
-                <p className="text-slate-300 leading-relaxed">
+                <p className="text-slate-700 leading-relaxed">
                   Rough to phenomenal sea conditions. Full suspension of fishing operations, pleasure crafts, and cargo lighters in the active basin until storm dissipation.
                 </p>
               </div>
 
-              <div className="bg-[#081829] border border-cyan-800/50 p-3 rounded-lg space-y-1">
-                <span className="text-cyan-300 font-bold font-mono-code flex items-center gap-1.5">
-                  <Info className="w-3.5 h-3.5" />
+              <div className="bg-sky-50/70 border border-sky-200 p-3 rounded-lg space-y-1">
+                <span className="text-sky-900 font-bold font-mono-code flex items-center gap-1.5">
+                  <Info className="w-3.5 h-3.5 text-sky-600" />
                   Structural & Wind Damage Assessment
                 </span>
-                <p className="text-slate-300 leading-relaxed">
+                <p className="text-slate-700 leading-relaxed">
                   Extensive damage to thatched roofs, kutcha houses, overhead power transmission lines, and communication towers. Uprooting of large trees expected.
                 </p>
               </div>
@@ -275,41 +275,41 @@ WMO GTS STANDARD / REGIONAL SPECIALIZED METEOROLOGICAL CENTRE (RSMC) COMPLIANT`;
           </div>
 
           {/* IMD Intensity Scale Reference */}
-          <div className="lg:col-span-6 bg-[#061220] border border-[#183652] p-4 rounded-xl space-y-3">
-            <div className="flex items-center justify-between border-b border-[#183652] pb-2">
-              <h3 className="text-sm font-bold text-white font-mono-code flex items-center gap-2">
-                <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+          <div className="lg:col-span-6 bg-white border border-slate-200 p-4 rounded-xl space-y-3 shadow-sm">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+              <h3 className="text-sm font-bold text-slate-900 font-mono-code flex items-center gap-2">
+                <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
                 IMD CYCLONE INTENSITY SCALE
               </h3>
-              <span className="text-[10px] text-slate-400 font-mono-code">WMO STANDARD</span>
+              <span className="text-[10px] text-slate-500 font-mono-code">WMO STANDARD</span>
             </div>
 
             <div className="overflow-x-auto">
               <table className="w-full text-xs font-mono-code text-left">
                 <thead>
-                  <tr className="border-b border-[#183652] text-slate-400">
-                    <th className="py-1">STAGE</th>
+                  <tr className="border-b border-slate-200 text-slate-500 bg-slate-50">
+                    <th className="py-1 px-1">STAGE</th>
                     <th>CATEGORY</th>
                     <th>WINDS (KTS)</th>
                     <th>SPEED (KM/H)</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#132c45]">
+                <tbody className="divide-y divide-slate-100">
                   {imdCategories.map((cat) => {
                     const isCurrent = intensityCategory.includes(cat.name) || intensityCategory.includes(cat.code);
                     return (
                       <tr
                         key={cat.code}
-                        className={`hover:bg-[#0a1e33] ${
+                        className={`hover:bg-slate-50 ${
                           isCurrent
-                            ? "bg-cyan-950/60 text-cyan-300 font-bold border-l-2 border-cyan-400"
-                            : "text-slate-300"
+                            ? "bg-sky-50 text-sky-900 font-bold border-l-2 border-sky-600"
+                            : "text-slate-700"
                         }`}
                       >
-                        <td className="py-1.5 px-1">{cat.code}</td>
-                        <td className="text-white">{cat.name}</td>
-                        <td className="text-teal-400">{cat.windKts}</td>
-                        <td className="text-amber-300">{cat.speedKmh}</td>
+                        <td className="py-1.5 px-1 font-bold">{cat.code}</td>
+                        <td className="text-slate-900 font-semibold">{cat.name}</td>
+                        <td className="text-teal-700 font-bold">{cat.windKts}</td>
+                        <td className="text-amber-700 font-bold">{cat.speedKmh}</td>
                       </tr>
                     );
                   })}

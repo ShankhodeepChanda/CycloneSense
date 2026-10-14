@@ -310,26 +310,26 @@ export const CommandRadar: React.FC<CommandRadarProps> = ({
   };
 
   return (
-    <div className="bg-[#081524] border border-[#183652] rounded-xl overflow-hidden shadow-2xl">
+    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
       {/* Module Header & Channel Selector */}
-      <div className="p-4 bg-[#0a1b2d] border-b border-[#183652] flex flex-wrap items-center justify-between gap-4">
+      <div className="p-4 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-2.5">
-          <div className="p-1.5 rounded-md bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
+          <div className="p-1.5 rounded-md bg-sky-50 border border-sky-200 text-sky-600">
             <Layers className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-white flex items-center gap-2">
+            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
               Live Command Radar & Geospatial Visualizer
             </h2>
-            <p className="text-xs text-slate-400 font-mono-code">
+            <p className="text-xs text-slate-500 font-mono-code">
               INSAT-3D / Himawari-9 Multispectral Storm Centered Swaths
             </p>
           </div>
         </div>
 
         {/* Multi-Spectral Channel Toggles */}
-        <div className="flex items-center gap-1.5 bg-[#050f1c] p-1 rounded-lg border border-[#1a3854]">
-          <span className="text-[11px] font-mono-code text-slate-400 px-2 hidden sm:inline">CHANNEL:</span>
+        <div className="flex items-center gap-1.5 bg-white p-1 rounded-lg border border-slate-200">
+          <span className="text-[11px] font-mono-code text-slate-500 px-2 hidden sm:inline">CHANNEL:</span>
           {(
             [
               { id: "TIR1", label: "TIR 10.8µm", desc: "Thermal IR (Cloud-top Temp)" },
@@ -342,10 +342,10 @@ export const CommandRadar: React.FC<CommandRadarProps> = ({
               key={band.id}
               onClick={() => setSelectedBand(band.id)}
               title={band.desc}
-              className={`px-2.5 py-1 text-xs font-mono-code rounded transition-all ${
+              className={`px-2.5 py-1 text-xs font-mono-code rounded transition-all cursor-pointer ${
                 selectedBand === band.id
-                  ? "bg-cyan-500 text-slate-950 font-bold shadow-sm shadow-cyan-500/50"
-                  : "text-slate-300 hover:text-white hover:bg-slate-800"
+                  ? "bg-sky-600 text-white font-bold shadow-xs"
+                  : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
               }`}
             >
               {band.label}
@@ -357,18 +357,18 @@ export const CommandRadar: React.FC<CommandRadarProps> = ({
       {/* Main Radar Screen + Telemetry HUD Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12">
         {/* Radar Viewport Canvas */}
-        <div className="lg:col-span-8 relative bg-[#040a12] flex flex-col items-center justify-center p-3 border-b lg:border-b-0 lg:border-r border-[#183652]">
+        <div className="lg:col-span-8 relative bg-slate-950 flex flex-col items-center justify-center p-3 border-b lg:border-b-0 lg:border-r border-slate-200">
           {/* Top Overlays: Reticle lock & Quick toggles */}
           <div className="absolute top-4 left-4 z-10 flex flex-wrap items-center gap-2">
-            <div className="bg-[#081524]/90 backdrop-blur-md px-3 py-1.5 rounded-md border border-[#1f4265] text-xs font-mono-code text-cyan-300 flex items-center gap-2 shadow-lg">
-              <Crosshair className="w-3.5 h-3.5 text-cyan-400 animate-spin" style={{ animationDuration: "10s" }} />
+            <div className="bg-slate-900/90 backdrop-blur-md px-3 py-1.5 rounded-md border border-slate-700 text-xs font-mono-code text-sky-300 flex items-center gap-2 shadow-lg">
+              <Crosshair className="w-3.5 h-3.5 text-sky-400 animate-spin" style={{ animationDuration: "10s" }} />
               <span>
                 LOCK: {effectiveLat.toFixed(2)}°N, {effectiveLon.toFixed(2)}°E
               </span>
             </div>
 
             {hoverCoords && (
-              <div className="bg-[#081524]/90 px-2.5 py-1 rounded text-[11px] font-mono-code text-slate-300 border border-slate-700 hidden sm:block">
+              <div className="bg-slate-900/90 px-2.5 py-1 rounded text-[11px] font-mono-code text-slate-300 border border-slate-700 hidden sm:block">
                 PTR: {hoverCoords.lat}°N, {hoverCoords.lon}°E
               </div>
             )}
@@ -377,9 +377,9 @@ export const CommandRadar: React.FC<CommandRadarProps> = ({
           <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
             <button
               onClick={() => setShowRangeRings(!showRangeRings)}
-              className={`text-xs px-2.5 py-1 rounded font-mono-code border transition-all ${
+              className={`text-xs px-2.5 py-1 rounded font-mono-code border transition-all cursor-pointer ${
                 showRangeRings
-                  ? "bg-cyan-950/80 text-cyan-300 border-cyan-700"
+                  ? "bg-sky-950/80 text-sky-300 border-sky-700"
                   : "bg-slate-900/80 text-slate-400 border-slate-700"
               }`}
             >
@@ -387,9 +387,9 @@ export const CommandRadar: React.FC<CommandRadarProps> = ({
             </button>
             <button
               onClick={() => setShowGrid(!showGrid)}
-              className={`text-xs px-2.5 py-1 rounded font-mono-code border transition-all ${
+              className={`text-xs px-2.5 py-1 rounded font-mono-code border transition-all cursor-pointer ${
                 showGrid
-                  ? "bg-cyan-950/80 text-cyan-300 border-cyan-700"
+                  ? "bg-sky-950/80 text-sky-300 border-sky-700"
                   : "bg-slate-900/80 text-slate-400 border-slate-700"
               }`}
             >
@@ -405,32 +405,32 @@ export const CommandRadar: React.FC<CommandRadarProps> = ({
               height={460}
               onMouseMove={handleCanvasMouseMove}
               onClick={handleCanvasClick}
-              className="w-full max-w-[560px] h-auto rounded-lg border border-[#142e47] shadow-inner cursor-crosshair"
+              className="w-full max-w-[560px] h-auto rounded-lg border border-slate-800 shadow-inner cursor-crosshair"
             />
           </div>
 
-          {/* Temporal Timeline Scrubber (Section 5.1 A4) */}
-          <div className="w-full max-w-[560px] mt-3 bg-[#061220] border border-[#163450] p-3 rounded-lg flex flex-col gap-2">
+          {/* Temporal Timeline Scrubber */}
+          <div className="w-full max-w-[560px] mt-3 bg-slate-900 border border-slate-800 p-3 rounded-lg flex flex-col gap-2">
             <div className="flex items-center justify-between text-xs font-mono-code">
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setIsPlaying(!isPlaying)}
-                  className="p-1.5 rounded bg-cyan-500 text-slate-950 font-bold hover:bg-cyan-400 transition"
+                  className="p-1.5 rounded bg-sky-500 text-slate-950 font-bold hover:bg-sky-400 transition cursor-pointer"
                   title={isPlaying ? "Pause Timeline" : "Play Timeline"}
                 >
                   {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
                 </button>
                 <button
                   onClick={() => setTimeStepIndex(2)}
-                  className="p-1.5 rounded bg-slate-800 text-slate-300 hover:text-white transition"
+                  className="p-1.5 rounded bg-slate-800 text-slate-300 hover:text-white transition cursor-pointer"
                   title="Reset to Current T-0"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
                 </button>
-                <span className="text-slate-300 font-semibold">{currentStep.label}</span>
-                <span className="text-slate-500">({currentStep.time})</span>
+                <span className="text-slate-200 font-semibold">{currentStep.label}</span>
+                <span className="text-slate-400">({currentStep.time})</span>
               </div>
-              <span className="text-cyan-400 font-bold">{currentStep.wind} kts</span>
+              <span className="text-sky-400 font-bold">{currentStep.wind} kts</span>
             </div>
 
             <div className="flex items-center gap-1.5">
@@ -438,10 +438,10 @@ export const CommandRadar: React.FC<CommandRadarProps> = ({
                 <button
                   key={step.label}
                   onClick={() => setTimeStepIndex(idx)}
-                  className={`flex-1 py-1.5 rounded text-[11px] font-mono-code text-center border transition-all ${
+                  className={`flex-1 py-1.5 rounded text-[11px] font-mono-code text-center border transition-all cursor-pointer ${
                     timeStepIndex === idx
-                      ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/60 font-semibold"
-                      : "bg-[#0b1b2b] text-slate-400 border-[#1a3854] hover:bg-slate-800"
+                      ? "bg-sky-500/20 text-sky-300 border-sky-500/60 font-semibold"
+                      : "bg-slate-950 text-slate-400 border-slate-800 hover:bg-slate-800"
                   }`}
                 >
                   {step.label.split(" ")[0]}
@@ -451,86 +451,86 @@ export const CommandRadar: React.FC<CommandRadarProps> = ({
           </div>
         </div>
 
-        {/* Telemetry HUD (Section 5.1 A3) */}
-        <div className="lg:col-span-4 p-5 flex flex-col justify-between bg-[#061220]/80">
+        {/* Telemetry HUD */}
+        <div className="lg:col-span-4 p-5 flex flex-col justify-between bg-white">
           <div className="space-y-4">
-            <div className="border-b border-[#183652] pb-3">
+            <div className="border-b border-slate-200 pb-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-mono-code text-slate-400">TELEMETRY HUD</span>
-                <span className="text-[10px] font-mono-code px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800">
+                <span className="text-xs font-mono-code text-slate-500">TELEMETRY HUD</span>
+                <span className="text-[10px] font-mono-code px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold">
                   REAL-TIME SYNC
                 </span>
               </div>
-              <h3 className="text-lg font-bold text-white mt-1">{category}</h3>
+              <h3 className="text-lg font-bold text-slate-900 mt-1">{category}</h3>
             </div>
 
             {/* Main Metrics Cards */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-[#0a1d30] border border-[#183c5e] p-3 rounded-lg">
-                <div className="flex items-center gap-1.5 text-xs text-slate-400 font-mono-code">
-                  <Wind className="w-3.5 h-3.5 text-cyan-400" />
+              <div className="bg-slate-50 border border-slate-200 p-3 rounded-lg">
+                <div className="flex items-center gap-1.5 text-xs text-slate-500 font-mono-code">
+                  <Wind className="w-3.5 h-3.5 text-sky-600" />
                   <span>SUSTAINED WIND</span>
                 </div>
-                <div className="text-2xl font-bold text-white mt-1">
-                  {currentStep.wind} <span className="text-sm font-normal text-cyan-400">kts</span>
+                <div className="text-2xl font-bold text-slate-900 mt-1">
+                  {currentStep.wind} <span className="text-sm font-normal text-sky-600">kts</span>
                 </div>
-                <div className="text-[11px] text-slate-400 mt-0.5">
+                <div className="text-[11px] text-slate-500 mt-0.5">
                   {(currentStep.wind * 1.852).toFixed(0)} km/h · 1-min avg
                 </div>
               </div>
 
-              <div className="bg-[#0a1d30] border border-[#183c5e] p-3 rounded-lg">
-                <div className="flex items-center gap-1.5 text-xs text-slate-400 font-mono-code">
-                  <Gauge className="w-3.5 h-3.5 text-amber-400" />
+              <div className="bg-slate-50 border border-slate-200 p-3 rounded-lg">
+                <div className="flex items-center gap-1.5 text-xs text-slate-500 font-mono-code">
+                  <Gauge className="w-3.5 h-3.5 text-amber-600" />
                   <span>CENTRAL PRESSURE</span>
                 </div>
-                <div className="text-2xl font-bold text-white mt-1">
-                  {pressureHpa} <span className="text-sm font-normal text-amber-400">hPa</span>
+                <div className="text-2xl font-bold text-slate-900 mt-1">
+                  {pressureHpa} <span className="text-sm font-normal text-amber-600">hPa</span>
                 </div>
-                <div className="text-[11px] text-slate-400 mt-0.5">ΔP -32 hPa below ambient</div>
+                <div className="text-[11px] text-slate-500 mt-0.5">ΔP -32 hPa below ambient</div>
               </div>
             </div>
 
             {/* Translation Velocity & Vector */}
-            <div className="bg-[#0a1d30] border border-[#183c5e] p-3 rounded-lg space-y-2">
-              <div className="flex items-center justify-between text-xs font-mono-code text-slate-400">
+            <div className="bg-slate-50 border border-slate-200 p-3 rounded-lg space-y-2">
+              <div className="flex items-center justify-between text-xs font-mono-code text-slate-500">
                 <span className="flex items-center gap-1.5">
-                  <Compass className="w-3.5 h-3.5 text-teal-400" />
+                  <Compass className="w-3.5 h-3.5 text-teal-600" />
                   <span>TRANSLATION VECTOR</span>
                 </span>
-                <span className="text-teal-300 font-bold">335° (NNW)</span>
+                <span className="text-teal-700 font-bold">335° (NNW)</span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-300">Forward Speed:</span>
-                <span className="font-mono-code font-bold text-white">14.2 km/h</span>
+                <span className="text-slate-600">Forward Speed:</span>
+                <span className="font-mono-code font-bold text-slate-900">14.2 km/h</span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-300">Core Diameter:</span>
-                <span className="font-mono-code font-bold text-white">76 km</span>
+                <span className="text-slate-600">Core Diameter:</span>
+                <span className="font-mono-code font-bold text-slate-900">76 km</span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-slate-300">RMW (Max Wind Radius):</span>
-                <span className="font-mono-code font-bold text-cyan-300">38 km</span>
+                <span className="text-slate-600">RMW (Max Wind Radius):</span>
+                <span className="font-mono-code font-bold text-sky-700">38 km</span>
               </div>
             </div>
 
             {/* Rapid Intensification Alert Banner */}
             {isRapidIntensifying && (
-              <div className="bg-gradient-to-r from-amber-950/70 to-red-950/70 border border-amber-600/60 p-3 rounded-lg text-xs space-y-1 shadow-lg">
-                <div className="flex items-center gap-1.5 text-amber-300 font-bold">
-                  <ShieldAlert className="w-4 h-4 text-amber-400 animate-pulse" />
+              <div className="bg-amber-50 border border-amber-300 p-3 rounded-lg text-xs space-y-1 shadow-xs">
+                <div className="flex items-center gap-1.5 text-amber-900 font-bold">
+                  <ShieldAlert className="w-4 h-4 text-amber-600 animate-pulse" />
                   <span>RAPID INTENSIFICATION CRITERION MET</span>
                 </div>
-                <p className="text-slate-300 leading-relaxed text-[11px]">
+                <p className="text-amber-800 leading-relaxed text-[11px]">
                   Tropospheric wind shear is under 12 kts over SST of 30.2°C. Central barometric drop exceeds 2.5 hPa/3h.
                 </p>
               </div>
             )}
           </div>
 
-          <div className="pt-4 border-t border-[#183652] text-[11px] font-mono-code text-slate-400 flex items-center justify-between">
+          <div className="pt-4 border-t border-slate-200 text-[11px] font-mono-code text-slate-500 flex items-center justify-between">
             <span>INSAT-3DR NADIR 82.0°E</span>
-            <span className="text-emerald-400">CALIBRATED</span>
+            <span className="text-emerald-700 font-semibold">CALIBRATED</span>
           </div>
         </div>
       </div>
