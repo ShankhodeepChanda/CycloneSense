@@ -66,3 +66,9 @@ have real metrics worth showing.
 
 Data: NOAA NCEI IBTrACS (Knapp et al. 2010); NASA GIBS / EOSDIS; JMA Himawari; GDACS. Check each source's
 terms before redistributing.
+
+## Deploy on Vercel
+
+Import the repo at https://vercel.com/new (framework Vite is detected; `vercel.json` sets the build).
+The static site comes from `dist/`, and `api/active-cyclones.ts` serves the cyclone feed as a serverless function.
+No environment variables are needed. `Dockerfile` + `server.ts` remain for Cloud Run/Render.
