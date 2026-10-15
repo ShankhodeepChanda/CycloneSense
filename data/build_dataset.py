@@ -235,13 +235,14 @@ def write_metadata(out: Path, user: str, tracks: pd.DataFrame, index: pd.DataFra
         "Check each source's current terms before redistribution."
     )
     meta = {
-        "title": "CycloneSense: Tropical Cyclone Satellite Chips + Best Track",
+        "title": "CycloneSense: Satellite Chips + Best Track",  # Kaggle: 6-50 chars
         "id": f"{user}/cyclonesense-tc-satellite",
         "subtitle": "Real MODIS chips and IBTrACS labels, split by storm",
         "description": desc,
         "licenses": [{"name": "other"}],
         "keywords": ["weather", "satellite imagery", "cyclone", "remote sensing", "deep learning"],
     }
+    assert 6 <= len(meta["title"]) <= 50 and 20 <= len(meta["subtitle"]) <= 80, "Kaggle title/subtitle length"
     (out / "dataset-metadata.json").write_text(json.dumps(meta, indent=2))
 
 

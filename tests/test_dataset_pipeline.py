@@ -111,3 +111,12 @@ def test_do_job_saves_chip_and_resumes(tmp_path, monkeypatch):
 
     monkeypatch.setattr(bd, "fetch_chip", lambda *a: (Image.new("RGB", (64, 64)), 0.1))
     assert bd.do_job(None, job, "truecolor", tmp_path, 10.0, 64, 0.6) is None  # too little data -> dropped
+
+
+def test_kaggle_metadata_limits(tmp_path):
+    from data.build_dataset import write_metadata
+
+    write_metadata(tmp_path, "someone", pd.DataFrame(), pd.DataFrame())
+    meta = __import__("json").loads((tmp_path / "dataset-metadata.json").read_text())
+    assert 6 <= len(meta["title"]) <= 50 and 20 <= len(meta["subtitle"]) <= 80
+    assert meta["id"] == "someone/cyclonesense-tc-satellite"
