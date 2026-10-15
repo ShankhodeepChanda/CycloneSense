@@ -12,3 +12,6 @@ data/processed/*
 .coverage
 coverage.xml
 
+
+kaggle_dataset/
+metrics.json
