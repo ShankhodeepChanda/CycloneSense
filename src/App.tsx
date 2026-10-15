@@ -1,291 +1,146 @@
-import React, { useState } from "react";
-import { Navigation } from "./components/Navigation";
-import { CommandRadar } from "./components/CommandRadar";
-import { VisionStudio } from "./components/VisionStudio";
-import { TrajectoryForecast } from "./components/TrajectoryForecast";
-import { HazardAdvisoryHub } from "./components/HazardAdvisoryHub";
-import { BENCHMARK_PRESETS } from "./data/presets";
-import { PatternResponse, ForecastResponse, Observation } from "./types";
-import {
-  Satellite,
-  Activity,
-  Radio,
-  FileSpreadsheet,
-} from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import type { ActiveCycloneResult, ActiveCyclone } from "../server/gdacs";
+import { LAYERS, LiveMap } from "./LiveMap";
 
-export const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<string>("radar");
+const utcDay = (d: Date) => d.toISOString().slice(0, 10);
+// Today's daily mosaic only exists once the daytime pass over India has been processed.
+const defaultDay = () => utcDay(new Date(Date.now() - (new Date().getUTCHours() < 10 ? 86_400_000 : 0)));
 
-  // Global telemetry state synchronized across modules
-  const [currentStormName, setCurrentStormName] = useState<string>("ARB-2026-02 / CYCLONE TAUKTAE II");
-  const [stormLat, setStormLat] = useState<number>(18.42);
-  const [stormLon, setStormLon] = useState<number>(71.18);
-  const [windKts, setWindKts] = useState<number>(95);
-  const [pressureHpa, setPressureHpa] = useState<number>(954);
-  const [intensityCategory, setIntensityCategory] = useState<string>(
-    "Extremely Severe Cyclonic Storm (ESCS)"
-  );
-  const [isRapidIntensifying, setIsRapidIntensifying] = useState<boolean>(true);
+function nrtTime(delayMin: number): Date {
+  return new Date(Math.floor((Date.now() - delayMin * 60_000) / 600_000) * 600_000);
+}
 
-  // Active observation track
-  const [observations, setObservations] = useState<Observation[]>(
-    BENCHMARK_PRESETS[1].sampleObservations
-  );
+const ALERT_TEXT: Record<string, string> = { Red: "Red alert", Orange: "Orange alert", Green: "Green" };
 
-  const handleCoordinateLock = (lat: number, lon: number) => {
-    setStormLat(lat);
-    setStormLon(lon);
-  };
+export function App() {
+  const [layerId, setLayerId] = useState(LAYERS[0].id);
+  const [day, setDay] = useState(defaultDay);
+  const [delay, setDelay] = useState(60); // minutes behind "now" for the near real-time layer
+  const [feed, setFeed] = useState<ActiveCycloneResult | null>(null);
+  const [focus, setFocus] = useState<ActiveCyclone | null>(null);
+  const [blank, setBlank] = useState(false);
 
-  const handlePatternClassified = (result: PatternResponse) => {
-    if (result.pattern_predicted === "eye") {
-      setWindKts(120);
-      setPressureHpa(942);
-      setIntensityCategory("Extremely Severe Cyclonic Storm (ESCS)");
-      setIsRapidIntensifying(true);
-    } else if (result.pattern_predicted === "central_dense_overcast") {
-      setWindKts(95);
-      setPressureHpa(954);
-      setIntensityCategory("Very Severe Cyclonic Storm (VSCS)");
-      setIsRapidIntensifying(true);
-    } else if (result.pattern_predicted === "curved_band") {
-      setWindKts(55);
-      setPressureHpa(986);
-      setIntensityCategory("Cyclonic Storm (CS)");
-      setIsRapidIntensifying(false);
-    } else {
-      setWindKts(35);
-      setPressureHpa(998);
-      setIntensityCategory("Tropical Depression (D)");
-      setIsRapidIntensifying(false);
-    }
-  };
+  const layer = LAYERS.find((l) => l.id === layerId)!;
+  const when = nrtTime(delay);
+  const time = layer.kind === "daily" ? day : when.toISOString().replace(/\.\d{3}Z$/, "Z");
+  const onTileProblem = useCallback((p: boolean) => setBlank(p), []);
 
-  const handleForecastUpdate = (forecast: ForecastResponse) => {
-    setIntensityCategory(forecast.intensity_class);
-    setIsRapidIntensifying(forecast.rapid_intensification_detected);
-  };
+  useEffect(() => {
+    const load = () =>
+      fetch("/api/active-cyclones")
+        .then((r) => r.json())
+        .then(setFeed)
+        .catch(() => setFeed({ ok: false, fetchedAt: null, cyclones: [], source: "" }));
+    load();
+    const t = setInterval(load, 10 * 60_000);
+    return () => clearInterval(t);
+  }, []);
 
   return (
-    <div className="min-h-screen bg-[#050d18] text-[#e2edf5] flex flex-col font-sans">
-      {/* Navigation Header */}
-      <Navigation
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        activeStormName={currentStormName}
-        isRapidIntensifying={isRapidIntensifying}
-      />
+    <div className="min-h-screen bg-slate-50 text-slate-900">
+      <header className="border-b bg-white px-4 py-3">
+        <h1 className="text-xl font-semibold">CycloneSense</h1>
+        <p className="text-sm text-slate-600">Live satellite view of the Bay of Bengal and Arabian Sea</p>
+      </header>
 
-      {/* Main Content Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-8">
-        {/* Hero Mission Briefing & Storm Spinning Visualizer */}
-        <section className="bg-gradient-to-br from-[#081729] via-[#06111f] to-[#040a14] border border-[#183652] rounded-2xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
-          {/* Subtle background glow */}
-          <div className="absolute top-0 right-1/4 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
+      <main className="mx-auto grid max-w-6xl gap-4 p-4 lg:grid-cols-[1fr_320px]">
+        <section aria-label="Satellite map">
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            {LAYERS.map((l) => (
+              <button
+                key={l.id}
+                aria-pressed={l.id === layerId}
+                onClick={() => setLayerId(l.id)}
+                className={`rounded-full border px-3 py-1.5 text-sm ${
+                  l.id === layerId ? "border-sky-700 bg-sky-700 text-white" : "border-slate-300 bg-white hover:bg-slate-100"
+                }`}
+              >
+                {l.label}
+              </button>
+            ))}
+          </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 items-center gap-8 relative z-10">
-            {/* Left Content Briefing */}
-            <div className="lg:col-span-7 space-y-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 text-xs font-mono-code px-2.5 py-1 rounded bg-cyan-950/80 text-cyan-300 border border-cyan-800">
-                  <Radio className="w-3 h-3 text-cyan-400 animate-pulse" />
-                  OPERATIONAL METEOROLOGICAL INTELLIGENCE SUITE
+          <div className="h-[60vh] min-h-[360px] overflow-hidden rounded-lg border bg-slate-200">
+            <LiveMap layer={layer} time={time} cyclones={feed?.cyclones ?? []} focus={focus} onTileProblem={onTileProblem} />
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
+            {layer.kind === "daily" ? (
+              <label className="flex items-center gap-2">
+                Date (UTC)
+                <input type="date" value={day} max={utcDay(new Date())} onChange={(e) => e.target.value && setDay(e.target.value)}
+                  className="rounded border border-slate-300 px-2 py-1" />
+              </label>
+            ) : (
+              <>
+                <span>
+                  Satellite time: {when.toISOString().slice(11, 16)} UTC /{" "}
+                  {when.toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit" })} IST
                 </span>
-                <span className="text-xs font-mono-code text-slate-400 bg-slate-900 px-2.5 py-1 rounded border border-slate-800">
-                  NORTH INDIAN OCEAN BASIN (BAY OF BENGAL & ARABIAN SEA)
-                </span>
-              </div>
+                <button onClick={() => setDelay((d) => d + 10)} className="rounded border border-slate-300 bg-white px-2 py-1 hover:bg-slate-100">Earlier</button>
+                <button onClick={() => setDelay((d) => Math.max(30, d - 10))} className="rounded border border-slate-300 bg-white px-2 py-1 hover:bg-slate-100">Later</button>
+              </>
+            )}
+          </div>
+          <p className="mt-2 text-sm text-slate-600">{layer.note}</p>
+          {blank && (
+            <p role="status" className="mt-2 rounded bg-amber-50 p-2 text-sm text-amber-900">
+              This image is not available yet. {layer.kind === "daily" ? "Pick the previous day." : "Press Earlier to step back 10 minutes."}
+            </p>
+          )}
+        </section>
 
-              <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight">
-                AI-Assisted Tropical Cyclone Detection,{" "}
-                <span className="bg-gradient-to-r from-cyan-400 to-teal-300 bg-clip-text text-transparent">
-                  Morphological Classification
-                </span>{" "}
-                & Prognostic Forecasting
-              </h2>
-
-              <p className="text-sm text-slate-300 leading-relaxed max-w-2xl">
-                Unified meteorological command dashboard combining Vision Transformers (ViT-B/16),
-                recurrent temporal extrapolation, and Explainable AI (Grad-CAM) for real-time
-                cyclogenesis verification, Dvorak T-number estimation, and 72-hour cyclone track and intensity projection.
+        <aside className="space-y-4">
+          <section className="rounded-lg border bg-white p-4" aria-live="polite">
+            <h2 className="font-semibold">Active cyclones</h2>
+            {feed === null && <p className="mt-2 text-sm text-slate-600">Loading…</p>}
+            {feed && !feed.ok && (
+              <p className="mt-2 text-sm text-amber-900">
+                The live cyclone feed could not be reached. Please check the official IMD bulletin below.
               </p>
+            )}
+            {feed?.ok && feed.cyclones.length === 0 && (
+              <p className="mt-2 text-sm text-slate-600">No active tropical cyclones are reported in the North Indian Ocean right now.</p>
+            )}
+            {feed?.ok && feed.cyclones.length > 0 && (
+              <ul className="mt-2 space-y-2">
+                {feed.cyclones.map((c) => (
+                  <li key={c.id}>
+                    <button onClick={() => setFocus(c)} className="w-full rounded border border-slate-200 p-2 text-left hover:bg-slate-50">
+                      <span className="font-medium">{c.name}</span>
+                      <span className="block text-sm text-slate-600">
+                        {ALERT_TEXT[c.alert] ?? c.alert}
+                        {c.windKt ? ` · ${c.windKt} kt winds` : ""} · {c.lat.toFixed(1)}°N {c.lon.toFixed(1)}°E
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {feed?.ok && (
+              <p className="mt-3 text-xs text-slate-500">
+                Source: {feed.source}. {feed.stale ? "Showing the last successful update. " : ""}
+                Checked {feed.fetchedAt ? new Date(feed.fetchedAt).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata" }) + " IST" : ""}.
+              </p>
+            )}
+          </section>
 
-              {/* Action Jump Buttons */}
-              <div className="flex flex-wrap items-center gap-3 pt-2">
-                <button
-                  onClick={() => setActiveTab("radar")}
-                  className="px-4 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs flex items-center gap-2 transition shadow-lg shadow-cyan-950"
-                >
-                  <Radio className="w-4 h-4" />
-                  <span>Launch Command Radar</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab("vision")}
-                  className="px-4 py-2 rounded-lg bg-[#0c2236] hover:bg-[#12304d] text-cyan-300 border border-cyan-700/60 font-medium text-xs flex items-center gap-2 transition"
-                >
-                  <Satellite className="w-4 h-4" />
-                  <span>Grad-CAM Explainability</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab("trajectory")}
-                  className="px-4 py-2 rounded-lg bg-[#0c2236] hover:bg-[#12304d] text-cyan-300 border border-cyan-700/60 font-medium text-xs flex items-center gap-2 transition"
-                >
-                  <Activity className="w-4 h-4" />
-                  <span>Track & Intensity</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab("advisories")}
-                  className="px-4 py-2 rounded-lg bg-[#0c2236] hover:bg-[#12304d] text-cyan-300 border border-cyan-700/60 font-medium text-xs flex items-center gap-2 transition"
-                >
-                  <FileSpreadsheet className="w-4 h-4" />
-                  <span>Bulletins & Advisories</span>
-                </button>
-              </div>
-
-              {/* Quick Telemetry Strip */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-[#163654]">
-                <div>
-                  <span className="text-[10px] font-mono-code text-slate-400 block">ACTIVE TARGET</span>
-                  <span className="text-xs font-bold text-white font-mono-code">{currentStormName.split(" / ")[0]}</span>
-                </div>
-                <div>
-                  <span className="text-[10px] font-mono-code text-slate-400 block">CURRENT COORDS</span>
-                  <span className="text-xs font-bold text-cyan-300 font-mono-code">
-                    {stormLat}°N, {stormLon}°E
-                  </span>
-                </div>
-                <div>
-                  <span className="text-[10px] font-mono-code text-slate-400 block">PEAK WINDS</span>
-                  <span className="text-xs font-bold text-white font-mono-code">{windKts} kts (1-min)</span>
-                </div>
-                <div>
-                  <span className="text-[10px] font-mono-code text-slate-400 block">EST. MIN PRESSURE</span>
-                  <span className="text-xs font-bold text-amber-300 font-mono-code">{pressureHpa} hPa</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Right Storm Spinning Graphic */}
-            <div className="lg:col-span-5 flex flex-col items-center justify-center">
-              <div className="storm relative">
-                <i></i>
-                <i></i>
-                <i></i>
-                <b></b>
-              </div>
-              <div className="mt-4 text-center">
-                <span className="text-[11px] font-mono-code text-cyan-400/90 block">
-                  DYNAMIC RADIUS OF MAXIMUM WINDS (RMW) · 38 KM
-                </span>
-                <span className="text-[10px] font-mono-code text-slate-400">
-                  Bioluminescent Inverted Planck Absorption Scale
-                </span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* View Switcher Controls / Anchor Navigation */}
-        <div className="flex items-center justify-between border-b border-[#183652] pb-2">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-mono-code text-slate-400">OPERATIONAL VIEW:</span>
-            <span className="text-sm font-bold text-cyan-300 uppercase tracking-wide font-mono-code">
-              {activeTab === "radar" && "Module A · Live Command Radar & Multispectral Visualizer"}
-              {activeTab === "vision" && "Module B · AI Pattern Classifier & Explainability Studio"}
-              {activeTab === "trajectory" && "Module C · Trajectory Predictor & Landfall Intercept"}
-              {activeTab === "advisories" && "Module D · Official Bulletins, GIS Hazard Export & Advisories"}
-            </span>
-          </div>
-
-          <div className="hidden sm:flex items-center gap-2 text-xs font-mono-code text-slate-400">
-            <span>QUICK SWITCH:</span>
-            <button
-              onClick={() => setActiveTab("radar")}
-              className={`px-2 py-0.5 rounded ${activeTab === "radar" ? "bg-cyan-500 text-slate-950 font-bold" : "hover:text-white"}`}
-            >
-              RADAR
-            </button>
-            <span>·</span>
-            <button
-              onClick={() => setActiveTab("vision")}
-              className={`px-2 py-0.5 rounded ${activeTab === "vision" ? "bg-cyan-500 text-slate-950 font-bold" : "hover:text-white"}`}
-            >
-              VISION
-            </button>
-            <span>·</span>
-            <button
-              onClick={() => setActiveTab("trajectory")}
-              className={`px-2 py-0.5 rounded ${activeTab === "trajectory" ? "bg-cyan-500 text-slate-950 font-bold" : "hover:text-white"}`}
-            >
-              TRACK
-            </button>
-            <span>·</span>
-            <button
-              onClick={() => setActiveTab("advisories")}
-              className={`px-2 py-0.5 rounded ${activeTab === "advisories" ? "bg-cyan-500 text-slate-950 font-bold" : "hover:text-white"}`}
-            >
-              ADVISORIES
-            </button>
-          </div>
-        </div>
-
-        {/* Active Module Panel */}
-        <section>
-          {activeTab === "radar" && (
-            <CommandRadar
-              currentStormLat={stormLat}
-              currentStormLon={stormLon}
-              onCoordinateLock={handleCoordinateLock}
-              windKts={windKts}
-              pressureHpa={pressureHpa}
-              category={intensityCategory}
-              isRapidIntensifying={isRapidIntensifying}
-            />
-          )}
-
-          {activeTab === "vision" && (
-            <VisionStudio onPatternClassified={handlePatternClassified} />
-          )}
-
-          {activeTab === "trajectory" && (
-            <TrajectoryForecast
-              initialObservations={observations}
-              onForecastUpdate={handleForecastUpdate}
-            />
-          )}
-
-          {activeTab === "advisories" && (
-            <HazardAdvisoryHub
-              stormName={currentStormName}
-              stormLat={stormLat}
-              stormLon={stormLon}
-              windKts={windKts}
-              pressureHpa={pressureHpa}
-              intensityCategory={intensityCategory}
-            />
-          )}
-        </section>
-
-        {/* Operational Context & Compliance Banner */}
-        <footer className="bg-[#061220] border border-[#163654] rounded-xl p-5 text-xs text-slate-400 space-y-3 font-mono-code">
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#142e47] pb-3">
-            <div className="flex items-center gap-2">
-              <span className="text-cyan-400 font-bold">CycloneSense AI</span>
-              <span>· Version 1.2.0 (Operational Track: Remote Sensing × Cyclone Intelligence)</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-emerald-400">WMO GTS Telemetry Compliant</span>
-              <span>·</span>
-              <span>IMD MOSDAC / NOAA Ground Station Compatible</span>
-            </div>
-          </div>
-
-          <p className="text-[11px] text-slate-500 leading-relaxed">
-            <strong>STATUTORY DISCLAIMER:</strong> CycloneSense AI is an advanced research decision-support platform engineered for operational testing, meteorological pattern verification, and early cyclogenesis reconnaissance. It does not supersede official bulletins or statutory cyclone advisories issued by the India Meteorological Department (IMD / RSMC New Delhi).
-          </p>
-        </footer>
+          <section className="rounded-lg border bg-white p-4">
+            <h2 className="font-semibold">Official warnings</h2>
+            <p className="mt-2 text-sm text-slate-600">
+              For warnings and evacuation advice, follow the India Meteorological Department and your state disaster authority.
+            </p>
+            <a href="https://mausam.imd.gov.in/" target="_blank" rel="noreferrer" className="mt-2 inline-block text-sm text-sky-700 underline">
+              IMD weather and cyclone bulletins
+            </a>
+          </section>
+        </aside>
       </main>
+
+      <footer className="mx-auto max-w-6xl px-4 pb-6 text-xs text-slate-500">
+        CycloneSense is a research project and is not an official warning system. Imagery: NASA GIBS / EOSDIS, JMA Himawari.
+        Cyclone positions: GDACS.
+      </footer>
     </div>
   );
-};
-export default App;
+}

@@ -13,3 +13,4 @@ xarray>=2024.2.0
 h5py>=3.10.0
 python-multipart>=0.0.9
 requests>=2.31.0
+pandas>=2.0.0
