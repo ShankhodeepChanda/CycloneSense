@@ -53,9 +53,17 @@ export function LiveMap({ layer, time, cyclones, focus, onTileProblem }: Props) 
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
       zIndex: 1, maxZoom: 19, attribution: "&copy; OpenStreetMap contributors",
     }).addTo(m);
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png", {
-      zIndex: 5, subdomains: "abcd", attribution: "&copy; CARTO",
-    }).addTo(m);
+    // Keyless NASA GIBS reference overlays (coastlines + place names). If their tiles fail, drop the overlay rather than show broken tiles.
+    for (const [id, z] of [["Coastlines_15m", 4], ["Reference_Labels_15m", 5]] as const) {
+      let errors = 0;
+      const o = L.tileLayer(`https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/${id}/default/GoogleMapsCompatible_Level9/{z}/{y}/{x}.png`, {
+        zIndex: z, maxNativeZoom: 9, maxZoom: 10, attribution: "NASA GIBS",
+      }).on("tileerror", () => {
+        errors += 1;
+        if (errors === 8) o.remove();
+      });
+      o.addTo(m);
+    }
     markers.current = L.layerGroup().addTo(m);
     map.current = m;
     return () => {

@@ -17,13 +17,19 @@ export interface ActiveCyclone {
 // North Indian Ocean: Arabian Sea + Bay of Bengal (+ margin)
 const NIO = { minLat: 0, maxLat: 32, minLon: 40, maxLon: 100 };
 
+function isCurrent(p: any): boolean {
+  if (p.iscurrent !== undefined) return String(p.iscurrent) === "true";
+  const ended = Date.parse(p.todate);
+  return Number.isFinite(ended) && Date.now() - ended < 3 * 86_400_000;
+}
+
 export function parseActiveCyclones(geojson: any): ActiveCyclone[] {
   const features: any[] = Array.isArray(geojson?.features) ? geojson.features : [];
   const byEvent = new Map<string, ActiveCyclone>();
 
   for (const f of features) {
     const p = f?.properties ?? {};
-    if (p.eventtype !== "TC" || String(p.iscurrent) !== "true") continue;
+    if (p.eventtype !== "TC" || !isCurrent(p)) continue;
     if (f?.geometry?.type !== "Point") continue;
     // A TC event also carries track/cone/first/last points; only the centroid is the current position.
     if (p.Class && p.Class !== "Point_Centroid") continue;
@@ -32,13 +38,14 @@ export function parseActiveCyclones(geojson: any): ActiveCyclone[] {
     if (typeof lat !== "number" || typeof lon !== "number") continue;
     if (lat < NIO.minLat || lat > NIO.maxLat || lon < NIO.minLon || lon > NIO.maxLon) continue;
 
-    const kmh = Number(p.severitydata?.severity);
+    const raw = Number(p.severitydata?.severity);
+    const knots = /kn|kt/i.test(String(p.severitydata?.severityunit ?? "")) ? raw : raw / 1.852;
     const id = String(p.eventid ?? `${p.eventname}-${lat}-${lon}`);
     byEvent.set(id, {
       id,
       name: String(p.eventname || p.name || "Unnamed system"),
       alert: String(p.alertlevel || "Green"),
-      windKt: Number.isFinite(kmh) && kmh > 0 ? Math.round(kmh / 1.852) : null,
+      windKt: Number.isFinite(knots) && knots > 0 ? Math.round(knots) : null,
       lat,
       lon,
       from: p.fromdate ?? null,
@@ -49,7 +56,10 @@ export function parseActiveCyclones(geojson: any): ActiveCyclone[] {
   return [...byEvent.values()].sort((a, b) => (b.windKt ?? 0) - (a.windKt ?? 0));
 }
 
-const GDACS_URL = "https://www.gdacs.org/gdacsapi/api/events/geteventlist/MAP?eventtypes=TC";
+// Documented search endpoint (no key). There is no "active only" filter, so ask for the last 10 days and keep current ones.
+const gdacsUrl = () =>
+  "https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH?eventlist=TC&alertlevel=green;orange;red&pagesize=100&fromdate=" +
+  new Date(Date.now() - 10 * 86_400_000).toISOString().slice(0, 10);
 const TTL_MS = 10 * 60 * 1000;
 let cache: { at: number; data: ActiveCyclone[] } | null = null;
 
@@ -59,6 +69,7 @@ export interface ActiveCycloneResult {
   fetchedAt: string | null;
   cyclones: ActiveCyclone[];
   source: string;
+  error?: string;
 }
 
 export async function getActiveCyclones(): Promise<ActiveCycloneResult> {
@@ -69,7 +80,7 @@ export async function getActiveCyclones(): Promise<ActiveCycloneResult> {
   try {
     const ctl = new AbortController();
     const timer = setTimeout(() => ctl.abort(), 10_000);
-    const res = await fetch(GDACS_URL, { signal: ctl.signal, headers: { accept: "application/json" } });
+    const res = await fetch(gdacsUrl(), { signal: ctl.signal, headers: { accept: "application/json", "user-agent": "CycloneSense/1.0 (research project)" } });
     clearTimeout(timer);
     if (!res.ok) throw new Error(`GDACS responded ${res.status}`);
     cache = { at: Date.now(), data: parseActiveCyclones(await res.json()) };
@@ -78,6 +89,6 @@ export async function getActiveCyclones(): Promise<ActiveCycloneResult> {
     // Serve the last good answer (clearly marked) rather than nothing; never fabricate one.
     if (cache) return { ok: true, stale: true, fetchedAt: new Date(cache.at).toISOString(), cyclones: cache.data, source };
     console.error("active cyclone feed failed:", err);
-    return { ok: false, fetchedAt: null, cyclones: [], source };
+    return { ok: false, fetchedAt: null, cyclones: [], source, error: String((err as Error)?.message ?? err).slice(0, 200) };
   }
 }

@@ -97,6 +97,7 @@ export function App() {
             {feed && !feed.ok && (
               <p className="mt-2 text-sm text-amber-900">
                 The live cyclone feed could not be reached. Please check the official IMD bulletin below.
+                {feed.error && <span className="mt-1 block text-xs text-slate-500">Reason: {feed.error}</span>}
               </p>
             )}
             {feed?.ok && feed.cyclones.length === 0 && (

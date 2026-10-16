@@ -45,3 +45,19 @@ test("missing wind becomes null, strongest storm sorts first", () => {
   });
   assert.deepEqual(out.map((c) => [c.name, c.windKt]), [["STRONG", 108], ["WEAK", null]]);
 });
+
+test("without iscurrent, keeps storms that ended within 3 days and drops older ones", () => {
+  const day = 86_400_000;
+  const out = parseActiveCyclones({
+    features: [
+      tc({ eventid: 20, eventname: "RECENT", iscurrent: undefined, todate: new Date(Date.now() - day).toISOString() }, pt(88, 17)),
+      tc({ eventid: 21, eventname: "OLD", iscurrent: undefined, todate: new Date(Date.now() - 6 * day).toISOString() }, pt(88, 17)),
+    ],
+  });
+  assert.deepEqual(out.map((c) => c.name), ["RECENT"]);
+});
+
+test("severity already in knots is not converted again", () => {
+  const out = parseActiveCyclones({ features: [tc({ eventid: 22, severitydata: { severity: 65, severityunit: "kn" } }, pt(88, 17))] });
+  assert.equal(out[0].windKt, 65);
+});
