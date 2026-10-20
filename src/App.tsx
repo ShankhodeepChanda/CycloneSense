@@ -41,7 +41,12 @@ export function App() {
     void loadFeed(controller.signal);
     const timer = window.setInterval(() => void loadFeed(), 5 * 60_000);
     return () => { controller.abort(); window.clearInterval(timer); };
-  }, [loadFeed, feedRetry]);
+  }, [loadFeed]);
+
+  useEffect(() => {
+    if (feedRetry === 0) return;
+    void loadFeed();
+  }, [feedRetry, loadFeed]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 30_000);
