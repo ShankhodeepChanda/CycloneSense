@@ -56,7 +56,8 @@ export function LiveMap({ layer, variant, time, cyclones, view, interactive, onT
     sat.current?.remove();
     let errors = 0;
     onTileProblem(false);
-    sat.current = L.tileLayer(tileUrl(variant, time), { maxNativeZoom: variant.maxNative, maxZoom: 10, attribution: "Imagery: NASA GIBS / EOSDIS" })
+    sat.current = L.tileLayer(tileUrl(variant, time), { maxNativeZoom: variant.maxNative, maxZoom: 10, opacity: 0, attribution: "Imagery: NASA GIBS / EOSDIS", className: "cy-imagery" })
+      .on("load", () => sat.current?.setOpacity(1))
       .on("tileerror", () => { errors += 1; if (errors === 6) onTileProblem(true); })
       .addTo(map.current);
   }, [variant, time, onTileProblem]);
