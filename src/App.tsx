@@ -40,6 +40,7 @@ export function App() {
   const [nrt, setNrt] = useState<{ variant: Variant; delayMin: number } | null | "loading">("loading");
   const [extra, setExtra] = useState(0); // minutes stepped back from the newest working image
   const [feed, setFeed] = useState<ActiveCycloneResult | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
   const [view, setView] = useState<{ center: LL; zoom: number; n: number }>({ center: [20, 128], zoom: 3, n: 0 });
   const [blank, setBlank] = useState(false);
   const n = useRef(0);
@@ -57,13 +58,24 @@ export function App() {
   const fly = (center: LL, zoom: number) => setView({ center, zoom, n: ++n.current });
 
   useEffect(() => { resolveNrt(LAYERS.find((l) => l.kind === "nrt")!).then(setNrt); }, []);
-  useEffect(() => {
-    const load = () => fetch("/api/active-cyclones").then((r) => r.json()).then(setFeed)
-      .catch(() => setFeed({ ok: false, fetchedAt: null, cyclones: [], source: "" }));
-    load();
-    const t = setInterval(load, 10 * 60_000);
-    return () => clearInterval(t);
+  const refreshFeed = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      const response = await fetch("/api/active-cyclones", { cache: "no-store" });
+      if (!response.ok) throw new Error(`Feed request failed (${response.status})`);
+      setFeed(await response.json());
+    } catch {
+      setFeed({ ok: false, fetchedAt: null, cyclones: [], source: "" });
+    } finally {
+      setRefreshing(false);
+    }
   }, []);
+
+  useEffect(() => {
+    refreshFeed();
+    const t = setInterval(refreshFeed, 10 * 60_000);
+    return () => clearInterval(t);
+  }, [refreshFeed]);
 
   // New chapter: switch layer and move the camera. In "Active now", head for the strongest storm near India.
   const target = nioList[0];
@@ -101,7 +113,7 @@ export function App() {
           <aside className="hud" aria-live="polite">
             <b>{layer.label}</b>
             <span>{layer.kind === "daily" ? `${day} (UTC)` : `${when.toISOString().slice(11, 16)} UTC / ${when.toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit" })} IST`}</span>
-            <span><i className={feed?.ok ? "dot" : "dot off"} />{feed?.ok ? `Feed checked ${feed.fetchedAt ? new Date(feed.fetchedAt).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit" }) : ""} IST` : "Feed offline"}</span>
+            <span className="feed-status"><i className={feed?.ok ? "dot" : "dot off"} />{feed?.ok ? `Feed checked ${feed.fetchedAt ? new Date(feed.fetchedAt).toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit" }) : ""} IST` : feed === null ? "Connecting to live feed" : "Feed offline"}<button className="refresh" type="button" onClick={refreshFeed} disabled={refreshing} aria-label={refreshing ? "Refreshing cyclone feed" : "Refresh cyclone feed"}>{refreshing ? "Updating…" : "Refresh"}</button></span>
           </aside>
         </div>
 
