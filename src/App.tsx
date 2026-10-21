@@ -109,7 +109,7 @@ export function App() {
 
       <div className="story">
         <div className={`stage ${active === LAST ? "live" : ""}`}>
-          <LiveMap layer={layer} variant={variant} time={time} cyclones={feed?.cyclones ?? []} view={view} interactive={active === LAST} onTileProblem={onTileProblem} />
+          <LiveMap layer={layer} variant={variant} under={utcDay(new Date(Date.parse(day) - 86_400_000))} time={time} cyclones={feed?.cyclones ?? []} view={view} interactive={active === LAST} onTileProblem={onTileProblem} />
           <aside className="hud" aria-live="polite">
             <b>{layer.label}</b>
             <span>{layer.kind === "daily" ? `${day} (UTC)` : `${when.toISOString().slice(11, 16)} UTC / ${when.toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit" })} IST`}</span>
@@ -188,7 +188,7 @@ export function App() {
                   </>
                 )}
               </div>
-              <p className="note">{layer.note}</p>
+              <p className="note">{layer.note} Dimmer areas are filled in from the previous day's true colour.</p>
               {blank && <p className="warn" role="status">This image is not available yet. {layer.kind === "daily" ? "Pick the previous day." : "Press Earlier to step back 10 minutes."}</p>}
             </Panel>
           </section>

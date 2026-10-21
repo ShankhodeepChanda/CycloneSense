@@ -1,6 +1,6 @@
 // NASA GIBS layer catalogue + a probe that finds the near real-time Himawari layer that actually answers.
 // Himawari's real GIBS id is "..._v0_NRT_ZENJPEG" (found via NASA's directory index); older ids and endpoints are kept as fallbacks.
-export interface Variant { layer: string; ep: string; tms: string; ext: "jpg" | "png"; maxNative: number }
+export interface Variant { layer: string; ep: string; tms: string; ext: "jpg" | "png"; maxNative: number; key?: boolean } // key: JPEG whose no-data pixels are opaque black
 export interface SatLayer {
   id: string;
   label: string;
@@ -10,14 +10,14 @@ export interface SatLayer {
   variants: Variant[];
 }
 
-const v = (layer: string, tms: string, ext: "jpg" | "png", maxNative: number, ep = "best"): Variant => ({ layer, ep, tms, ext, maxNative });
+const v = (layer: string, tms: string, ext: "jpg" | "png", maxNative: number, ep = "best", key = false): Variant => ({ layer, ep, tms, ext, maxNative, key });
 const HIMA = "Himawari_AHI_Band13_Clean_Infrared_v0_NRT_ZENJPEG";
 const L6 = "GoogleMapsCompatible_Level6";
 
 export const LAYERS: SatLayer[] = [
   { id: "viirs", label: "Daily true colour", kind: "daily", coast: "#fff3b0",
     note: "NASA VIIRS, one daytime pass per day (about 1:30 pm local time). Best for seeing cloud structure.",
-    variants: [v("VIIRS_SNPP_CorrectedReflectance_TrueColor", "GoogleMapsCompatible_Level9", "jpg", 9)] },
+    variants: [v("VIIRS_SNPP_CorrectedReflectance_TrueColor", "GoogleMapsCompatible_Level9", "jpg", 9, "best", true)] },
   { id: "modis-ir", label: "Daily thermal IR", kind: "daily", coast: "#ffffff",
     note: "NASA MODIS Terra cloud-top temperature, daytime pass. Colder (higher) clouds are usually the stronger storms.",
     variants: [v("MODIS_Terra_Brightness_Temp_Band31_Day", "GoogleMapsCompatible_Level7", "png", 7)] },
