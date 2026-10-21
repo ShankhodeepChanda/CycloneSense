@@ -1,10 +1,11 @@
-// Turns a GDACS event-list GeoJSON into the active tropical cyclones near India.
+// Turns a GDACS event-list GeoJSON into the active tropical cyclones worldwide, flagging those near India.
 // GDACS (UN/EC Global Disaster Alert and Coordination System) is a real, keyless feed.
 // Parsing is defensive on purpose: unknown fields are ignored, never invented.
 
 export interface ActiveCyclone {
   id: string;
   name: string;
+  nio: boolean; // inside the North Indian Ocean box (Arabian Sea + Bay of Bengal)
   alert: string; // Green | Orange | Red (GDACS humanitarian alert level, not an IMD category)
   windKt: number | null;
   lat: number;
@@ -36,7 +37,6 @@ export function parseActiveCyclones(geojson: any): ActiveCyclone[] {
 
     const [lon, lat] = f.geometry.coordinates ?? [];
     if (typeof lat !== "number" || typeof lon !== "number") continue;
-    if (lat < NIO.minLat || lat > NIO.maxLat || lon < NIO.minLon || lon > NIO.maxLon) continue;
 
     const raw = Number(p.severitydata?.severity);
     const knots = /kn|kt/i.test(String(p.severitydata?.severityunit ?? "")) ? raw : raw / 1.852;
@@ -44,6 +44,7 @@ export function parseActiveCyclones(geojson: any): ActiveCyclone[] {
     byEvent.set(id, {
       id,
       name: String(p.eventname || p.name || "Unnamed system"),
+      nio: lat >= NIO.minLat && lat <= NIO.maxLat && lon >= NIO.minLon && lon <= NIO.maxLon,
       alert: String(p.alertlevel || "Green"),
       windKt: Number.isFinite(knots) && knots > 0 ? Math.round(knots) : null,
       lat,
@@ -53,7 +54,8 @@ export function parseActiveCyclones(geojson: any): ActiveCyclone[] {
       url: p.url?.report ?? p.url?.details ?? null,
     });
   }
-  return [...byEvent.values()].sort((a, b) => (b.windKt ?? 0) - (a.windKt ?? 0));
+  // North Indian Ocean storms first, then strongest first
+  return [...byEvent.values()].sort((a, b) => Number(b.nio) - Number(a.nio) || (b.windKt ?? 0) - (a.windKt ?? 0));
 }
 
 // Documented search endpoint (no key). There is no "active only" filter, so ask for the last 10 days and keep current ones.

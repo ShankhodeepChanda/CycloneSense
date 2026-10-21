@@ -1,11 +1,71 @@
 @import "tailwindcss";
 
-body {
-  margin: 0;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-}
+:root { --sy: 0; --p: 0; --ink: #0b1f33; --sea: #0e7490; }
+html { scroll-behavior: smooth; scroll-padding-top: 72px; }
+body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--ink); background: #f4f8fb; }
 
-/* Leaflet tooltips: readable white label with dark text */
-.leaflet-tooltip {
-  font-weight: 600;
+/* ---- scroll progress + nav */
+.progress { position: fixed; inset: 0 0 auto 0; height: 3px; z-index: 60; transform-origin: 0 50%; transform: scaleX(var(--p)); background: linear-gradient(90deg, #22d3ee, #38bdf8, #fb923c); }
+.nav { position: fixed; inset: 3px 0 auto 0; z-index: 50; transition: background .3s, box-shadow .3s; }
+.nav.solid { background: rgb(255 255 255 / .85); backdrop-filter: blur(10px); box-shadow: 0 1px 0 rgb(15 23 42 / .08); color: var(--ink); }
+.nav:not(.solid) { color: #fff; }
+
+/* ---- hero */
+.hero { position: relative; min-height: 100svh; overflow: hidden; color: #fff; display: grid; align-items: center;
+  background: radial-gradient(1200px 700px at 78% 40%, #0e7490 0%, #0b2a43 45%, #06121f 100%); }
+.storm-wrap { position: absolute; right: -8vmin; top: 50%; width: min(92vmin, 880px); aspect-ratio: 1; opacity: .9;
+  transform: translateY(calc(-50% + var(--sy) * .22px)); will-change: transform; pointer-events: none; }
+.storm { width: 100%; height: 100%; animation: spin 90s linear infinite; }
+.storm .inner { transform-origin: 50% 50%; animation: spin 38s linear infinite reverse; }
+.eye { animation: breathe 6s ease-in-out infinite; transform-origin: 50% 50%; }
+.hero-copy { position: relative; z-index: 2; transform: translateY(calc(var(--sy) * -.08px)); }
+.hero h1 { font-size: clamp(2.4rem, 6.2vw, 5rem); line-height: 1.03; letter-spacing: -.03em; font-weight: 800; }
+.grad { background: linear-gradient(90deg, #67e8f9, #38bdf8 45%, #fdba74); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.hero-in > * { opacity: 0; transform: translateY(24px); animation: up .9s cubic-bezier(.2,.7,.2,1) forwards; }
+.hero-in > *:nth-child(2) { animation-delay: .12s } .hero-in > *:nth-child(3) { animation-delay: .24s }
+.hero-in > *:nth-child(4) { animation-delay: .36s } .hero-in > *:nth-child(5) { animation-delay: .48s }
+.hint { position: absolute; bottom: 24px; left: 50%; margin-left: -14px; width: 28px; height: 46px; border: 2px solid rgb(255 255 255 / .5); border-radius: 16px; z-index: 2; }
+.hint::after { content: ""; position: absolute; left: 50%; top: 8px; width: 4px; height: 8px; margin-left: -2px; border-radius: 2px; background: #fff; animation: wheel 1.8s ease-in-out infinite; }
+.btn { display: inline-flex; align-items: center; gap: .5rem; border-radius: 999px; padding: .8rem 1.4rem; font-weight: 600; transition: transform .2s, box-shadow .2s, background .2s; }
+.btn:hover { transform: translateY(-2px); }
+.btn-primary { background: linear-gradient(90deg, #22d3ee, #38bdf8); color: #04293a; box-shadow: 0 8px 30px -8px #22d3ee; }
+.btn-ghost { border: 1px solid rgb(255 255 255 / .4); color: #fff; }
+.btn-ghost:hover { background: rgb(255 255 255 / .12); }
+.chip-live { display: inline-flex; align-items: center; gap: .5rem; padding: .35rem .8rem; border-radius: 999px; background: rgb(255 255 255 / .1); border: 1px solid rgb(255 255 255 / .2); font-size: .85rem; }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 0 0 #4ade80; animation: ping 2s infinite; }
+
+/* ---- reveal on scroll */
+.rv { opacity: 0; transition: opacity .8s cubic-bezier(.2,.7,.2,1), transform .8s cubic-bezier(.2,.7,.2,1); }
+.rv-up { transform: translateY(36px); } .rv-left { transform: translateX(-48px); } .rv-right { transform: translateX(48px); } .rv-zoom { transform: scale(.94); }
+.rv.in { opacity: 1; transform: none; }
+
+.card { background: #fff; border: 1px solid rgb(15 23 42 / .08); border-radius: 20px; padding: 1.5rem; box-shadow: 0 10px 30px -18px rgb(15 23 42 / .35); transition: transform .3s, box-shadow .3s; }
+.card:hover { transform: translateY(-4px); box-shadow: 0 18px 40px -18px rgb(14 116 144 / .5); }
+.num { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; font-weight: 800; color: #fff; background: linear-gradient(135deg, #0e7490, #38bdf8); }
+.stat { font-size: clamp(2.4rem, 5vw, 3.6rem); font-weight: 800; letter-spacing: -.03em; background: linear-gradient(90deg, #0e7490, #38bdf8); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+/* ---- map */
+.cy-map { background: #0b2538; border-radius: 18px; }
+.leaflet-tooltip { font-weight: 700; }
+.cy-label { position: absolute; transform: translate(-50%, -50%); white-space: nowrap; font-size: 11px; font-weight: 600; color: #fff; text-shadow: 0 0 3px #000, 0 0 6px #000; pointer-events: none; }
+.cy-label.sea { font-size: 13px; font-style: italic; letter-spacing: .08em; opacity: .8; font-weight: 500; }
+.cy-pin { position: relative; width: 34px; height: 34px; }
+.cy-pin i { position: absolute; inset: 11px; border-radius: 50%; background: var(--c); border: 2px solid #fff; }
+.cy-pin b { position: absolute; inset: 0; border-radius: 50%; border: 2px solid var(--c); opacity: 0; }
+.cy-pin.nio b { animation: pulse 1.8s ease-out infinite; }
+.cy-pin:not(.nio) { opacity: .75; transform: scale(.7); }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes up { to { opacity: 1; transform: none; } }
+@keyframes breathe { 50% { transform: scale(1.12); } }
+@keyframes wheel { 0% { opacity: 0; transform: translateY(0); } 40% { opacity: 1; } 100% { opacity: 0; transform: translateY(16px); } }
+@keyframes pulse { 0% { transform: scale(.5); opacity: .9; } 100% { transform: scale(1.5); opacity: 0; } }
+@keyframes ping { 70% { box-shadow: 0 0 0 9px rgb(74 222 128 / 0); } 100% { box-shadow: 0 0 0 0 rgb(74 222 128 / 0); } }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .storm, .storm .inner, .eye, .dot, .hint::after, .cy-pin.nio b { animation: none; }
+  .hero-in > * { animation: none; opacity: 1; transform: none; }
+  .rv { opacity: 1; transform: none; transition: none; }
+  .storm-wrap, .hero-copy { transform: none; }
 }

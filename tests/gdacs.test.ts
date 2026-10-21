@@ -18,10 +18,9 @@ test("keeps current NIO cyclone centroid and converts km/h to knots", () => {
   assert.deepEqual([out[0].name, out[0].alert, out[0].windKt, out[0].lat, out[0].lon], ["TESTONE", "Orange", 65, 17.2, 88.5]);
 });
 
-test("ignores other basins, past events, other hazards, and non-centroid points", () => {
+test("flags other basins as not NIO, and ignores past events, other hazards, and non-centroid points", () => {
   const out = parseActiveCyclones({
     features: [
-      tc({ eventid: 2 }, pt(-60, 20)), // Atlantic
       tc({ eventid: 3, iscurrent: "false" }, pt(88, 17)),
       tc({ eventid: 4, eventtype: "EQ" }, pt(88, 17)),
       tc({ eventid: 5, Class: "Point_First" }, pt(88, 17)),
@@ -29,6 +28,13 @@ test("ignores other basins, past events, other hazards, and non-centroid points"
     ],
   });
   assert.equal(out.length, 0);
+});
+
+test("keeps other basins but marks them nio=false, NIO storms sort first", () => {
+  const out = parseActiveCyclones({
+    features: [tc({ eventid: 2, eventname: "ATL", severitydata: { severity: 300 } }, pt(-60, 20)), tc({ eventid: 3, eventname: "BOB" }, pt(88, 17))],
+  });
+  assert.deepEqual(out.map((c) => [c.name, c.nio]), [["BOB", true], ["ATL", false]]);
 });
 
 test("copes with empty or malformed input", () => {
