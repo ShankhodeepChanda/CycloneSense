@@ -11,6 +11,7 @@
     "test:web": "tsx --test tests/gdacs.test.ts"
   },
   "dependencies": {
+    "@fontsource-variable/bricolage-grotesque": "^5.3.0",
     "express": "^4.21.2",
     "leaflet": "^1.9.4",
     "react": "^19.0.0",

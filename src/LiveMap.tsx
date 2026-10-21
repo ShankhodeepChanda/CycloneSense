@@ -18,11 +18,12 @@ interface Props {
   variant: Variant;
   time: string; // YYYY-MM-DD for daily layers, ISO UTC for near real-time
   cyclones: ActiveCyclone[];
-  focus: ActiveCyclone | null;
+  view: { center: [number, number]; zoom: number; n: number }; // n changes to re-trigger the same view
+  interactive: boolean; // false while the page story scrolls past, true in the explore chapter
   onTileProblem: (problem: boolean) => void;
 }
 
-export function LiveMap({ layer, variant, time, cyclones, focus, onTileProblem }: Props) {
+export function LiveMap({ layer, variant, time, cyclones, view, interactive, onTileProblem }: Props) {
   const el = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
   const sat = useRef<L.TileLayer | null>(null);
@@ -30,7 +31,8 @@ export function LiveMap({ layer, variant, time, cyclones, focus, onTileProblem }
   const markers = useRef<L.LayerGroup | null>(null);
 
   useEffect(() => {
-    const m = L.map(el.current!, { center: [16, 80], zoom: 4, minZoom: 3, maxZoom: 10, worldCopyJump: true, scrollWheelZoom: false });
+    const m = L.map(el.current!, { center: [20, 128], zoom: 3, minZoom: 3, maxZoom: 10, worldCopyJump: true, scrollWheelZoom: false, zoomControl: false });
+    L.control.zoom({ position: "bottomright" }).addTo(m);
     // The page scrolls, so wheel-zoom only switches on after a click and off again when the pointer leaves.
     m.on("click", () => m.scrollWheelZoom.enable());
     m.getContainer().addEventListener("mouseleave", () => m.scrollWheelZoom.disable());
@@ -70,13 +72,26 @@ export function LiveMap({ layer, variant, time, cyclones, focus, onTileProblem }
       }).addTo(markers.current!);
       const name = document.createElement("span"); // textContent, so a feed name can never inject HTML
       name.textContent = c.name;
-      mk.bindTooltip(name, { permanent: c.nio, direction: "right", offset: [14, 0] });
+      mk.bindTooltip(name, { permanent: true, direction: "right", offset: [14, 0] });
     }
   }, [cyclones]);
 
   useEffect(() => {
-    if (focus) map.current?.flyTo([focus.lat, focus.lon], 6);
-  }, [focus]);
+    const m = map.current;
+    if (!m) return;
+    const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // Shift the target away from the text panel (left on desktop, bottom on phones) so the storm is not hidden behind it.
+    const wide = innerWidth > 900;
+    const at = m.project(view.center, view.zoom).add(wide ? [-Math.min(240, innerWidth * 0.18), 0] : [0, innerHeight * 0.18]);
+    m.flyTo(m.unproject(at, view.zoom), view.zoom, { animate: !calm, duration: 2.4 });
+  }, [view]);
+
+  useEffect(() => {
+    const m = map.current;
+    if (!m) return;
+    for (const h of [m.dragging, m.touchZoom, m.doubleClickZoom, m.boxZoom, m.keyboard]) interactive ? h.enable() : h.disable();
+    if (!interactive) m.scrollWheelZoom.disable();
+  }, [interactive]);
 
   return <div ref={el} role="application" aria-label="Satellite map of the Indian Ocean" className="cy-map h-full w-full" />;
 }
