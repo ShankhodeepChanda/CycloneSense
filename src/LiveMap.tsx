@@ -22,8 +22,18 @@ const KeyedTiles = (L.TileLayer as any).extend({
       const c = tile.getContext("2d")!;
       c.drawImage(img, 0, 0);
       try {
-        const d = c.getImageData(0, 0, tile.width, tile.height), p = d.data;
-        for (let i = 0; i < p.length; i += 4) if (p[i] <= 10 && p[i + 1] <= 10 && p[i + 2] <= 10) p[i + 3] = 0;
+        const d = c.getImageData(0, 0, tile.width, tile.height), p = d.data, w = tile.width, h = tile.height;
+        for (let i = 0; i < p.length; i += 4) if (p[i] <= 14 && p[i + 1] <= 14 && p[i + 2] <= 14) p[i + 3] = 0;
+        // JPEG leaves a dark fringe next to the black: peel up to 2 pixels of near-black off every cleared edge.
+        for (let pass = 0; pass < 2; pass++) {
+          const kill: number[] = [];
+          for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+            const o = (y * w + x) * 4;
+            if (p[o + 3] === 0 || Math.max(p[o], p[o + 1], p[o + 2]) > 60) continue;
+            if ((x > 0 && p[o - 1] === 0) || (x < w - 1 && p[o + 7] === 0) || (y > 0 && p[o - w * 4 + 3] === 0) || (y < h - 1 && p[o + w * 4 + 3] === 0)) kill.push(o + 3);
+          }
+          for (const k of kill) p[k] = 0;
+        }
         c.putImageData(d, 0, 0);
       } catch { /* shortcut: if the browser blocks pixel access the tile stays as drawn, black gaps included */ }
       done(undefined, tile);
@@ -34,7 +44,7 @@ const KeyedTiles = (L.TileLayer as any).extend({
   },
 });
 const tiles = (x: Variant, time: string, opts: L.TileLayerOptions): L.TileLayer =>
-  new (x.key ? KeyedTiles : L.TileLayer)(tileUrl(x, time), { maxNativeZoom: x.maxNative, maxZoom: 10, ...opts });
+  new (x.key ? KeyedTiles : L.TileLayer)(tileUrl(x, time), { maxNativeZoom: x.maxNative, maxZoom: 10, updateWhenZooming: false, ...opts });
 
 const ALERT_COLOR: Record<string, string> = { Red: "#ef4444", Orange: "#f97316", Green: "#22c55e" };
 
@@ -54,6 +64,7 @@ export function LiveMap({ layer, variant, under, time, cyclones, view, interacti
   const map = useRef<L.Map | null>(null);
   const sat = useRef<L.TileLayer | null>(null);
   const base = useRef<L.TileLayer | null>(null);
+  const stale = useRef<L.TileLayer[]>([]);
   const coast = useRef<L.GeoJSON | null>(null);
   const markers = useRef<L.LayerGroup | null>(null);
 
@@ -79,21 +90,25 @@ export function LiveMap({ layer, variant, under, time, cyclones, view, interacti
   }, [layer]);
 
   useEffect(() => {
-    if (!map.current) return;
-    sat.current?.remove();
+    const m = map.current;
+    if (!m) return;
+    // Keep the old image on screen until the new one has loaded, then drop it: no blank map while tiles arrive.
+    const old = sat.current;
+    if (old) stale.current.push(old);
     let errors = 0;
     onTileProblem(false);
-    sat.current = tiles(variant, time, { zIndex: 2, opacity: 0, attribution: "Imagery: NASA GIBS / EOSDIS", className: "cy-imagery" })
-      .on("load", () => sat.current?.setOpacity(1))
+    const next = tiles(variant, time, { zIndex: 2, attribution: "Imagery: NASA GIBS / EOSDIS" })
       .on("tileerror", () => { errors += 1; if (errors === 6) onTileProblem(true); })
-      .addTo(map.current);
+      .on("load", () => { for (const l of stale.current.splice(0)) if (l !== next) l.remove(); })
+      .addTo(m);
+    sat.current = next;
   }, [variant, time, onTileProblem]);
 
   // Dimmed previous-day true colour underneath, so gaps in the top layer show land and sea instead of nothing.
   useEffect(() => {
     if (!map.current) return;
     base.current?.remove();
-    base.current = tiles(LAYERS[0].variants[0], under, { zIndex: 1, className: "cy-under" }).addTo(map.current);
+    base.current = tiles({ ...LAYERS[0].variants[0], maxNative: 5 }, under, { zIndex: 1, opacity: 0.6 }).addTo(map.current);
   }, [under]);
 
   useEffect(() => {
