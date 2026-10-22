@@ -1,0 +1,152 @@
+{
+  "created_utc": "2026-10-22T11:24:18+00:00",
+  "training_duration_seconds": 333.29,
+  "args": {
+    "data_dir": "kaggle_multiyear45",
+    "channel": "ir",
+    "satellite": "all",
+    "epochs": 5,
+    "batch_size": 32,
+    "lr": 0.0001,
+    "size": 224,
+    "no_augmentation": false,
+    "workers": 2,
+    "no_pretrained": false,
+    "output": "models/multiyear45_resnet18_ir_weighted_lr1e4.pt",
+    "metrics": "models/multiyear45_metrics_ir_weighted_lr1e4.json",
+    "seed": 42,
+    "category_weighting": true,
+    "category_weight_power": 0.5
+  },
+  "storms": {
+    "train": 15,
+    "val": 15,
+    "test": 15
+  },
+  "images": {
+    "train": 487,
+    "val": 319,
+    "test": 334
+  },
+  "validation_history": [
+    {
+      "epoch": 1,
+      "n": 319,
+      "mae_kt": 54.98,
+      "rmse_kt": 63.49,
+      "category_accuracy": 0.382,
+      "within_one_category": 0.737,
+      "mae_kt_by_true_category": {
+        "TD": 50.33,
+        "TS": 50.49,
+        "C1": 59.71,
+        "C2": 55.07,
+        "C3": 63.74,
+        "C4": 77.18,
+        "C5": 65.97
+      }
+    },
+    {
+      "epoch": 2,
+      "n": 319,
+      "mae_kt": 27.3,
+      "rmse_kt": 34.93,
+      "category_accuracy": 0.404,
+      "within_one_category": 0.759,
+      "mae_kt_by_true_category": {
+        "TD": 23.77,
+        "TS": 23.79,
+        "C1": 24.33,
+        "C2": 28.99,
+        "C3": 29.16,
+        "C4": 50.32,
+        "C5": 60.8
+      }
+    },
+    {
+      "epoch": 3,
+      "n": 319,
+      "mae_kt": 23.87,
+      "rmse_kt": 30.46,
+      "category_accuracy": 0.361,
+      "within_one_category": 0.743,
+      "mae_kt_by_true_category": {
+        "TD": 24.65,
+        "TS": 23.06,
+        "C1": 18.83,
+        "C2": 18.8,
+        "C3": 23.91,
+        "C4": 29.25,
+        "C5": 46.91
+      }
+    },
+    {
+      "epoch": 4,
+      "n": 319,
+      "mae_kt": 21.87,
+      "rmse_kt": 28.11,
+      "category_accuracy": 0.439,
+      "within_one_category": 0.85,
+      "mae_kt_by_true_category": {
+        "TD": 20.4,
+        "TS": 19.4,
+        "C1": 19.54,
+        "C2": 18.82,
+        "C3": 29.71,
+        "C4": 32.27,
+        "C5": 46.74
+      }
+    },
+    {
+      "epoch": 5,
+      "n": 319,
+      "mae_kt": 20.83,
+      "rmse_kt": 26.92,
+      "category_accuracy": 0.411,
+      "within_one_category": 0.834,
+      "mae_kt_by_true_category": {
+        "TD": 20.71,
+        "TS": 18.45,
+        "C1": 17.34,
+        "C2": 17.06,
+        "C3": 27.48,
+        "C4": 29.17,
+        "C5": 39.51
+      }
+    }
+  ],
+  "best_epoch": 5,
+  "best_validation_mae_kt": 20.83,
+  "test_model": {
+    "n": 334,
+    "mae_kt": 18.93,
+    "rmse_kt": 24.98,
+    "category_accuracy": 0.458,
+    "within_one_category": 0.838,
+    "mae_kt_by_true_category": {
+      "TD": 22.83,
+      "TS": 18.11,
+      "C1": 17.64,
+      "C2": 11.27,
+      "C3": 14.92,
+      "C4": 13.29,
+      "C5": 20.95
+    }
+  },
+  "test_baseline_predict_train_mean": {
+    "n": 334,
+    "mae_kt": 21.96,
+    "rmse_kt": 29.03,
+    "category_accuracy": 0.434,
+    "within_one_category": 0.862,
+    "mae_kt_by_true_category": {
+      "TD": 26.35,
+      "TS": 7.69,
+      "C1": 20.89,
+      "C2": 39.64,
+      "C3": 53.14,
+      "C4": 73.41,
+      "C5": 97.78
+    }
+  }
+}
