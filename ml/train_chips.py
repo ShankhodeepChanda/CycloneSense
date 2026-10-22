@@ -86,6 +86,10 @@ def main(argv: list[str] | None = None) -> dict:
     p.add_argument("--output", default="models/intensity_resnet18.pt")
     p.add_argument("--metrics", default="metrics.json")
     p.add_argument("--seed", type=int, default=42)
+    p.add_argument("--category-weighting", action="store_true",
+                   help="Weight rare wind-intensity categories in the training loss")
+    p.add_argument("--category-weight-power", type=float, default=0.5,
+                   help="Inverse-frequency weighting power; default 0.5")
     args = p.parse_args(argv)
 
     torch.manual_seed(args.seed)
@@ -96,6 +100,22 @@ def main(argv: list[str] | None = None) -> dict:
     for s, df in parts.items():
         if df.empty:
             raise SystemExit(f"No '{s}' images for channel '{args.channel}'. Fetch more data or pick another channel.")
+    category_weights = {c: 1.0 for c in CATS}
+    if args.category_weighting:
+        counts = parts["train"]["wind_kt"].astype(float).map(category).value_counts()
+        n_train = len(parts["train"])
+        power = args.category_weight_power
+        if power < 0:
+            raise SystemExit("--category-weight-power must be non-negative")
+        raw = {
+            c: min(3.0, (n_train / (len(CATS) * max(int(counts.get(c, 0)), 1))) ** power)
+            for c in CATS
+        }
+        weighted_mean = sum(int(counts.get(c, 0)) * raw[c] for c in CATS) / n_train
+        category_weights = {c: raw[c] / weighted_mean for c in CATS}
+        category_weights = {c: min(3.0, w) for c, w in category_weights.items()}
+        print("Category loss weights:", json.dumps(category_weights, sort_keys=True))
+
     seen = [set(df["sid"]) for df in parts.values()]
     assert not (seen[0] & seen[1] or seen[0] & seen[2] or seen[1] & seen[2]), "storm leaked across splits"
 
@@ -108,17 +128,28 @@ def main(argv: list[str] | None = None) -> dict:
     model = CycloneImageClassifier(num_classes=1, pretrained=not args.no_pretrained).to(device)
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=1e-4)
     sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=args.epochs)
-    loss_fn = nn.HuberLoss(delta=0.2)  # on wind / 100 kt
+    loss_fn = nn.HuberLoss(delta=0.2, reduction="none")  # on wind / 100 kt
 
     best, out = float("inf"), Path(args.output)
     out.parent.mkdir(parents=True, exist_ok=True)
     print(f"device={device} channel={args.channel} " + " ".join(f"{s}={len(df)} imgs/{df['sid'].nunique()} storms" for s, df in parts.items()))
     for epoch in range(1, args.epochs + 1):
         model.train()
-        for x, y in loaders["train"]:
-            x, y = x.to(device), (y / 100).to(device)
+        for x, wind_kt in loaders["train"]:
+            x, wind_kt = x.to(device), wind_kt.to(device)
+            target = wind_kt / 100.0
             opt.zero_grad(set_to_none=True)
-            loss_fn(model(x).squeeze(1), y).backward()
+            per_sample_loss = loss_fn(model(x).squeeze(1), target)
+            if args.category_weighting:
+                sample_weights = torch.tensor(
+                    [category_weights[category(float(v))]
+                     for v in wind_kt.detach().cpu().tolist()],
+                    dtype=torch.float32, device=device,
+                )
+                loss = (per_sample_loss * sample_weights).mean()
+            else:
+                loss = per_sample_loss.mean()
+            loss.backward()
             opt.step()
         sched.step()
         val = score(*predict(model, loaders["val"], device))
