@@ -32,10 +32,26 @@ CATS = ["TD", "TS", "C1", "C2", "C3", "C4", "C5"]
 NORM = T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 
 
+
 class ChipDataset(Dataset):
-    def __init__(self, root: Path, rows: pd.DataFrame, size: int, train: bool):
+    def __init__(
+        self,
+        root: Path,
+        rows: pd.DataFrame,
+        size: int,
+        train: bool,
+        augment: bool = True,
+    ):
         self.root, self.rows = root, rows.reset_index(drop=True)
-        crop = [T.RandomResizedCrop(size, scale=(0.8, 1.0)), T.RandomRotation(30)] if train else [T.Resize(size)]
+
+        if train and augment:
+            crop = [
+                T.RandomResizedCrop(size, scale=(0.8, 1.0)),
+                T.RandomRotation(30),
+            ]
+        else:
+            crop = [T.Resize(size)]
+
         self.tf = T.Compose([*crop, T.ToTensor(), NORM])
 
     def __len__(self):
@@ -46,6 +62,7 @@ class ChipDataset(Dataset):
         with Image.open(self.root / r["image_path"]) as im:
             x = self.tf(im.convert("RGB"))
         return x, torch.tensor(float(r["wind_kt"]), dtype=torch.float32)
+
 
 
 def predict(model, loader, device) -> tuple[np.ndarray, np.ndarray]:
@@ -87,6 +104,11 @@ def main(argv: list[str] | None = None) -> dict:
     p.add_argument("--batch-size", type=int, default=64)
     p.add_argument("--lr", type=float, default=3e-4)
     p.add_argument("--size", type=int, default=224)
+    p.add_argument(
+    "--no-augmentation",
+    action="store_true",
+    help="Disable random cropping and rotation during training",
+)
     p.add_argument("--workers", type=int, default=2)
     p.add_argument("--no-pretrained", action="store_true", help="skip ImageNet weights (offline / tests)")
     p.add_argument("--output", default="models/intensity_resnet18.pt")
@@ -132,10 +154,20 @@ def main(argv: list[str] | None = None) -> dict:
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     loaders = {
-        s: DataLoader(ChipDataset(root, df, args.size, train=(s == "train")), batch_size=args.batch_size,
-                      shuffle=(s == "train"), num_workers=args.workers)
-        for s, df in parts.items()
-    }
+    s: DataLoader(
+        ChipDataset(
+            root,
+            df,
+            args.size,
+            train=(s == "train"),
+            augment=not args.no_augmentation,
+        ),
+        batch_size=args.batch_size,
+        shuffle=(s == "train"),
+        num_workers=args.workers,
+    )
+    for s, df in parts.items()
+}
     model = CycloneImageClassifier(num_classes=1, pretrained=not args.no_pretrained).to(device)
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=1e-4)
     sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=args.epochs)
