@@ -77,6 +77,12 @@ def main(argv: list[str] | None = None) -> dict:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--data-dir", default="kaggle_dataset")
     p.add_argument("--channel", default="truecolor", choices=["truecolor", "ir"])
+    p.add_argument(
+    "--satellite",
+    default="all",
+    choices=["all", "terra", "aqua"],
+    help="Filter images by satellite",
+)
     p.add_argument("--epochs", type=int, default=12)
     p.add_argument("--batch-size", type=int, default=64)
     p.add_argument("--lr", type=float, default=3e-4)
