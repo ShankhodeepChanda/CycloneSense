@@ -1,0 +1,61 @@
+{
+  "created_utc": "2026-10-22T10:52:28+00:00",
+  "args": {
+    "data_dir": "kaggle_multiyear45",
+    "channel": "ir",
+    "satellite": "aqua",
+    "epochs": 5,
+    "batch_size": 32,
+    "lr": 0.0003,
+    "size": 224,
+    "workers": 2,
+    "no_pretrained": false,
+    "output": "models/multiyear45_resnet18_ir_aqua.pt",
+    "metrics": "models/multiyear45_metrics_ir_aqua.json",
+    "seed": 42,
+    "category_weighting": true,
+    "category_weight_power": 0.5
+  },
+  "storms": {
+    "train": 15,
+    "val": 14,
+    "test": 15
+  },
+  "images": {
+    "train": 242,
+    "val": 157,
+    "test": 166
+  },
+  "test_model": {
+    "n": 166,
+    "mae_kt": 28.77,
+    "rmse_kt": 35.25,
+    "category_accuracy": 0.277,
+    "within_one_category": 0.651,
+    "mae_kt_by_true_category": {
+      "TD": 29.76,
+      "TS": 29.99,
+      "C1": 21.48,
+      "C2": 28.31,
+      "C3": 31.55,
+      "C4": 23.08,
+      "C5": 28.86
+    }
+  },
+  "test_baseline_predict_train_mean": {
+    "n": 166,
+    "mae_kt": 21.95,
+    "rmse_kt": 29.12,
+    "category_accuracy": 0.44,
+    "within_one_category": 0.861,
+    "mae_kt_by_true_category": {
+      "TD": 26.67,
+      "TS": 7.56,
+      "C1": 21.08,
+      "C2": 38.62,
+      "C3": 53.15,
+      "C4": 75.29,
+      "C5": 96.54
+    }
+  }
+}

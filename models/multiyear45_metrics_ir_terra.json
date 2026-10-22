@@ -1,0 +1,61 @@
+{
+  "created_utc": "2026-10-22T10:48:54+00:00",
+  "args": {
+    "data_dir": "kaggle_multiyear45",
+    "channel": "ir",
+    "satellite": "terra",
+    "epochs": 5,
+    "batch_size": 32,
+    "lr": 0.0003,
+    "size": 224,
+    "workers": 2,
+    "no_pretrained": false,
+    "output": "models/multiyear45_resnet18_ir_terra.pt",
+    "metrics": "models/multiyear45_metrics_ir_terra.json",
+    "seed": 42,
+    "category_weighting": true,
+    "category_weight_power": 0.5
+  },
+  "storms": {
+    "train": 15,
+    "val": 15,
+    "test": 15
+  },
+  "images": {
+    "train": 245,
+    "val": 162,
+    "test": 168
+  },
+  "test_model": {
+    "n": 168,
+    "mae_kt": 24.89,
+    "rmse_kt": 30.42,
+    "category_accuracy": 0.363,
+    "within_one_category": 0.732,
+    "mae_kt_by_true_category": {
+      "TD": 30.79,
+      "TS": 23.74,
+      "C1": 15.66,
+      "C2": 20.92,
+      "C3": 16.54,
+      "C4": 19.06,
+      "C5": 49.72
+    }
+  },
+  "test_baseline_predict_train_mean": {
+    "n": 168,
+    "mae_kt": 21.97,
+    "rmse_kt": 28.94,
+    "category_accuracy": 0.429,
+    "within_one_category": 0.863,
+    "mae_kt_by_true_category": {
+      "TD": 26.04,
+      "TS": 7.82,
+      "C1": 20.74,
+      "C2": 40.53,
+      "C3": 52.65,
+      "C4": 72.65,
+      "C5": 99.31
+    }
+  }
+}
