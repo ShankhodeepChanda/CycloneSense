@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -173,7 +174,9 @@ def main(argv: list[str] | None = None) -> dict:
     sched = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=args.epochs)
     loss_fn = nn.HuberLoss(delta=0.2, reduction="none")  # on wind / 100 kt
 
-    best, out = float("inf"), Path(args.output)
+    best, best_epoch, out = float("inf"), None, Path(args.output)
+    validation_history = []
+    training_started = time.perf_counter()
     out.parent.mkdir(parents=True, exist_ok=True)
     print(f"device={device} channel={args.channel} " + " ".join(f"{s}={len(df)} imgs/{df['sid'].nunique()} storms" for s, df in parts.items()))
     for epoch in range(1, args.epochs + 1):
@@ -196,9 +199,11 @@ def main(argv: list[str] | None = None) -> dict:
             opt.step()
         sched.step()
         val = score(*predict(model, loaders["val"], device))
+        validation_history.append({"epoch": epoch, **val})
         print(f"epoch {epoch:02d}/{args.epochs} val MAE {val['mae_kt']:.2f} kt, category acc {val['category_accuracy']:.3f}")
         if val["mae_kt"] < best:
             best = val["mae_kt"]
+            best_epoch = epoch
             torch.save({"model_state_dict": model.state_dict(), "architecture": "resnet18", "target": "wind_kt/100",
                         "channel": args.channel, "val": val}, out)
 
@@ -207,9 +212,13 @@ def main(argv: list[str] | None = None) -> dict:
     mean_wind = float(parts["train"]["wind_kt"].mean())
     metrics = {
         "created_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "training_duration_seconds": round(time.perf_counter() - training_started, 2),
         "args": vars(args),
         "storms": {s: int(df["sid"].nunique()) for s, df in parts.items()},
         "images": {s: int(len(df)) for s, df in parts.items()},
+        "validation_history": validation_history,
+        "best_epoch": best_epoch,
+        "best_validation_mae_kt": round(best, 2),
         "test_model": score(pred, truth),
         "test_baseline_predict_train_mean": score(np.full_like(truth, mean_wind), truth),
     }
