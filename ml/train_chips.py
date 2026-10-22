@@ -102,6 +102,11 @@ def main(argv: list[str] | None = None) -> dict:
     root = Path(args.data_dir)
     index = pd.read_csv(root / "images_index.csv")
     index = index[index["channel"] == args.channel]
+
+    if args.satellite != "all":
+       index = index[
+        index["satellite"].str.lower() == args.satellite
+    ].copy()
     parts = {s: index[index["split"] == s] for s in ("train", "val", "test")}
     for s, df in parts.items():
         if df.empty:
