@@ -1,0 +1,336 @@
+{
+  "timestamp": "2026-10-22T14:51:21Z",
+  "evaluation_context": {
+    "test_split": "kaggle_multiyear45, channel=ir, split=test",
+    "images": 334,
+    "storms": 15,
+    "years": [2018, 2019, 2020],
+    "note": "This is a diagnostic analysis on a repeatedly examined split"
+  },
+  "models": {
+    "A": {
+      "name": "Original weighted (lr=3e-4)",
+      "checkpoint": "models/multiyear45_resnet18_ir_weighted.pt",
+      "metrics_file": "models/multiyear45_metrics_ir_weighted.json",
+      "created_utc": "2026-10-22T10:26:10+00:00",
+      "configuration": {
+        "learning_rate": 0.0003,
+        "epochs": 5,
+        "batch_size": 32,
+        "augmentation": true,
+        "category_weighting": true,
+        "category_weight_power": 0.5,
+        "seed": 42
+      },
+      "training_data": {
+        "images": 487,
+        "storms": 15
+      },
+      "validation": {
+        "images": 319,
+        "storms": 15,
+        "best_mae_kt": 17.31
+      },
+      "test_performance": {
+        "images": 334,
+        "storms": 15,
+        "mae_kt": 16.42,
+        "rmse_kt": 20.86,
+        "category_accuracy": 0.476,
+        "within_one_category": 0.889,
+        "mean_bias_kt": 7.82,
+        "median_absolute_error_kt": 13.30,
+        "maximum_absolute_error_kt": 86.68,
+        "negative_predictions": 3
+      },
+      "test_by_category": {
+        "TD": {"images": 103, "storms": 14, "mae_kt": 17.93},
+        "TS": {"images": 145, "storms": 15, "mae_kt": 15.28},
+        "C1": {"images": 40, "storms": 11, "mae_kt": 16.63},
+        "C2": {"images": 20, "storms": 8, "mae_kt": 14.80},
+        "C3": {"images": 10, "storms": 6, "mae_kt": 15.84},
+        "C4": {"images": 9, "storms": 3, "mae_kt": 10.70, "note": "few_storms"},
+        "C5": {"images": 7, "storms": 1, "mae_kt": 29.60, "note": "one_storm"}
+      }
+    },
+    "B": {
+      "name": "Weighted, no augmentation",
+      "checkpoint": "models/multiyear45_resnet18_ir_weighted_noaug.pt",
+      "metrics_file": "models/multiyear45_metrics_ir_weighted_noaug.json",
+      "created_utc": "2026-10-22T11:10:31+00:00",
+      "configuration": {
+        "learning_rate": 0.0003,
+        "epochs": 5,
+        "batch_size": 32,
+        "augmentation": false,
+        "category_weighting": true,
+        "category_weight_power": 0.5,
+        "seed": 42
+      },
+      "training_data": {
+        "images": 487,
+        "storms": 15
+      },
+      "test_performance": {
+        "images": 334,
+        "storms": 15,
+        "mae_kt": 18.15,
+        "rmse_kt": 23.59,
+        "category_accuracy": 0.428,
+        "within_one_category": 0.877,
+        "mean_bias_kt": 6.53,
+        "median_absolute_error_kt": 13.92,
+        "maximum_absolute_error_kt": 87.72,
+        "negative_predictions": 2
+      },
+      "test_by_category": {
+        "TD": {"images": 103, "mae_kt": 19.84},
+        "TS": {"images": 145, "mae_kt": 16.10},
+        "C1": {"images": 40, "mae_kt": 12.07},
+        "C2": {"images": 20, "mae_kt": 19.31},
+        "C3": {"images": 10, "mae_kt": 17.84},
+        "C4": {"images": 9, "mae_kt": 19.47, "note": "few_storms"},
+        "C5": {"images": 7, "mae_kt": 65.71, "note": "one_storm"}
+      }
+    },
+    "C": {
+      "name": "Weighted, lr=1e-4",
+      "checkpoint": "models/multiyear45_resnet18_ir_weighted_lr1e4.pt",
+      "metrics_file": "models/multiyear45_metrics_ir_weighted_lr1e4.json",
+      "created_utc": "2026-10-22T11:24:18+00:00",
+      "configuration": {
+        "learning_rate": 0.0001,
+        "epochs": 5,
+        "batch_size": 32,
+        "augmentation": true,
+        "category_weighting": true,
+        "category_weight_power": 0.5,
+        "seed": 42
+      },
+      "training_data": {
+        "images": 487,
+        "storms": 15
+      },
+      "validation_history": {
+        "best_epoch": 5,
+        "best_mae_kt": 20.83,
+        "trend": "monotonic_improvement_epochs_1_to_5"
+      },
+      "test_performance": {
+        "images": 334,
+        "storms": 15,
+        "mae_kt": 18.93,
+        "rmse_kt": 24.98,
+        "category_accuracy": 0.458,
+        "within_one_category": 0.838,
+        "mean_bias_kt": 8.94,
+        "median_absolute_error_kt": 13.68,
+        "maximum_absolute_error_kt": 76.94,
+        "negative_predictions": 7
+      },
+      "test_by_category": {
+        "TD": {"images": 103, "mae_kt": 22.83},
+        "TS": {"images": 145, "mae_kt": 18.11},
+        "C1": {"images": 40, "mae_kt": 17.64},
+        "C2": {"images": 20, "mae_kt": 11.27},
+        "C3": {"images": 10, "mae_kt": 14.92},
+        "C4": {"images": 9, "mae_kt": 13.29, "note": "few_storms"},
+        "C5": {"images": 7, "mae_kt": 20.95, "note": "one_storm"}
+      }
+    }
+  },
+  "model_comparison": {
+    "rank_by_test_mae": [
+      {"rank": 1, "model": "A", "mae_kt": 16.42, "advantage": "best_overall"},
+      {"rank": 2, "model": "B", "mae_kt": 18.15, "gap_kt": 1.73},
+      {"rank": 3, "model": "C", "mae_kt": 18.93, "gap_kt": 2.51}
+    ],
+    "rank_by_test_rmse": [
+      {"rank": 1, "model": "A", "rmse_kt": 20.86},
+      {"rank": 2, "model": "B", "rmse_kt": 23.59},
+      {"rank": 3, "model": "C", "rmse_kt": 24.98}
+    ],
+    "rank_by_category_accuracy": [
+      {"rank": 1, "model": "A", "accuracy": 0.476},
+      {"rank": 2, "model": "C", "accuracy": 0.458},
+      {"rank": 3, "model": "B", "accuracy": 0.428}
+    ],
+    "hypothesis_tests": {
+      "A_vs_B": "Model A is better on MAE (1.73 kt) and category accuracy (4.8%); B is worse",
+      "A_vs_C": "Model A is better on MAE (2.51 kt) and category accuracy (1.8%); C shows no clear advantage",
+      "C_design_intent_vs_outcome": "Lowering learning rate (3e-4 to 1e-4) resulted in WORSE test performance, not better. Suggests underfitting or training instability."
+    }
+  },
+  "storm_level_analysis": {
+    "models_a_vs_c_comparison": {
+      "storms_improved_by_c": 3,
+      "storms_worsened_by_c": 12,
+      "storms_tied": 0,
+      "mean_mae_change_c_minus_a_kt": 1.99,
+      "median_mae_change_c_minus_a_kt": 1.73,
+      "paired_bootstrap_95_ci_kt": [0.21, 3.67],
+      "interpretation": "Model C is worse on average across storms. Bootstrap interval does not cross zero, but is only 15 storms with high variance."
+    },
+    "top_3_improvements_for_c": [
+      {
+        "rank": 1,
+        "storm": "MANGKHUT (2018250N12170)",
+        "improvement_kt": 6.23,
+        "c_mae_kt": 19.61,
+        "a_mae_kt": 25.84,
+        "note": "Intense storm; C better for high intensities"
+      },
+      {
+        "rank": 2,
+        "storm": "RITA (2019326S08163)",
+        "improvement_kt": 1.10,
+        "c_mae_kt": 14.20,
+        "a_mae_kt": 15.29
+      },
+      {
+        "rank": 3,
+        "storm": "SOULIK (2018227N11145)",
+        "improvement_kt": 0.59,
+        "c_mae_kt": 18.57,
+        "a_mae_kt": 19.16
+      }
+    ],
+    "top_3_regressions_for_c": [
+      {
+        "rank": 1,
+        "storm": "KROSA (2019216N16147)",
+        "regression_kt": 8.63,
+        "c_mae_kt": 24.74,
+        "a_mae_kt": 16.11,
+        "note": "Largest regression; C systematically overpredicts"
+      },
+      {
+        "rank": 2,
+        "storm": "USAGI (2018311N07179)",
+        "regression_kt": 5.99,
+        "c_mae_kt": 23.04,
+        "a_mae_kt": 17.04
+      },
+      {
+        "rank": 3,
+        "storm": "SAUDEL (2020291N06141)",
+        "regression_kt": 5.55,
+        "c_mae_kt": 21.16,
+        "a_mae_kt": 15.61
+      }
+    ]
+  },
+  "prediction_failure_analysis": {
+    "negative_predictions": {
+      "model_a": 3,
+      "model_b": 2,
+      "model_c": 7,
+      "concern": "Model C produces 2x more negative predictions than A"
+    },
+    "extreme_errors_threshold_50kt": {
+      "model_a": 5,
+      "model_b": 11,
+      "model_c": 20,
+      "concern": "Model C has 4x more extreme errors than A"
+    },
+    "prediction_spikes_30kt_within_48h": {
+      "model_a": 54,
+      "model_b": 47,
+      "model_c": 84,
+      "interpretation": "Model C shows more temporal instability"
+    },
+    "high_category_inconsistency": {
+      "c3_c4_c5_improvement_vs_a": {
+        "c3": {
+          "storms_improved": 2,
+          "storms_worsened": 4,
+          "mean_improvement_kt": -4.52,
+          "interpretation": "Net regression on C3; improvements are marginal"
+        },
+        "c4": {
+          "storms_improved": 1,
+          "storms_worsened": 2,
+          "sample_count": 3,
+          "note": "only_3_storms_too_few"
+        },
+        "c5": {
+          "storms_improved": 1,
+          "storms_worsened": 0,
+          "sample_count": 1,
+          "note": "only_1_storm_no_generalization"
+        }
+      }
+    }
+  },
+  "temporal_holdout_2021_2023": {
+    "dataset": "kaggle_temporal_test",
+    "years": [2021, 2022, 2023],
+    "storms": 15,
+    "images": 512,
+    "model_a_unweighted": {
+      "mae_kt": 27.40,
+      "rmse_kt": 37.08,
+      "category_accuracy": 0.318,
+      "within_one_category": 0.732,
+      "by_year": {
+        "2021": {"images": 142, "mae_kt": 33.92},
+        "2022": {"images": 154, "mae_kt": 21.36},
+        "2023": {"images": 216, "mae_kt": 27.42}
+      }
+    },
+    "model_a_weighted": {
+      "mae_kt": 17.21,
+      "rmse_kt": 22.07,
+      "category_accuracy": 0.416,
+      "within_one_category": 0.875,
+      "mean_bias_kt": 3.90,
+      "by_year": {
+        "2021": {"images": 142, "mae_kt": 19.71},
+        "2022": {"images": 154, "mae_kt": 14.35},
+        "2023": {"images": 216, "mae_kt": 17.61}
+      },
+      "note": "Weighted model performs 10.2 kt better MAE than unweighted"
+    },
+    "temporal_holdout_limitation": "Previously examined diagnostic evaluation; not unbiased final estimate"
+  },
+  "reproducibility_assessment": {
+    "training_pipeline": {
+      "seed_management": "GOOD - seed=42 set in all experiments",
+      "determinism": "EXPECTED - torch.manual_seed() called",
+      "randomness_sources": "DataLoader shuffle, random crop/rotation augmentation (controlled via --no-augmentation)",
+      "best_checkpoint_selection": "GOOD - by validation MAE at each epoch"
+    },
+    "validation_test_split_isolation": "GOOD - validation used only for selection; no tuning against test",
+    "target_scaling": "GOOD - wind_kt / 100 during training, * 100 during prediction",
+    "loss_function": "HuberLoss(delta=0.2) on normalized wind (wind_kt/100)",
+    "model_initialization": "ResNet18 with ImageNet pretrained weights (or random if --no-pretrained)"
+  },
+  "summary": {
+    "best_model": "A - Original weighted (lr=3e-4)",
+    "recommendation": "Keep Model A as the primary checkpoint",
+    "reasoning": [
+      "Lowest test MAE (16.42 kt) and RMSE (20.86 kt)",
+      "Highest category accuracy (0.476)",
+      "Fewest prediction pathologies (3 negatives, 5 extreme errors, 54 spikes)",
+      "Better temporal holdout performance (MAE 17.21 kt)",
+      "Model C shows systematic overprediction and instability despite lower learning rate"
+    ],
+    "model_c_analysis": [
+      "Lower learning rate (1e-4) did not improve generalization",
+      "Produces 2x more negative predictions and 4x more extreme errors",
+      "Storm-level analysis shows 12 regressions vs 3 improvements",
+      "No clear evidence that LR reduction helps high-intensity categories"
+    ],
+    "model_b_analysis": [
+      "No augmentation hurts performance (MAE 18.15 kt vs 16.42 kt for A)",
+      "Particularly poor on C5 (MAE 65.71 kt vs 29.60 kt for A)",
+      "Augmentation appears beneficial for this task"
+    ],
+    "next_steps": [
+      "Use Model A checkpoint for deployment decisions",
+      "Investigate why Model C produces negative predictions (check data, loss scaling)",
+      "Consider why C3/C4/C5 remain challenging across all models",
+      "Document temporal holdout results separately from diagnostic test"
+    ]
+  }
+}
