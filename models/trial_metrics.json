@@ -1,0 +1,50 @@
+{
+  "created_utc": "2026-10-22T08:07:17+00:00",
+  "args": {
+    "data_dir": "kaggle_trial",
+    "channel": "truecolor",
+    "epochs": 2,
+    "batch_size": 8,
+    "lr": 0.0003,
+    "size": 128,
+    "workers": 0,
+    "no_pretrained": true,
+    "output": "models/trial_resnet18.pt",
+    "metrics": "models/trial_metrics.json",
+    "seed": 42
+  },
+  "storms": {
+    "train": 22,
+    "val": 5,
+    "test": 4
+  },
+  "images": {
+    "train": 149,
+    "val": 37,
+    "test": 22
+  },
+  "test_model": {
+    "n": 22,
+    "mae_kt": 42.28,
+    "rmse_kt": 48.99,
+    "category_accuracy": 0.455,
+    "within_one_category": 0.909,
+    "mae_kt_by_true_category": {
+      "TD": 40.46,
+      "TS": 41.08,
+      "C1": 57.62
+    }
+  },
+  "test_baseline_predict_train_mean": {
+    "n": 22,
+    "mae_kt": 18.08,
+    "rmse_kt": 20.37,
+    "category_accuracy": 0.409,
+    "within_one_category": 1.0,
+    "mae_kt_by_true_category": {
+      "TD": 26.09,
+      "TS": 8.55,
+      "C1": 16.86
+    }
+  }
+}
