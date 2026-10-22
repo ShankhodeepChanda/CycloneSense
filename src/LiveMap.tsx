@@ -4,7 +4,7 @@ import "leaflet/dist/leaflet.css";
 import type { ActiveCyclone } from "../server/gdacs";
 import { LAYERS, tileUrl, type SatLayer, type Variant } from "./gibs";
 
-const PLACES: [string, number, number, "city" | "sea"][] = [
+export const PLACES: [string, number, number, "city" | "sea"][] = [
   ["Bay of Bengal", 14, 88, "sea"], ["Arabian Sea", 15, 64, "sea"], ["Indian Ocean", 2, 78, "sea"],
   ["New Delhi", 28.61, 77.21, "city"], ["Mumbai", 19.08, 72.88, "city"], ["Kolkata", 22.57, 88.36, "city"],
   ["Chennai", 13.08, 80.27, "city"], ["Visakhapatnam", 17.69, 83.22, "city"], ["Kochi", 9.93, 76.27, "city"],
@@ -53,13 +53,18 @@ interface Props {
   variant: Variant;
   under: string; // day (YYYY-MM-DD) of the dimmed true-colour layer that fills gaps
   time: string; // YYYY-MM-DD for daily layers, ISO UTC for near real-time
+  opacity: number;
+  showCoast: boolean;
+  showLabels: boolean;
+  showStorms: boolean;
   cyclones: ActiveCyclone[];
+  selectedId: string | null;
+  onSelect: (id: string) => void;
   view: { center: [number, number]; zoom: number; n: number }; // n changes to re-trigger the same view
-  interactive: boolean; // false while the page story scrolls past, true in the explore chapter
   onTileProblem: (problem: boolean) => void;
 }
 
-export function LiveMap({ layer, variant, under, time, cyclones, view, interactive, onTileProblem }: Props) {
+export function LiveMap({ layer, variant, under, time, opacity, showCoast, showLabels, showStorms, cyclones, selectedId, onSelect, view, onTileProblem }: Props) {
   const el = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
   const sat = useRef<L.TileLayer | null>(null);
@@ -67,6 +72,9 @@ export function LiveMap({ layer, variant, under, time, cyclones, view, interacti
   const stale = useRef<L.TileLayer[]>([]);
   const coast = useRef<L.GeoJSON | null>(null);
   const markers = useRef<L.LayerGroup | null>(null);
+  const labels = useRef<L.LayerGroup | null>(null);
+  const op = useRef(opacity);
+  op.current = opacity;
 
   useEffect(() => {
     const m = L.map(el.current!, { center: [20, 128], zoom: 3, minZoom: 3, maxZoom: 10, worldCopyJump: true, scrollWheelZoom: false, zoomControl: false });
@@ -74,20 +82,34 @@ export function LiveMap({ layer, variant, under, time, cyclones, view, interacti
     // The page scrolls, so wheel-zoom only switches on after a click and off again when the pointer leaves.
     m.on("click", () => m.scrollWheelZoom.enable());
     m.getContainer().addEventListener("mouseleave", () => m.scrollWheelZoom.disable());
+    m.getContainer().title = "Click the map once to zoom with the scroll wheel";
+    labels.current = L.layerGroup();
     for (const [name, lat, lon, kind] of PLACES) {
-      L.marker([lat, lon], { interactive: false, keyboard: false, icon: L.divIcon({ className: "", html: `<span class="cy-label ${kind}">${name}</span>`, iconSize: [0, 0] }) }).addTo(m);
+      L.marker([lat, lon], { interactive: false, keyboard: false, icon: L.divIcon({ className: "", html: `<span class="cy-label ${kind}">${name}</span>`, iconSize: [0, 0] }) }).addTo(labels.current);
     }
     fetch("/coast.json").then((r) => r.json()).then((g) => {
-      if (map.current) coast.current = L.geoJSON(g, { interactive: false, style: { color: "#fff", weight: 1.1, opacity: 0.85 } }).addTo(map.current);
+      if (map.current) coast.current = L.geoJSON(g, { interactive: false, style: { color: "#fff", weight: 1.1, opacity: 0.85 } });
     }).catch(() => {}); // coastline is decoration; the map works without it
     markers.current = L.layerGroup().addTo(m);
     map.current = m;
     return () => { m.remove(); map.current = null; };
   }, []);
 
+  const toggle = (g: L.Layer | null, on: boolean) => {
+    const m = map.current;
+    if (!m || !g) return;
+    if (on && !m.hasLayer(g)) g.addTo(m);
+    if (!on && m.hasLayer(g)) g.remove();
+  };
   useEffect(() => {
+    // The coastline file loads asynchronously, so retry until it exists.
+    const t = setInterval(() => { if (coast.current) { coast.current.setStyle({ color: layer.coast }); toggle(coast.current, showCoast); clearInterval(t); } }, 150);
     coast.current?.setStyle({ color: layer.coast });
-  }, [layer]);
+    toggle(coast.current, showCoast);
+    return () => clearInterval(t);
+  }, [layer, showCoast]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => toggle(labels.current, showLabels), [showLabels]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { sat.current?.setOpacity(opacity); }, [opacity]);
 
   useEffect(() => {
     const m = map.current;
@@ -97,7 +119,7 @@ export function LiveMap({ layer, variant, under, time, cyclones, view, interacti
     if (old) stale.current.push(old);
     let errors = 0;
     onTileProblem(false);
-    const next = tiles(variant, time, { zIndex: 2, attribution: "Imagery: NASA GIBS / EOSDIS" })
+    const next = tiles(variant, time, { zIndex: 2, opacity: op.current, attribution: "Imagery: NASA GIBS / EOSDIS" })
       .on("tileerror", () => { errors += 1; if (errors === 6) onTileProblem(true); })
       .on("load", () => { for (const l of stale.current.splice(0)) if (l !== next) l.remove(); })
       .addTo(m);
@@ -113,35 +135,26 @@ export function LiveMap({ layer, variant, under, time, cyclones, view, interacti
 
   useEffect(() => {
     markers.current?.clearLayers();
+    if (!showStorms) return;
     for (const c of cyclones) {
       const color = ALERT_COLOR[c.alert] ?? "#94a3b8";
       const mk = L.marker([c.lat, c.lon], {
-        zIndexOffset: c.nio ? 1000 : 0,
+        zIndexOffset: c.id === selectedId ? 2000 : c.nio ? 1000 : 0,
         icon: L.divIcon({ className: "", iconSize: [34, 34], iconAnchor: [17, 17],
-          html: `<div class="cy-pin${c.nio ? " nio" : ""}" style="--c:${color}"><i></i><b></b></div>` }),
-      }).addTo(markers.current!);
+          html: `<div class="cy-pin${c.nio ? " nio" : ""}${c.id === selectedId ? " sel" : ""}" style="--c:${color}"><i></i><b></b></div>` }),
+      }).on("click", () => onSelect(c.id)).addTo(markers.current!);
       const name = document.createElement("span"); // textContent, so a feed name can never inject HTML
       name.textContent = c.name;
       mk.bindTooltip(name, { permanent: true, direction: "right", offset: [14, 0] });
     }
-  }, [cyclones]);
+  }, [cyclones, selectedId, showStorms, onSelect]);
 
   useEffect(() => {
     const m = map.current;
     if (!m) return;
     const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    // Shift the target away from the text panel (left on desktop, bottom on phones) so the storm is not hidden behind it.
-    const wide = innerWidth > 900;
-    const at = m.project(view.center, view.zoom).add(wide ? [-Math.min(240, innerWidth * 0.18), 0] : [0, innerHeight * 0.18]);
-    m.flyTo(m.unproject(at, view.zoom), view.zoom, { animate: !calm, duration: 2.4 });
+    m.flyTo(view.center, view.zoom, { animate: !calm, duration: 2 });
   }, [view]);
-
-  useEffect(() => {
-    const m = map.current;
-    if (!m) return;
-    for (const h of [m.dragging, m.touchZoom, m.doubleClickZoom, m.boxZoom, m.keyboard]) interactive ? h.enable() : h.disable();
-    if (!interactive) m.scrollWheelZoom.disable();
-  }, [interactive]);
 
   return <div ref={el} role="application" aria-label="Satellite map of the Indian Ocean" className="cy-map h-full w-full" />;
 }
