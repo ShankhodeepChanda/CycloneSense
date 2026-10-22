@@ -1,0 +1,163 @@
+{
+  "checkpoint": "models/multiyear45_resnet18_ir_weighted.pt",
+  "source_predictions": "models\\temporal_test_predictions_weighted.csv",
+  "images": 512,
+  "storms": 15,
+  "overall": {
+    "mae_kt": 17.212,
+    "rmse_kt": 22.066,
+    "mean_bias_kt": 3.899
+  },
+  "by_actual_category": {
+    "TD": {
+      "images": 152,
+      "storms": 15,
+      "actual_mean_kt": 24.375,
+      "predicted_mean_kt": 37.425,
+      "mean_bias_kt": 13.05,
+      "mae_kt": 16.907,
+      "rmse_kt": 21.71
+    },
+    "TS": {
+      "images": 159,
+      "storms": 15,
+      "actual_mean_kt": 44.057,
+      "predicted_mean_kt": 53.53,
+      "mean_bias_kt": 9.474,
+      "mae_kt": 17.409,
+      "rmse_kt": 22.134
+    },
+    "C1": {
+      "images": 68,
+      "storms": 12,
+      "actual_mean_kt": 71.765,
+      "predicted_mean_kt": 76.046,
+      "mean_bias_kt": 4.281,
+      "mae_kt": 12.183,
+      "rmse_kt": 15.274
+    },
+    "C2": {
+      "images": 38,
+      "storms": 9,
+      "actual_mean_kt": 90.0,
+      "predicted_mean_kt": 85.671,
+      "mean_bias_kt": -4.329,
+      "mae_kt": 14.613,
+      "rmse_kt": 17.748
+    },
+    "C3": {
+      "images": 33,
+      "storms": 9,
+      "actual_mean_kt": 105.758,
+      "predicted_mean_kt": 98.769,
+      "mean_bias_kt": -6.988,
+      "mae_kt": 16.447,
+      "rmse_kt": 19.934
+    },
+    "C4": {
+      "images": 56,
+      "storms": 9,
+      "actual_mean_kt": 122.5,
+      "predicted_mean_kt": 101.617,
+      "mean_bias_kt": -20.883,
+      "mae_kt": 23.715,
+      "rmse_kt": 29.309
+    },
+    "C5": {
+      "images": 6,
+      "storms": 2,
+      "actual_mean_kt": 154.167,
+      "predicted_mean_kt": 117.465,
+      "mean_bias_kt": -36.701,
+      "mae_kt": 36.701,
+      "rmse_kt": 42.25
+    }
+  },
+  "storm_summary": {
+    "best_mae_storms": [
+      {
+        "sid": "2022244N38313",
+        "name": "DANIELLE",
+        "year": 2022,
+        "images": 32,
+        "mae_kt": 10.664,
+        "mean_bias_kt": 8.38
+      },
+      {
+        "sid": "2022024S09090",
+        "name": "BATSIRAI",
+        "year": 2022,
+        "images": 32,
+        "mae_kt": 11.408,
+        "mean_bias_kt": 2.141
+      },
+      {
+        "sid": "2021222N12262",
+        "name": "LINDA",
+        "year": 2021,
+        "images": 30,
+        "mae_kt": 12.799,
+        "mean_bias_kt": 1.495
+      },
+      {
+        "sid": "2023232N13300",
+        "name": "FRANKLIN",
+        "year": 2023,
+        "images": 41,
+        "mae_kt": 12.893,
+        "mean_bias_kt": 4.658
+      },
+      {
+        "sid": "2022167N11269",
+        "name": "CELIA",
+        "year": 2022,
+        "images": 28,
+        "mae_kt": 12.908,
+        "mean_bias_kt": 2.779
+      }
+    ],
+    "worst_mae_storms": [
+      {
+        "sid": "2021197N17135",
+        "name": "IN-FA",
+        "year": 2021,
+        "images": 29,
+        "mae_kt": 25.095,
+        "mean_bias_kt": 23.233
+      },
+      {
+        "sid": "2021102N06144",
+        "name": "SURIGAE",
+        "year": 2021,
+        "images": 28,
+        "mae_kt": 23.504,
+        "mean_bias_kt": -6.367
+      },
+      {
+        "sid": "2022346S10098",
+        "name": "DARIAN",
+        "year": 2022,
+        "images": 34,
+        "mae_kt": 20.965,
+        "mean_bias_kt": -1.906
+      },
+      {
+        "sid": "2023036S12117",
+        "name": "FREDDY",
+        "year": 2023,
+        "images": 74,
+        "mae_kt": 20.548,
+        "mean_bias_kt": 5.268
+      },
+      {
+        "sid": "2021062S14064",
+        "name": "HABANA",
+        "year": 2021,
+        "images": 28,
+        "mae_kt": 18.868,
+        "mean_bias_kt": -4.475
+      }
+    ]
+  },
+  "caution": "Images within a storm are correlated. Storm-level results are important, and this 15-storm sample is too small to establish broad operational reliability."
+}
