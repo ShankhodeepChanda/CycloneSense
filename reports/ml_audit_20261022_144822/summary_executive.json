@@ -1,0 +1,185 @@
+{
+  "audit_metadata": {
+    "timestamp": "2026-10-22T14:54:26Z",
+    "audit_directory": "reports/ml_audit_20261022_144822/",
+    "repository": "D:\\CycloneSense",
+    "branch": "main",
+    "python_version": "3.14.7",
+    "pytorch_version": "2.14.1+cpu",
+    "device": "cpu"
+  },
+  "recommendation": {
+    "best_model": "A",
+    "checkpoint": "models/multiyear45_resnet18_ir_weighted.pt",
+    "decision": "KEEP - Do not replace with Model B or C",
+    "confidence": "HIGH"
+  },
+  "model_rankings": [
+    {
+      "rank": 1,
+      "model": "A",
+      "name": "Original weighted (lr=3e-4)",
+      "test_mae_kt": 16.42,
+      "test_rmse_kt": 20.86,
+      "category_accuracy": 0.476,
+      "negative_predictions": 3,
+      "extreme_errors_50kt": 5,
+      "temporal_holdout_mae_kt": 17.21,
+      "status": "BEST"
+    },
+    {
+      "rank": 2,
+      "model": "B",
+      "name": "Weighted, no augmentation",
+      "test_mae_kt": 18.15,
+      "test_rmse_kt": 23.59,
+      "category_accuracy": 0.428,
+      "negative_predictions": 2,
+      "extreme_errors_50kt": 11,
+      "gap_from_best_kt": 1.73,
+      "status": "WORSE - Augmentation matters"
+    },
+    {
+      "rank": 3,
+      "model": "C",
+      "name": "Weighted, lr=1e-4",
+      "test_mae_kt": 18.93,
+      "test_rmse_kt": 24.98,
+      "category_accuracy": 0.458,
+      "negative_predictions": 7,
+      "extreme_errors_50kt": 20,
+      "gap_from_best_kt": 2.51,
+      "status": "REGRESSION - Lower LR failed"
+    }
+  ],
+  "dataset_integrity": {
+    "kaggle_multiyear45": {
+      "total_images": 2280,
+      "total_storms": 45,
+      "temporal_range": "2018-2020",
+      "train_images": 974,
+      "val_images": 638,
+      "test_images": 668,
+      "test_images_ir": 334,
+      "storm_leakage": "NONE",
+      "split_integrity": "PASS"
+    },
+    "kaggle_temporal_test": {
+      "total_images": 512,
+      "total_storms": 15,
+      "temporal_range": "2021-2023",
+      "storm_overlap_with_training": "NONE",
+      "status": "PASS - Diagnostic holdout"
+    }
+  },
+  "storm_level_comparison_a_vs_c": {
+    "storms_improved_by_c": 3,
+    "storms_worsened_by_c": 12,
+    "mean_mae_change_c_minus_a_kt": 1.99,
+    "bootstrap_95_ci_kt": [0.21, 3.67],
+    "interpretation": "Model C is systematically worse across storms"
+  },
+  "high_category_performance": {
+    "c3": {
+      "images": 10,
+      "storms": 6,
+      "model_a_mae_kt": 15.84,
+      "model_c_mae_kt": 14.92,
+      "c_improvement_kt": 0.92,
+      "storm_level_consistency": "4 of 6 storms worse with C"
+    },
+    "c4": {
+      "images": 9,
+      "storms": 3,
+      "model_a_mae_kt": 10.70,
+      "model_c_mae_kt": 13.29,
+      "c_improvement_kt": -2.59,
+      "warning": "Only 3 storms - unreliable"
+    },
+    "c5": {
+      "images": 7,
+      "storms": 1,
+      "model_a_mae_kt": 29.60,
+      "model_c_mae_kt": 20.95,
+      "c_improvement_kt": 8.65,
+      "warning": "Only 1 storm (MANGKHUT) - no generalization"
+    }
+  },
+  "failure_modes": {
+    "negative_predictions": {
+      "model_a": 3,
+      "model_b": 2,
+      "model_c": 7,
+      "concern": "Model C produces 2.3x more negative predictions"
+    },
+    "extreme_errors_50kt_threshold": {
+      "model_a": 5,
+      "model_b": 11,
+      "model_c": 20,
+      "concern": "Model C has 4x more extreme errors"
+    },
+    "prediction_spikes_30kt_within_48h": {
+      "model_a": 54,
+      "model_b": 47,
+      "model_c": 84,
+      "concern": "Model C shows temporal instability"
+    }
+  },
+  "reproducibility": {
+    "seed_management": "GOOD",
+    "split_determinism": "GOOD",
+    "target_scaling": "GOOD",
+    "validation_isolation": "GOOD",
+    "metrics_verification": "PASS - All stored metrics match recomputed values"
+  },
+  "limitations": {
+    "high_category_sample_size": "C4 (3 storms) and C5 (1 storm) insufficient for reliable conclusions",
+    "test_split_reuse": "2018-2020 test split examined multiple times; not final holdout",
+    "temporal_holdout_reuse": "2021-2023 holdout previously examined; diagnostic only",
+    "image_correlation": "Multiple images per storm are not independent samples",
+    "operational_validation": "Image-level metrics do not establish forecasting reliability"
+  },
+  "artifacts_generated": {
+    "json_reports": [
+      "dataset_audit.json",
+      "model_metrics_comparison.json",
+      "summary.json",
+      "summary_executive.json"
+    ],
+    "csv_tables": [
+      "aligned_test_predictions.csv",
+      "storm_level_comparison.csv",
+      "category_comparison.csv",
+      "high_category_storm_comparison.csv",
+      "error_cases.csv"
+    ],
+    "visualizations": [
+      "per_storm_mae_A_vs_C.png",
+      "actual_vs_predicted_A_vs_C.png",
+      "category_mae_A_B_C.png",
+      "storm_series_most_improved.png",
+      "storm_series_most_regressed.png"
+    ],
+    "reports": [
+      "report.md",
+      "FINAL_AUDIT_REPORT.md"
+    ]
+  },
+  "next_steps": [
+    "Keep Model A as production checkpoint",
+    "Investigate Model C negative prediction failure modes",
+    "Do not tune further against existing test split",
+    "Collect more C4/C5 training data if possible",
+    "Test on completely new temporal data (2024+) when available",
+    "Document known limitations in README"
+  ],
+  "critical_issues": [],
+  "warnings": [
+    "Model C regression: lower LR resulted in worse performance",
+    "Model C produces excessive negative predictions and extreme errors",
+    "C4 and C5 categories have insufficient sample sizes (3 and 1 storms)",
+    "High-category improvements for Model C are not storm-level consistent"
+  ],
+  "audit_complete": true,
+  "audit_passed": true
+}
