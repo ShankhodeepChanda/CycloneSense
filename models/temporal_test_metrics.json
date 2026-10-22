@@ -1,0 +1,92 @@
+{
+  "experiment": "Temporal holdout: train years 2018-2020; test years 2021-2023",
+  "checkpoint": "models\\multiyear45_resnet18_ir.pt",
+  "channel": "ir",
+  "device": "cpu",
+  "test_images": 512,
+  "test_storms": 15,
+  "test_years": [
+    2021,
+    2022,
+    2023
+  ],
+  "training_images_for_baseline": 487,
+  "training_storms_for_baseline": 15,
+  "training_mean_wind_kt": 49.363,
+  "test_model": {
+    "n": 512,
+    "mae_kt": 27.401,
+    "rmse_kt": 37.077,
+    "category_accuracy": 0.3184,
+    "within_one_category": 0.7324
+  },
+  "test_baseline_predict_train_mean": {
+    "n": 512,
+    "mae_kt": 28.66,
+    "rmse_kt": 36.569,
+    "category_accuracy": 0.3105,
+    "within_one_category": 0.7402
+  },
+  "by_year": {
+    "2021": {
+      "images": 142,
+      "storms": 5,
+      "model": {
+        "n": 142,
+        "mae_kt": 33.922,
+        "rmse_kt": 42.802,
+        "category_accuracy": 0.1761,
+        "within_one_category": 0.5845
+      },
+      "baseline": {
+        "n": 142,
+        "mae_kt": 35.523,
+        "rmse_kt": 43.651,
+        "category_accuracy": 0.2535,
+        "within_one_category": 0.5845
+      }
+    },
+    "2022": {
+      "images": 154,
+      "storms": 5,
+      "model": {
+        "n": 154,
+        "mae_kt": 21.361,
+        "rmse_kt": 28.911,
+        "category_accuracy": 0.4091,
+        "within_one_category": 0.8182
+      },
+      "baseline": {
+        "n": 154,
+        "mae_kt": 23.504,
+        "rmse_kt": 29.996,
+        "category_accuracy": 0.3831,
+        "within_one_category": 0.8377
+      }
+    },
+    "2023": {
+      "images": 216,
+      "storms": 5,
+      "model": {
+        "n": 216,
+        "mae_kt": 27.421,
+        "rmse_kt": 38.188,
+        "category_accuracy": 0.3472,
+        "within_one_category": 0.7685
+      },
+      "baseline": {
+        "n": 216,
+        "mae_kt": 27.823,
+        "rmse_kt": 35.718,
+        "category_accuracy": 0.2963,
+        "within_one_category": 0.7731
+      }
+    }
+  },
+  "notes": [
+    "Checkpoint was loaded without retraining.",
+    "Temporal test storms were checked for overlap with training storms.",
+    "Test results must not be used to tune this checkpoint.",
+    "Images from a storm are correlated; image-level metrics are not independent-sample estimates."
+  ]
+}
