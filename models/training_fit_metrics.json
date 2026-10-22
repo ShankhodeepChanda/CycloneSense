@@ -1,0 +1,156 @@
+{
+  "checkpoint": "models\\multiyear45_resnet18_ir.pt",
+  "warning": "Training metrics are in-sample because these images were used to fit the checkpoint. Validation metrics are the more useful diagnostic of generalization within 2018-2020.",
+  "overall": {
+    "train": {
+      "images": 487,
+      "storms": 15,
+      "actual_mean_kt": 49.363,
+      "predicted_mean_kt": 36.216,
+      "mean_bias_kt": -13.148,
+      "mae_kt": 20.723,
+      "rmse_kt": 27.919
+    },
+    "val": {
+      "images": 319,
+      "storms": 15,
+      "actual_mean_kt": 54.608,
+      "predicted_mean_kt": 36.49,
+      "mean_bias_kt": -18.118,
+      "mae_kt": 25.122,
+      "rmse_kt": 34.593
+    }
+  },
+  "by_category": {
+    "train": {
+      "TD": {
+        "images": 187,
+        "storms": 15,
+        "actual_mean_kt": 22.246,
+        "predicted_mean_kt": 25.574,
+        "mean_bias_kt": 3.328,
+        "mae_kt": 11.471,
+        "rmse_kt": 13.794
+      },
+      "TS": {
+        "images": 171,
+        "storms": 14,
+        "actual_mean_kt": 45.994,
+        "predicted_mean_kt": 36.598,
+        "mean_bias_kt": -9.396,
+        "mae_kt": 14.718,
+        "rmse_kt": 18.382
+      },
+      "C1": {
+        "images": 46,
+        "storms": 12,
+        "actual_mean_kt": 72.174,
+        "predicted_mean_kt": 42.766,
+        "mean_bias_kt": -29.408,
+        "mae_kt": 29.665,
+        "rmse_kt": 33.096
+      },
+      "C2": {
+        "images": 32,
+        "storms": 10,
+        "actual_mean_kt": 90.469,
+        "predicted_mean_kt": 54.412,
+        "mean_bias_kt": -36.057,
+        "mae_kt": 36.057,
+        "rmse_kt": 38.953
+      },
+      "C3": {
+        "images": 30,
+        "storms": 8,
+        "actual_mean_kt": 105.833,
+        "predicted_mean_kt": 57.12,
+        "mean_bias_kt": -48.714,
+        "mae_kt": 48.714,
+        "rmse_kt": 50.876
+      },
+      "C4": {
+        "images": 19,
+        "storms": 7,
+        "actual_mean_kt": 121.316,
+        "predicted_mean_kt": 56.18,
+        "mean_bias_kt": -65.135,
+        "mae_kt": 65.135,
+        "rmse_kt": 67.659
+      },
+      "C5": {
+        "images": 2,
+        "storms": 1,
+        "actual_mean_kt": 160.0,
+        "predicted_mean_kt": 53.603,
+        "mean_bias_kt": -106.397,
+        "mae_kt": 106.397,
+        "rmse_kt": 106.447
+      }
+    },
+    "val": {
+      "TD": {
+        "images": 114,
+        "storms": 14,
+        "actual_mean_kt": 24.956,
+        "predicted_mean_kt": 28.615,
+        "mean_bias_kt": 3.659,
+        "mae_kt": 12.261,
+        "rmse_kt": 14.835
+      },
+      "TS": {
+        "images": 101,
+        "storms": 15,
+        "actual_mean_kt": 44.95,
+        "predicted_mean_kt": 34.53,
+        "mean_bias_kt": -10.42,
+        "mae_kt": 14.415,
+        "rmse_kt": 17.47
+      },
+      "C1": {
+        "images": 34,
+        "storms": 11,
+        "actual_mean_kt": 69.412,
+        "predicted_mean_kt": 41.141,
+        "mean_bias_kt": -28.271,
+        "mae_kt": 28.743,
+        "rmse_kt": 31.268
+      },
+      "C2": {
+        "images": 19,
+        "storms": 8,
+        "actual_mean_kt": 90.0,
+        "predicted_mean_kt": 51.735,
+        "mean_bias_kt": -38.265,
+        "mae_kt": 38.265,
+        "rmse_kt": 40.99
+      },
+      "C3": {
+        "images": 19,
+        "storms": 8,
+        "actual_mean_kt": 103.947,
+        "predicted_mean_kt": 49.111,
+        "mean_bias_kt": -54.836,
+        "mae_kt": 54.836,
+        "rmse_kt": 57.511
+      },
+      "C4": {
+        "images": 27,
+        "storms": 7,
+        "actual_mean_kt": 121.852,
+        "predicted_mean_kt": 50.669,
+        "mean_bias_kt": -71.183,
+        "mae_kt": 71.183,
+        "rmse_kt": 74.087
+      },
+      "C5": {
+        "images": 5,
+        "storms": 3,
+        "actual_mean_kt": 140.0,
+        "predicted_mean_kt": 41.564,
+        "mean_bias_kt": -98.436,
+        "mae_kt": 98.436,
+        "rmse_kt": 99.615
+      }
+    }
+  }
+}
