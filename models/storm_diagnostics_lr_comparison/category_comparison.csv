@@ -1,0 +1,22 @@
+category,model,model_name,images,storms,actual_mean_kt,predicted_mean_kt,mae_kt,rmse_kt,mean_bias_kt,median_absolute_error_kt,maximum_absolute_error_kt,negative_prediction_count,low_sample_flag,sample_warning
+TD,A,Original weighted (lr=3e-4),103,14,23.0097,34.744,17.9297,22.6271,11.7343,13.245,67.5839,2,False,
+TD,B,"Weighted, no augmentation",103,14,23.0097,39.1254,19.8422,24.0248,16.1156,18.0913,59.1516,2,False,
+TD,C,"Weighted, lr=1e-4",103,14,23.0097,38.5203,22.8303,29.0832,15.5106,18.8153,68.9019,4,False,
+TS,A,Original weighted (lr=3e-4),145,15,46.2759,54.4181,15.2807,18.9371,8.1422,11.8757,49.5029,1,False,
+TS,B,"Weighted, no augmentation",145,15,46.2759,57.2542,16.098,20.8858,10.9784,12.7739,67.5681,0,False,
+TS,C,"Weighted, lr=1e-4",145,15,46.2759,55.8622,18.1074,24.2855,9.5864,12.7367,76.9372,3,False,
+C1,A,Original weighted (lr=3e-4),40,11,70.25,77.8173,16.6304,20.5282,7.5673,14.6739,45.865,0,False,
+C1,B,"Weighted, no augmentation",40,11,70.25,66.5251,12.0722,16.1869,-3.7249,8.2553,41.2165,0,False,
+C1,C,"Weighted, lr=1e-4",40,11,70.25,72.0002,17.6352,21.8695,1.7502,14.1182,45.7671,0,False,
+C2,A,Original weighted (lr=3e-4),20,8,89.0,90.2886,14.8017,18.4355,1.2886,12.9733,39.9444,0,False,
+C2,B,"Weighted, no augmentation",20,8,89.0,78.0244,19.307,23.9446,-10.9756,13.5589,45.3118,0,False,
+C2,C,"Weighted, lr=1e-4",20,8,89.0,93.0056,11.2675,14.1868,4.0056,9.0352,27.9196,0,False,
+C3,A,Original weighted (lr=3e-4),10,6,102.5,114.2419,15.8357,21.7862,11.7419,10.6694,48.3019,0,False,
+C3,B,"Weighted, no augmentation",10,6,102.5,95.7734,17.8388,21.5227,-6.7266,19.8142,38.3147,0,False,
+C3,C,"Weighted, lr=1e-4",10,6,102.5,103.5192,14.9152,17.4969,1.0192,13.649,29.0054,0,False,
+C4,A,Original weighted (lr=3e-4),9,3,122.7778,121.0231,10.7027,13.4291,-1.7546,10.3767,21.8104,0,True,Fewer than 10 images or fewer than 5 storms
+C4,B,"Weighted, no augmentation",9,3,122.7778,103.3117,19.466,23.2306,-19.466,28.545,34.8712,0,True,Fewer than 10 images or fewer than 5 storms
+C4,C,"Weighted, lr=1e-4",9,3,122.7778,120.5299,13.2915,16.2308,-2.2479,11.5902,37.1898,0,True,Fewer than 10 images or fewer than 5 storms
+C5,A,Original weighted (lr=3e-4),7,1,147.1429,117.5384,29.6045,38.9864,-29.6045,15.3196,86.6804,0,True,Fewer than 10 images or fewer than 5 storms
+C5,B,"Weighted, no augmentation",7,1,147.1429,81.4354,65.7075,67.3857,-65.7075,64.1647,87.7169,0,True,Fewer than 10 images or fewer than 5 storms
+C5,C,"Weighted, lr=1e-4",7,1,147.1429,126.7724,20.9534,32.1218,-20.3705,14.4648,73.7643,0,True,Fewer than 10 images or fewer than 5 storms
