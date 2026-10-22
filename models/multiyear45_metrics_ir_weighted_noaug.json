@@ -1,0 +1,62 @@
+{
+  "created_utc": "2026-10-22T11:10:31+00:00",
+  "args": {
+    "data_dir": "kaggle_multiyear45",
+    "channel": "ir",
+    "satellite": "all",
+    "epochs": 5,
+    "batch_size": 32,
+    "lr": 0.0003,
+    "size": 224,
+    "no_augmentation": true,
+    "workers": 2,
+    "no_pretrained": false,
+    "output": "models/multiyear45_resnet18_ir_weighted_noaug.pt",
+    "metrics": "models/multiyear45_metrics_ir_weighted_noaug.json",
+    "seed": 42,
+    "category_weighting": true,
+    "category_weight_power": 0.5
+  },
+  "storms": {
+    "train": 15,
+    "val": 15,
+    "test": 15
+  },
+  "images": {
+    "train": 487,
+    "val": 319,
+    "test": 334
+  },
+  "test_model": {
+    "n": 334,
+    "mae_kt": 18.15,
+    "rmse_kt": 23.59,
+    "category_accuracy": 0.428,
+    "within_one_category": 0.877,
+    "mae_kt_by_true_category": {
+      "TD": 19.84,
+      "TS": 16.1,
+      "C1": 12.07,
+      "C2": 19.31,
+      "C3": 17.84,
+      "C4": 19.47,
+      "C5": 65.71
+    }
+  },
+  "test_baseline_predict_train_mean": {
+    "n": 334,
+    "mae_kt": 21.96,
+    "rmse_kt": 29.03,
+    "category_accuracy": 0.434,
+    "within_one_category": 0.862,
+    "mae_kt_by_true_category": {
+      "TD": 26.35,
+      "TS": 7.69,
+      "C1": 20.89,
+      "C2": 39.64,
+      "C3": 53.14,
+      "C4": 73.41,
+      "C5": 97.78
+    }
+  }
+}
