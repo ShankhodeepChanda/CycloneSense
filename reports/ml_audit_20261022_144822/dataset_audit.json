@@ -1,0 +1,118 @@
+{
+  "timestamp": "2026-10-22T14:51:05Z",
+  "audit_type": "dataset_and_pipeline",
+  "datasets": {
+    "kaggle_multiyear45": {
+      "purpose": "Main training/validation/test split (2018-2020)",
+      "total_rows": 2280,
+      "unique_storms": 45,
+      "channels": ["ir", "truecolor"],
+      "satellites": ["terra", "aqua"],
+      "split_distribution": {
+        "train": {
+          "images": 974,
+          "unique_storms": 30,
+          "description": "70% by storm ID deterministic hash"
+        },
+        "val": {
+          "images": 638,
+          "unique_storms": 15,
+          "description": "15% by storm ID deterministic hash"
+        },
+        "test": {
+          "images": 668,
+          "unique_storms": 15,
+          "description": "15% by storm ID deterministic hash"
+        }
+      },
+      "split_methodology": "Deterministic 70/15/15 by SHA1(storm_id) % 100; no storm spans multiple splits",
+      "split_integrity": "PASS: No storm occurs in multiple splits",
+      "temporal_range": "2018-2020",
+      "sample_columns": [
+        "image_path",
+        "channel",
+        "satellite",
+        "layer",
+        "valid_fraction",
+        "chip_deg",
+        "sid",
+        "name",
+        "basin",
+        "time",
+        "lat",
+        "lon",
+        "wind_kt",
+        "pres_hpa",
+        "category",
+        "ri_24h",
+        "split",
+        "offset_h"
+      ]
+    },
+    "kaggle_temporal_test": {
+      "purpose": "Separate temporal holdout evaluation (2021-2023, storm-disjoint)",
+      "total_rows": 512,
+      "unique_storms": 15,
+      "channels": ["ir"],
+      "satellites": ["terra", "aqua"],
+      "split_distribution": {
+        "temporal_test": {
+          "images": 512,
+          "unique_storms": 15
+        }
+      },
+      "temporal_range": "2021-2023",
+      "split_integrity": "PASS: Separate evaluation set, no overlap with training storms",
+      "purpose_limitation": "Diagnostic temporal holdout, not a final unbiased test set (previously examined)"
+    }
+  },
+  "leakage_analysis": {
+    "storm_split_overlap": "NONE - all splits are storm-disjoint",
+    "train_val_test_overlap_check": "PASS",
+    "temporal_test_train_overlap_check": "PASS",
+    "considerations": [
+      "Images from the same storm are naturally correlated; image-level metrics are not independent samples",
+      "Repeated observations from the same storm at different times/channels may artificially inflate performance",
+      "Satellite pairs (Terra/Aqua) at the same time represent the same physical storm state"
+    ]
+  },
+  "duplicate_analysis": {
+    "channel_sid_time_combinations_multiyear45_ir": {
+      "total_unique_combinations": 668,
+      "total_rows": 1140,
+      "duplicates_detected": "YES",
+      "duplicate_explanation": "Terra and Aqua images for the same storm at same time; each satellite provides separate imagery",
+      "duplicates_are_legitimate": true
+    }
+  },
+  "image_integrity": {
+    "missing_images_multiyear45": 0,
+    "invalid_labels_multiyear45": 0,
+    "finite_wind_values": "ALL",
+    "wind_range_kt": [15.0, 155.0],
+    "categories_present": ["TD", "TS", "C1", "C2", "C3", "C4", "C5"],
+    "category_distribution_multiyear45_test": {
+      "TD": 103,
+      "TS": 145,
+      "C1": 40,
+      "C2": 20,
+      "C3": 10,
+      "C4": 9,
+      "C5": 7
+    }
+  },
+  "findings": {
+    "critical_issues": [],
+    "warnings": [
+      "C4 and C5 have only 3 storms each; category-specific results are unreliable",
+      "Model C produces 7 negative wind predictions on test split; need investigation",
+      "Model C has higher MAE than Model A on the shared 2018-2020 test split"
+    ],
+    "notes": [
+      "Split methodology is sound and prevents storm leakage",
+      "Temporal holdout is properly separated but has been previously examined",
+      "No data quality issues detected"
+    ]
+  },
+  "summary": "Dataset is well-structured with proper storm-level split isolation. No leakage detected. Legitimate Terra/Aqua pairs explain apparent duplicates. Main concern is high-category (C4/C5) sample sizes and Model C prediction instability."
+}
