@@ -7,8 +7,10 @@ tropical-cyclone dataset (for Kaggle) and trains an intensity model on it.
 
 ## 1. Website (simple, public)
 
-Map of India's seas with NASA GIBS satellite layers (daily true colour, daily thermal IR, near real-time
-Himawari IR) and a list of active North Indian Ocean cyclones from GDACS. If the feed is down or no
+Light-theme dashboard (v2.0.0; the earlier scroll-story site is tag `v1.0.0`; see CHANGELOG.md). Map of India's
+seas with NASA GIBS satellite layers (daily true colour, daily thermal IR, near real-time Himawari IR), timeline
+playback, a list of active cyclones worldwide from GDACS (those near India first), and current conditions and a
+pressure chart per city from Open-Meteo. If the feed is down or no
 cyclone is active, the site says so; nothing on it is simulated.
 
 ```bash
