@@ -1,0 +1,320 @@
+{
+  "title": "CycloneSense lower-learning-rate training experiment comparison",
+  "generated_utc": "2026-10-22T11:24:18+00:00",
+  "interpretation": {
+    "validation": "Primary selection criterion; validation is the more useful model-selection signal.",
+    "test": "Diagnostic only. This split has been examined in prior experiments and is not an untouched final estimate.",
+    "limitations": "Each split contains 15 storms, so image counts overstate the number of independent storm cases."
+  },
+  "training_command": "python -m ml.train_chips --data-dir kaggle_multiyear45 --channel ir --satellite all --epochs 5 --batch-size 32 --lr 1e-4 --category-weighting --category-weight-power 0.5 --seed 42 --output models/multiyear45_resnet18_ir_weighted_lr1e4.pt --metrics models/multiyear45_metrics_ir_weighted_lr1e4.json",
+  "runs": {
+    "original_weighted_lr3e4": {
+      "configuration": {
+        "data_dir": "kaggle_multiyear45",
+        "channel": "ir",
+        "epochs": 5,
+        "batch_size": 32,
+        "lr": 0.0003,
+        "size": 224,
+        "workers": 2,
+        "no_pretrained": false,
+        "output": "models/multiyear45_resnet18_ir_weighted.pt",
+        "metrics": "models/multiyear45_metrics_ir_weighted.json",
+        "seed": 42,
+        "category_weighting": true,
+        "category_weight_power": 0.5
+      },
+      "images": {
+        "train": 487,
+        "val": 319,
+        "test": 334
+      },
+      "storms": {
+        "train": 15,
+        "val": 15,
+        "test": 15
+      },
+      "validation_best_mae_kt": 17.31,
+      "validation_best_epoch": null,
+      "validation_source": "Verified in the current checkpoint metadata (category accuracy included) and models/weighted_validation_metrics.json; per-epoch history and best epoch were not present.",
+      "test_model_diagnostic": {
+        "n": 334,
+        "mae_kt": 16.42,
+        "rmse_kt": 20.86,
+        "category_accuracy": 0.476,
+        "within_one_category": 0.889,
+        "mae_kt_by_true_category": {
+          "TD": 17.93,
+          "TS": 15.28,
+          "C1": 16.63,
+          "C2": 14.8,
+          "C3": 15.84,
+          "C4": 10.7,
+          "C5": 29.6
+        }
+      },
+      "training_mean_baseline_diagnostic": {
+        "n": 334,
+        "mae_kt": 21.96,
+        "rmse_kt": 29.03,
+        "category_accuracy": 0.434,
+        "within_one_category": 0.862,
+        "mae_kt_by_true_category": {
+          "TD": 26.35,
+          "TS": 7.69,
+          "C1": 20.89,
+          "C2": 39.64,
+          "C3": 53.14,
+          "C4": 73.41,
+          "C5": 97.78
+        }
+      },
+      "checkpoint": "models/multiyear45_resnet18_ir_weighted.pt",
+      "metrics": "models/multiyear45_metrics_ir_weighted.json",
+      "validation_best_metrics": {
+        "n": 319,
+        "mae_kt": 17.31,
+        "rmse_kt": 22.98,
+        "category_accuracy": 0.448,
+        "within_one_category": 0.859,
+        "mae_kt_by_true_category": {
+          "TD": 15.1,
+          "TS": 14.8,
+          "C1": 13.87,
+          "C2": 12.05,
+          "C3": 25.29,
+          "C4": 35.69,
+          "C5": 32.36
+        }
+      }
+    },
+    "weighted_no_augmentation_lr3e4": {
+      "configuration": {
+        "data_dir": "kaggle_multiyear45",
+        "channel": "ir",
+        "satellite": "all",
+        "epochs": 5,
+        "batch_size": 32,
+        "lr": 0.0003,
+        "size": 224,
+        "no_augmentation": true,
+        "workers": 2,
+        "no_pretrained": false,
+        "output": "models/multiyear45_resnet18_ir_weighted_noaug.pt",
+        "metrics": "models/multiyear45_metrics_ir_weighted_noaug.json",
+        "seed": 42,
+        "category_weighting": true,
+        "category_weight_power": 0.5
+      },
+      "images": {
+        "train": 487,
+        "val": 319,
+        "test": 334
+      },
+      "storms": {
+        "train": 15,
+        "val": 15,
+        "test": 15
+      },
+      "validation_best_mae_kt": 21.9,
+      "validation_best_epoch": 5,
+      "validation_history_mae_kt": [
+        37.1,
+        40.36,
+        97.16,
+        46.74,
+        21.9
+      ],
+      "validation_source": "Reported in the user-provided experiment brief; the metrics file does not contain the epoch-wise validation history or best validation MAE.",
+      "validation_category_accuracy_by_epoch": null,
+      "test_model_diagnostic": {
+        "n": 334,
+        "mae_kt": 18.15,
+        "rmse_kt": 23.59,
+        "category_accuracy": 0.428,
+        "within_one_category": 0.877,
+        "mae_kt_by_true_category": {
+          "TD": 19.84,
+          "TS": 16.1,
+          "C1": 12.07,
+          "C2": 19.31,
+          "C3": 17.84,
+          "C4": 19.47,
+          "C5": 65.71
+        }
+      },
+      "training_mean_baseline_diagnostic": {
+        "n": 334,
+        "mae_kt": 21.96,
+        "rmse_kt": 29.03,
+        "category_accuracy": 0.434,
+        "within_one_category": 0.862,
+        "mae_kt_by_true_category": {
+          "TD": 26.35,
+          "TS": 7.69,
+          "C1": 20.89,
+          "C2": 39.64,
+          "C3": 53.14,
+          "C4": 73.41,
+          "C5": 97.78
+        }
+      },
+      "checkpoint": "models/multiyear45_resnet18_ir_weighted_noaug.pt",
+      "metrics": "models/multiyear45_metrics_ir_weighted_noaug.json"
+    },
+    "weighted_lr1e4_augmentation_enabled": {
+      "configuration": {
+        "data_dir": "kaggle_multiyear45",
+        "channel": "ir",
+        "satellite": "all",
+        "epochs": 5,
+        "batch_size": 32,
+        "lr": 0.0001,
+        "size": 224,
+        "no_augmentation": false,
+        "workers": 2,
+        "no_pretrained": false,
+        "output": "models/multiyear45_resnet18_ir_weighted_lr1e4.pt",
+        "metrics": "models/multiyear45_metrics_ir_weighted_lr1e4.json",
+        "seed": 42,
+        "category_weighting": true,
+        "category_weight_power": 0.5
+      },
+      "images": {
+        "train": 487,
+        "val": 319,
+        "test": 334
+      },
+      "storms": {
+        "train": 15,
+        "val": 15,
+        "test": 15
+      },
+      "validation_history": [
+        {
+          "epoch": 1,
+          "n": 319,
+          "mae_kt": 54.98,
+          "rmse_kt": 63.49,
+          "category_accuracy": 0.382,
+          "within_one_category": 0.737,
+          "mae_kt_by_true_category": {
+            "TD": 50.33,
+            "TS": 50.49,
+            "C1": 59.71,
+            "C2": 55.07,
+            "C3": 63.74,
+            "C4": 77.18,
+            "C5": 65.97
+          }
+        },
+        {
+          "epoch": 2,
+          "n": 319,
+          "mae_kt": 27.3,
+          "rmse_kt": 34.93,
+          "category_accuracy": 0.404,
+          "within_one_category": 0.759,
+          "mae_kt_by_true_category": {
+            "TD": 23.77,
+            "TS": 23.79,
+            "C1": 24.33,
+            "C2": 28.99,
+            "C3": 29.16,
+            "C4": 50.32,
+            "C5": 60.8
+          }
+        },
+        {
+          "epoch": 3,
+          "n": 319,
+          "mae_kt": 23.87,
+          "rmse_kt": 30.46,
+          "category_accuracy": 0.361,
+          "within_one_category": 0.743,
+          "mae_kt_by_true_category": {
+            "TD": 24.65,
+            "TS": 23.06,
+            "C1": 18.83,
+            "C2": 18.8,
+            "C3": 23.91,
+            "C4": 29.25,
+            "C5": 46.91
+          }
+        },
+        {
+          "epoch": 4,
+          "n": 319,
+          "mae_kt": 21.87,
+          "rmse_kt": 28.11,
+          "category_accuracy": 0.439,
+          "within_one_category": 0.85,
+          "mae_kt_by_true_category": {
+            "TD": 20.4,
+            "TS": 19.4,
+            "C1": 19.54,
+            "C2": 18.82,
+            "C3": 29.71,
+            "C4": 32.27,
+            "C5": 46.74
+          }
+        },
+        {
+          "epoch": 5,
+          "n": 319,
+          "mae_kt": 20.83,
+          "rmse_kt": 26.92,
+          "category_accuracy": 0.411,
+          "within_one_category": 0.834,
+          "mae_kt_by_true_category": {
+            "TD": 20.71,
+            "TS": 18.45,
+            "C1": 17.34,
+            "C2": 17.06,
+            "C3": 27.48,
+            "C4": 29.17,
+            "C5": 39.51
+          }
+        }
+      ],
+      "best_validation_mae_kt": 20.83,
+      "best_epoch": 5,
+      "test_model_diagnostic": {
+        "n": 334,
+        "mae_kt": 18.93,
+        "rmse_kt": 24.98,
+        "category_accuracy": 0.458,
+        "within_one_category": 0.838,
+        "mae_kt_by_true_category": {
+          "TD": 22.83,
+          "TS": 18.11,
+          "C1": 17.64,
+          "C2": 11.27,
+          "C3": 14.92,
+          "C4": 13.29,
+          "C5": 20.95
+        }
+      },
+      "training_mean_baseline_diagnostic": {
+        "n": 334,
+        "mae_kt": 21.96,
+        "rmse_kt": 29.03,
+        "category_accuracy": 0.434,
+        "within_one_category": 0.862,
+        "mae_kt_by_true_category": {
+          "TD": 26.35,
+          "TS": 7.69,
+          "C1": 20.89,
+          "C2": 39.64,
+          "C3": 53.14,
+          "C4": 73.41,
+          "C5": 97.78
+        }
+      },
+      "training_duration_seconds": 333.29,
+      "checkpoint": "models/multiyear45_resnet18_ir_weighted_lr1e4.pt",
+      "metrics": "models/multiyear45_metrics_ir_weighted_lr1e4.json"
+    }
+  },
+  "recommendation": "Retain the original weighted checkpoint as the current best. The lower learning rate produced a steadily improving validation curve and a 20.83 kt best validation MAE, but did not beat the original 17.31 kt result. The no-augmentation run's 21.90 kt validation MAE is reported from the supplied brief rather than its metrics artifact."
+}
