@@ -92,7 +92,7 @@ export async function getActiveCyclones(): Promise<ActiveCycloneResult> {
   }
   try {
     const ctl = new AbortController();
-    const timer = setTimeout(() => ctl.abort(), 10_000);
+    const timer = setTimeout(() => ctl.abort(), 25_000); // GDACS answers in 6-8 s under load
     const res = await fetch(gdacsUrl(), { signal: ctl.signal, headers: { accept: "application/json", "user-agent": "CycloneSense/1.0 (research project)" } });
     clearTimeout(timer);
     if (!res.ok) throw new Error(`GDACS responded ${res.status}`);

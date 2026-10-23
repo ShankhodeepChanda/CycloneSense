@@ -133,3 +133,53 @@ def test_real_model_a_checkpoint_predicts_from_a_synthetic_image(png_bytes):
     assert np.isfinite(body["raw_prediction_kt"])
     assert body["checkpoint"] == PRODUCTION_CHECKPOINT.name
     assert body["application_prediction_kt"] == max(body["raw_prediction_kt"], 0)
+
+
+# --- optional central pressure alongside the image (multi-metric inference) ---
+
+
+def _wind_response(png_bytes, monkeypatch, data=None):
+    monkeypatch.setattr(api, "load_wind_model", lambda: (FixedWindModel(0.9), torch.device("cpu")))
+    client = TestClient(api.app)
+    return client.post(
+        "/predict/wind",
+        files={"file": ("chip.png", png_bytes, "image/png")},
+        data=data or {},
+    )
+
+
+def test_pressure_input_adds_a_second_independent_intensity_estimate(png_bytes, monkeypatch):
+    body = _wind_response(png_bytes, monkeypatch, {"pressure_hpa": "950"}).json()
+    multi = body["multi_metric"]
+    assert multi["observed_pressure_hpa"] == pytest.approx(950.0)
+    # Atkinson-Holliday puts 950 hPa near 95 kt; the image model here is pinned to 90 kt.
+    assert 80.0 < multi["pressure_derived_wind_kt"] < 110.0
+    assert multi["image_minus_pressure_kt"] == pytest.approx(
+        body["raw_prediction_kt"] - multi["pressure_derived_wind_kt"], abs=0.11
+    )
+
+
+def test_the_image_estimate_is_not_altered_by_the_pressure_the_user_typed(png_bytes, monkeypatch):
+    """Model A takes pixels only. Letting a typed pressure move its output would be a lie."""
+    without = _wind_response(png_bytes, monkeypatch).json()
+    with_pressure = _wind_response(png_bytes, monkeypatch, {"pressure_hpa": "905"}).json()
+    assert without["raw_prediction_kt"] == pytest.approx(with_pressure["raw_prediction_kt"])
+
+
+def test_without_pressure_no_second_estimate_is_reported(png_bytes, monkeypatch):
+    assert _wind_response(png_bytes, monkeypatch).json()["multi_metric"] is None
+
+
+def test_the_image_estimate_also_reports_its_own_derived_pressure(png_bytes, monkeypatch):
+    body = _wind_response(png_bytes, monkeypatch, {"pressure_hpa": "950"}).json()
+    assert 880.0 <= body["multi_metric"]["image_derived_pressure_hpa"] <= 1012.0
+
+
+def test_an_impossible_pressure_is_refused(png_bytes, monkeypatch):
+    assert _wind_response(png_bytes, monkeypatch, {"pressure_hpa": "1500"}).status_code == 422
+    assert _wind_response(png_bytes, monkeypatch, {"pressure_hpa": "not a number"}).status_code == 422
+
+
+def test_agreement_is_described_in_words_for_the_dashboard(png_bytes, monkeypatch):
+    body = _wind_response(png_bytes, monkeypatch, {"pressure_hpa": "950"}).json()
+    assert body["multi_metric"]["agreement"] in {"close", "moderate", "poor"}

@@ -32,6 +32,7 @@ from ml.sequence_dataset import (
     DELTA_SCALE_DEG,
     FEATURES,
     INPUT_STEPS,
+    NORM,
     PRESSURE_CEILING_HPA,
     PRESSURE_FLOOR_HPA,
     TARGET_LEADS,
@@ -165,7 +166,16 @@ class CoastlineIndex:
     The model was trained on IBTrACS ``dist2land_km``; this reproduces that feature at
     serving time (correlation 0.945, median error 5.4 km over the North Indian Ocean
     fixes in this repository), so the input distribution at inference matches training.
+
+    The shipped file is an **Eastern Hemisphere** coastline: it holds no American coast.
+    No point on Earth lies more than about 2 690 km from land (Point Nemo), so a nearest
+    vertex beyond :data:`COVERAGE_LIMIT_KM` means this file does not cover that position,
+    and the distance is reported as unavailable instead of as a number that is wrong by
+    thousands of kilometres. GDACS lists storms worldwide, so this really does happen.
     """
+
+    #: Beyond this, a "nearest coast" result is evidence of missing data, not of distance.
+    COVERAGE_LIMIT_KM = 2800.0
 
     _shared: "CoastlineIndex | None" = None
     _shared_lock = threading.Lock()
@@ -205,9 +215,14 @@ class CoastlineIndex:
         vertex = self._lonlat[index]
         return float(distances[index]), (float(vertex[1]), float(vertex[0]))
 
-    def distance_to_land_km(self, lat: float, lon: float) -> float:
-        """Distance in km to the nearest coastline vertex."""
-        return float(np.min(self._distances(lat, lon)))
+    def distance_to_land_km(self, lat: float, lon: float) -> float | None:
+        """Distance in km to the nearest coast, or None where this file has no coverage."""
+        nearest = float(np.min(self._distances(lat, lon)))
+        return None if nearest > self.COVERAGE_LIMIT_KM else nearest
+
+    def covers(self, lat: float, lon: float) -> bool:
+        """True when this coastline can answer for a position at all."""
+        return self.distance_to_land_km(lat, lon) is not None
 
 
 @dataclass
@@ -219,7 +234,7 @@ class PreparedSequence:
     lon0: float
     wind0: float
     pressure0: float
-    dist2land0: float
+    dist2land0: float | None
     observations_used: int
     imputed: list[str]
 
@@ -307,6 +322,7 @@ def prepare_sequence(
         imputed.append("padded_input_steps")
 
     rows: list[list[float]] = []
+    uncovered = False
     for index, step in enumerate(window):
         if index == 0:
             previous = cleaned[-input_steps - 1] if len(cleaned) > input_steps else None
@@ -316,6 +332,10 @@ def prepare_sequence(
             dlat = step["lat"] - window[index - 1]["lat"]
             dlon = step["lon"] - window[index - 1]["lon"]
         distance = coastline.distance_to_land_km(step["lat"], step["lon"])
+        if distance is None:
+            # Feed the model the neutral value for this feature rather than a wrong one.
+            distance = NORM["dist2land_km"][0]
+            uncovered = True
         values = {
             "lat": step["lat"],
             "lon": step["lon"],
@@ -327,20 +347,30 @@ def prepare_sequence(
         }
         rows.append([float(values[name]) for name in FEATURES])
 
-    if "dist2land_km" not in imputed:
-        imputed.append("dist2land_km (derived from the Natural Earth coastline)")
+    imputed.append(
+        "dist2land_km unavailable: the shipped coastline does not cover this longitude, "
+        f"so the model was given its neutral value of {NORM['dist2land_km'][0]:.0f} km"
+        if uncovered
+        else "dist2land_km (derived from the Natural Earth coastline)"
+    )
 
     last = window[-1]
+    last_distance = coastline.distance_to_land_km(last["lat"], last["lon"])
     return PreparedSequence(
         features=np.array(rows, dtype=np.float64),
         lat0=last["lat"],
         lon0=last["lon"],
         wind0=float(last["wind_kt"]),
         pressure0=float(last["pressure_hpa"]),
-        dist2land0=rows[-1][FEATURES.index("dist2land_km")],
+        dist2land0=last_distance,
         observations_used=observations_used,
         imputed=imputed,
     )
+
+
+def _round_or_none(value: float | None, digits: int = 1) -> float | None:
+    """Keep an unavailable measurement as null all the way to the response."""
+    return None if value is None else round(float(value), digits)
 
 
 def _clamp_intensity(wind_kt: float, pressure_hpa: float) -> tuple[float, float]:
@@ -378,6 +408,19 @@ def _landfall_estimate(
 ) -> dict[str, Any]:
     """First point on the forecast path that reaches the coast, if any does within 48 h."""
     start_distance = coastline.distance_to_land_km(lat0, lon0)
+    if start_distance is None:
+        return {
+            "projected": False,
+            "location": None,
+            "lat": None,
+            "lon": None,
+            "eta_hours": None,
+            "note": (
+                "Landfall was not evaluated: the shipped coastline covers the Eastern "
+                "Hemisphere only, and this storm is outside it."
+            ),
+            "threshold_km": LANDFALL_THRESHOLD_KM,
+        }
     if start_distance <= LANDFALL_THRESHOLD_KM:
         return {
             "projected": True,
@@ -390,7 +433,8 @@ def _landfall_estimate(
         }
 
     for hour, lat, lon in _interpolate_path(lat0, lon0, waypoints, LANDFALL_SCAN_STEP_H):
-        if coastline.distance_to_land_km(lat, lon) <= LANDFALL_THRESHOLD_KM:
+        distance = coastline.distance_to_land_km(lat, lon)
+        if distance is not None and distance <= LANDFALL_THRESHOLD_KM:
             return {
                 "projected": True,
                 "location": nearest_coastal_place(lat, lon),
@@ -404,10 +448,21 @@ def _landfall_estimate(
                 "threshold_km": LANDFALL_THRESHOLD_KM,
             }
 
-    closest = min(
-        (coastline.distance_to_land_km(lat, lon), hour, lat, lon)
+    scanned = [
+        (coastline.distance_to_land_km(lat, lon), hour)
         for hour, lat, lon in _interpolate_path(lat0, lon0, waypoints, LANDFALL_SCAN_STEP_H)
-    )
+    ]
+    covered = [(distance, hour) for distance, hour in scanned if distance is not None]
+    if not covered:
+        return {
+            "projected": False, "location": None, "lat": None, "lon": None, "eta_hours": None,
+            "note": (
+                "Landfall was not evaluated: the forecast track leaves the area the shipped "
+                "coastline covers."
+            ),
+            "threshold_km": LANDFALL_THRESHOLD_KM,
+        }
+    closest = min(covered)
     return {
         "projected": False,
         "location": None,
@@ -523,7 +578,8 @@ class TrajectoryEngine:
             deltas[step] = ((step + 1) * dlat, (step + 1) * dlon)
             projected_lat = prepared.lat0 + deltas[step][0]
             projected_lon = prepared.lon0 + deltas[step][1]
-            if self.coastline.distance_to_land_km(projected_lat, projected_lon) < DECAY_ONSET_KM:
+            distance = self.coastline.distance_to_land_km(projected_lat, projected_lon)
+            if distance is not None and distance < DECAY_ONSET_KM:
                 wind *= FALLBACK_OVERLAND_DECAY
             intensity[step] = (wind, pressure_from_wind(wind))
         return deltas, intensity
@@ -565,7 +621,7 @@ class TrajectoryEngine:
                     "wind_kt": round(wind, 1),
                     "pressure_hpa": round(pressure, 1),
                     "uncertainty_radius_km": round(float(radii[index]), 1),
-                    "dist2land_km": round(self.coastline.distance_to_land_km(lat, lon), 1),
+                    "dist2land_km": _round_or_none(self.coastline.distance_to_land_km(lat, lon)),
                 }
             )
 
@@ -595,7 +651,7 @@ class TrajectoryEngine:
                 "lon": round(prepared.lon0, 2),
                 "wind_kt": round(prepared.wind0, 1),
                 "pressure_hpa": round(prepared.pressure0, 1),
-                "dist2land_km": round(prepared.dist2land0, 1),
+                "dist2land_km": _round_or_none(prepared.dist2land0),
             },
             "waypoints": waypoints,
             "landfall_estimate": _landfall_estimate(

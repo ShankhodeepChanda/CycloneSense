@@ -1,5 +1,14 @@
 import { useRef, useState, type FormEvent } from "react";
 
+type MultiMetric = {
+  observed_pressure_hpa: number;
+  pressure_derived_wind_kt: number;
+  image_derived_pressure_hpa: number;
+  image_minus_pressure_kt: number;
+  agreement: "close" | "moderate" | "poor" | string;
+  relation: string;
+};
+
 type WindResult = {
   status: string;
   model: string;
@@ -9,7 +18,14 @@ type WindResult = {
   application_prediction_kt: number;
   predicted_wind_kt: number;
   category: string;
+  multi_metric: MultiMetric | null;
   disclaimer: string;
+};
+
+const AGREEMENT_TEXT: Record<string, string> = {
+  close: "The two estimates agree within 10 kt.",
+  moderate: "The two estimates differ by 10 to 25 kt.",
+  poor: "The two estimates differ by more than 25 kt. Treat both with caution.",
 };
 
 const MAX_BYTES = 10 * 1024 * 1024;
@@ -21,6 +37,7 @@ function endpoint() {
 
 export function WindEstimator() {
   const [file, setFile] = useState<File | null>(null);
+  const [pressure, setPressure] = useState("");
   const [result, setResult] = useState<WindResult | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -52,6 +69,9 @@ export function WindEstimator() {
     try {
       const body = new FormData();
       body.append("file", file);
+      // Sent only when given. The image model ignores it; the API returns it as a
+      // separate pressure-derived estimate to compare against.
+      if (pressure.trim() !== "") body.append("pressure_hpa", pressure.trim());
       const response = await fetch(endpoint(), { method: "POST", body, signal: AbortSignal.timeout(120_000) });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
@@ -95,6 +115,22 @@ export function WindEstimator() {
           }}
           aria-describedby="wind-help wind-status"
         />
+        <label className="wind-pressure" htmlFor="wind-pressure">
+          <span>Central pressure <small>optional</small></span>
+          <input
+            id="wind-pressure"
+            type="number"
+            inputMode="decimal"
+            min="800"
+            max="1050"
+            step="0.1"
+            placeholder="e.g. 950"
+            value={pressure}
+            onChange={(event) => setPressure(event.currentTarget.value)}
+            aria-describedby="wind-pressure-help"
+          />
+          <small id="wind-pressure-help">hPa, 800 to 1050</small>
+        </label>
         <button className="wind-submit" type="submit" disabled={!file || loading}>
           {loading && <span className="wind-spinner" aria-hidden="true" />}
           {loading ? "Estimating…" : "Estimate wind"}
@@ -115,6 +151,21 @@ export function WindEstimator() {
               <div><dt>Model scale</dt><dd>{result.normalized_model_output.toFixed(4)} × 100 kt</dd></div>
             </dl>
             <p>{result.disclaimer}</p>
+            {result.multi_metric && (
+              <div className="wind-multi">
+                <h4>Compared with the pressure you entered</h4>
+                <dl>
+                  <div><dt>From {Math.round(result.multi_metric.observed_pressure_hpa)} hPa</dt><dd>{result.multi_metric.pressure_derived_wind_kt.toFixed(1)} kt</dd></div>
+                  <div><dt>From the image</dt><dd>{result.raw_prediction_kt.toFixed(1)} kt</dd></div>
+                  <div><dt>Image implies</dt><dd>{Math.round(result.multi_metric.image_derived_pressure_hpa)} hPa</dd></div>
+                  <div><dt>Difference</dt><dd>{result.multi_metric.image_minus_pressure_kt > 0 ? "+" : ""}{result.multi_metric.image_minus_pressure_kt.toFixed(1)} kt</dd></div>
+                </dl>
+                <p className={`wind-agree ${result.multi_metric.agreement}`}>
+                  {AGREEMENT_TEXT[result.multi_metric.agreement] ?? result.multi_metric.agreement}
+                </p>
+                <p className="wind-note">Pressure estimate via {result.multi_metric.relation}. The image model never sees this number.</p>
+              </div>
+            )}
             {result.raw_prediction_kt < 0 && <p className="wind-note">The raw estimate is negative. The application value is shown as 0 kt; research output remains raw.</p>}
           </div>
         )}

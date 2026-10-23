@@ -84,7 +84,9 @@ class TrajectoryWaypoint(BaseModel):
     uncertainty_radius_km: float = Field(
         ..., description="Cone radius from the checkpoint's measured validation RMSE at this lead"
     )
-    dist2land_km: float = Field(..., description="Distance from this waypoint to the nearest coastline")
+    dist2land_km: Optional[float] = Field(
+        None, description="Distance to the nearest coastline, or null where the shipped coastline has no coverage"
+    )
 
 
 class CurrentMetrics(BaseModel):
@@ -93,7 +95,7 @@ class CurrentMetrics(BaseModel):
     lon: float
     wind_kt: float
     pressure_hpa: float
-    dist2land_km: float
+    dist2land_km: Optional[float] = None
 
 
 class LandfallEstimate(BaseModel):
@@ -168,6 +170,20 @@ class PatternResponse(BaseModel):
     disclaimer: str = "Operational Cyclone Research Decision Support · Verify against official IMD/RSMC advisories"
 
 
+class WindMultiMetric(BaseModel):
+    """A second, independent intensity estimate from an observed central pressure.
+
+    Model A reads pixels only. This block sits beside its output so the two estimates can
+    be compared; it never changes the image estimate.
+    """
+    observed_pressure_hpa: float = Field(..., description="Central pressure supplied by the user")
+    pressure_derived_wind_kt: float = Field(..., description="Wind implied by that pressure (Atkinson-Holliday)")
+    image_derived_pressure_hpa: float = Field(..., description="Pressure implied by the image wind estimate")
+    image_minus_pressure_kt: float = Field(..., description="Image estimate minus pressure-derived estimate")
+    agreement: str = Field(..., description="'close' within 10 kt, 'moderate' within 25 kt, else 'poor'")
+    relation: str = "Atkinson-Holliday (1977) wind-pressure relationship for the North Indian Ocean"
+
+
 class WindPredictionResponse(BaseModel):
     """Wind estimate response with raw science output and a separate display safeguard."""
     status: str = "success"
@@ -179,6 +195,9 @@ class WindPredictionResponse(BaseModel):
     application_prediction_kt: float
     predicted_wind_kt: float
     category: str
+    multi_metric: Optional[WindMultiMetric] = Field(
+        None, description="Present only when a central pressure was supplied alongside the image"
+    )
     disclaimer: str = "Research estimate from a satellite image; not an official warning or operational intensity estimate."
 
 

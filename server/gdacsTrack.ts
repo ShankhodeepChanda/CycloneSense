@@ -175,7 +175,9 @@ export async function getCycloneTrack(
   }
   try {
     const ctl = new AbortController();
-    const timer = setTimeout(() => ctl.abort(), 10_000);
+    // GDACS geometry regularly takes 6-8 s for a storm with a full track and cone, so a
+    // 10 s budget aborted it whenever the event-list fetch was in flight at the same time.
+    const timer = setTimeout(() => ctl.abort(), 25_000);
     const res = await fetch(geometryUrl(eventId, episodeId), {
       signal: ctl.signal,
       headers: { accept: "application/json", "user-agent": "CycloneSense/1.0 (research project)" },

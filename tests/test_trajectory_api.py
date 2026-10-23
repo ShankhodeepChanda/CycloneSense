@@ -81,6 +81,61 @@ class TestCoastline:
         assert abs(coast.distance_to_land_km(14.1, 86.4) - 520.0) < 80.0
 
 
+class TestCoastlineCoverage:
+    """public/coast.json is an Eastern Hemisphere coastline: it holds no American coast.
+
+    No point on Earth is more than about 2 690 km from land (Point Nemo), so a nearest
+    coast beyond that proves the index does not cover that position. Reporting the number
+    anyway would put a confidently wrong distance into a forecast.
+    """
+
+    def test_a_position_the_coastline_does_not_cover_returns_no_distance(self):
+        coast = CoastlineIndex()
+        # Off Manzanillo, Mexico:真 nearest land is about 40 km away, but this file has none.
+        assert coast.distance_to_land_km(18.77, -104.5) is None
+        assert coast.covers(18.77, -104.5) is False
+
+    def test_the_florida_strait_is_also_outside_this_coastline(self):
+        assert CoastlineIndex().distance_to_land_km(25.0, -80.0) is None
+
+    def test_the_north_indian_ocean_is_well_inside_coverage(self):
+        coast = CoastlineIndex()
+        assert coast.covers(14.1, 86.4) is True
+        assert coast.distance_to_land_km(14.1, 86.4) is not None
+
+    def test_the_eastern_atlantic_is_covered_because_africa_is_present(self):
+        assert CoastlineIndex().distance_to_land_km(28.0, -18.0) is not None
+
+
+class TestForecastOutsideCoastlineCoverage:
+    WESTERN = [{"lat": 15.7 + 0.5 * i, "lon": -104.1 - 0.1 * i, "wind_kt": 105} for i in range(4)]
+
+    def test_an_unavailable_distance_is_declared_not_guessed(self):
+        result = TrajectoryEngine().forecast("VANCE", self.WESTERN)
+        assert any("dist2land_km" in entry and "unavailable" in entry for entry in result["inputs_imputed"])
+        assert result["current_metrics"]["dist2land_km"] is None
+
+    def test_waypoints_report_no_distance_rather_than_a_wrong_one(self):
+        result = TrajectoryEngine().forecast("VANCE", self.WESTERN)
+        assert all(waypoint["dist2land_km"] is None for waypoint in result["waypoints"])
+
+    def test_landfall_says_it_could_not_be_evaluated(self):
+        landfall = TrajectoryEngine().forecast("VANCE", self.WESTERN)["landfall_estimate"]
+        assert landfall["projected"] is False
+        assert "coastline" in landfall["note"].lower()
+        assert "km offshore" not in landfall["note"]
+
+    def test_the_forecast_itself_still_comes_back(self):
+        result = TrajectoryEngine().forecast("VANCE", self.WESTERN)
+        assert len(result["waypoints"]) == 8
+        assert all(math.isfinite(waypoint["lat"]) for waypoint in result["waypoints"])
+
+    def test_the_endpoint_serves_it_without_a_schema_error(self):
+        response = post({"cyclone_id": "VANCE", "observations": self.WESTERN})
+        assert response.status_code == 200
+        assert response.json()["waypoints"][0]["dist2land_km"] is None
+
+
 class TestRegionClassification:
     def test_the_bay_of_bengal_box_is_recognised(self):
         assert classify_region(15.0, 88.0) == "Bay of Bengal"
