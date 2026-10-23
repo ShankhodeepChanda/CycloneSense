@@ -191,111 +191,16 @@ class CycloneSenseEngine:
         }
 
     def predict_trajectory(self, cyclone_id: str, observations: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Projects 72-hour future track waypoints, intensity changes, and coastal crossing intercepts."""
-        if not observations:
-            observations = [{"lat": 18.42, "lon": 71.18, "wind_kts": 95, "pressure_hpa": 954}]
+        """Project track, intensity and coastal crossing using the trained sequence model.
 
-        last_obs = observations[-1]
-        lat0 = last_obs.get("lat", 18.42)
-        lon0 = last_obs.get("lon", 71.18)
-        wind0 = last_obs.get("wind_kts", 95)
-        press0 = last_obs.get("pressure_hpa", 954)
+        The forecast itself lives in app/trajectory.py, which runs the checkpoint trained
+        by ml/train_trajectory.py and falls back to a labelled straight-line extrapolation
+        when no checkpoint is installed. This method only adapts that result to the
+        /predict/forecast response shape, which publishes +12 h through +72 h.
+        """
+        from app.trajectory import engine as trajectory_engine
 
-        # Delta velocity from last 2 observations
-        if len(observations) >= 2:
-            prev = observations[-2]
-            dlat = lat0 - prev.get("lat", lat0 - 1.0)
-            dlon = lon0 - prev.get("lon", lon0 + 0.3)
-        else:
-            dlat = 1.15
-            dlon = -0.28
-
-        lead_times = [12, 24, 36, 48, 72]
-        trajectory = []
-        is_ri = False
-
-        # Intensity threshold check: 30 kts in 24h
-        if len(observations) >= 2:
-            dt_wind = wind0 - observations[0].get("wind_kts", wind0)
-            if dt_wind >= 25:
-                is_ri = True
-
-        landfall_intercept = None
-
-        for idx, tau in enumerate(lead_times):
-            step = (idx + 1)
-            # Recurrent projection with Coriolis curvature towards north-northwest
-            pred_lat = round(lat0 + dlat * step * 1.15, 2)
-            pred_lon = round(lon0 + dlon * step * 0.9 + 0.05 * (step**1.3), 2)
-
-            cone_radius = round(38 + step * 36, 1)
-
-            # Intensity extrapolation
-            if tau <= 36:
-                pred_wind = min(155, round(wind0 + (step * 5.0) if is_ri else wind0 + (step * 2.0)))
-                pred_press = max(915, round(press0 - (step * 4.5) if is_ri else press0 - (step * 2.0)))
-            else:
-                # Post-landfall friction weakening
-                pred_wind = max(40, round(wind0 + 10 - (step - 3) * 25))
-                pred_press = min(1005, round(press0 + (step - 3) * 18))
-
-            # Coastal crossing logic (e.g. crossing Gujarat coast near lat 20.8°N - 21.5°N)
-            is_crossing = False
-            location_name = None
-            if 20.6 <= pred_lat <= 22.2 and 69.5 <= pred_lon <= 72.5 and landfall_intercept is None:
-                is_crossing = True
-                location_name = "Gujarat Coast near Diu / Veraval"
-                landfall_intercept = {
-                    "lat": pred_lat,
-                    "lon": pred_lon,
-                    "location": location_name,
-                    "eta_hours": tau,
-                    "confidence_window_hours": 2.5,
-                    "tidal_coincidence": "Astronomical High Tide (Surge Projection: +3.6m to +4.0m)",
-                }
-
-            trajectory.append({
-                "tau_hours": tau,
-                "pred_lat": pred_lat,
-                "pred_lon": pred_lon,
-                "pred_wind_kts": pred_wind,
-                "pred_pressure_hpa": pred_press,
-                "cone_radius_km": cone_radius,
-                "is_landfall": is_crossing,
-                "landfall_location": location_name,
-            })
-
-        # Category mapping
-        peak_wind = max([pt["pred_wind_kts"] for pt in trajectory] + [wind0])
-        if peak_wind >= 120:
-            intensity_class = "Super Cyclonic Storm (SuCS)"
-        elif peak_wind >= 90:
-            intensity_class = "Extremely Severe Cyclonic Storm (ESCS)"
-        elif peak_wind >= 64:
-            intensity_class = "Very Severe Cyclonic Storm (VSCS)"
-        elif peak_wind >= 48:
-            intensity_class = "Severe Cyclonic Storm (SCS)"
-        elif peak_wind >= 34:
-            intensity_class = "Cyclonic Storm (CS)"
-        else:
-            intensity_class = "Deep Depression (DD)"
-
-        return {
-            "status": "success",
-            "cyclone_id": cyclone_id,
-            "prognostic_trajectory": trajectory,
-            "intensity_class": intensity_class,
-            "confidence_index": 0.942,
-            "rapid_intensification_detected": is_ri,
-            "landfall_intercept": landfall_intercept or {
-                "lat": 20.90,
-                "lon": 70.85,
-                "location": "Saurashtra Coast near Diu",
-                "eta_hours": 36,
-                "confidence_window_hours": 3.0,
-                "tidal_coincidence": "High Tide (+3.8m Surge Anticipated)",
-            },
-        }
+        return trajectory_engine.legacy_forecast(cyclone_id, observations)
 
 
 # Singleton engine instance

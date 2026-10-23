@@ -7,8 +7,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse
 from starlette.concurrency import run_in_threadpool
 from PIL import Image, ImageStat, UnidentifiedImageError
-from app.schemas import ForecastRequest, ForecastResponse, PatternResponse, HealthResponse, WindPredictionResponse
+from app.schemas import (
+    ForecastRequest, ForecastResponse, PatternResponse, HealthResponse,
+    TrajectoryRequest, TrajectoryResponse, WindPredictionResponse,
+)
 from app.model import engine
+from app.trajectory import engine as trajectory_engine
 from data.build_dataset import category as wind_category
 from ml.wind_inference import (
     InvalidWindImageError, NonFiniteModelOutputError, load_wind_model,
@@ -59,7 +63,7 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=False,
 
 @app.get("/health", response_model=HealthResponse)
 def get_health():
-    return HealthResponse(status="ok", service="cyclonesense-api-python", version="1.3.0", uptime_seconds=round(time.time()-START_TIME,1), hardware={"engine":engine.device,"gpu":engine.device,"model_mode":"image-analysis-baseline"}, models_loaded={"image_analyzer":True,"trajectory_engine":True,"gradcam_engine":False,"wind_regression":_wind_model is not None}, telemetry={"satellite_sources":["INSAT-3D/3DR VHRR","Himawai-9","GOES-16"],"spatial_coverage":"North Indian Ocean"})
+    return HealthResponse(status="ok", service="cyclonesense-api-python", version="1.3.0", uptime_seconds=round(time.time()-START_TIME,1), hardware={"engine":engine.device,"gpu":engine.device,"model_mode":"image-analysis-baseline"}, models_loaded={"image_analyzer":True,"trajectory_engine":True,"gradcam_engine":False,"wind_regression":_wind_model is not None,"trajectory_sequence_model":trajectory_engine.available}, telemetry={"satellite_sources":["INSAT-3D/3DR VHRR","Himawai-9","GOES-16"],"spatial_coverage":"North Indian Ocean"})
 
 @app.post("/predict/pattern", response_model=PatternResponse)
 async def predict_cyclone_pattern(file: UploadFile = File(...)):
@@ -109,6 +113,25 @@ async def predict_wind_speed(file: UploadFile = File(...)):
         predicted_wind_kt=application,
         category=wind_category(raw),
     )
+
+@app.post("/predict/trajectory", response_model=TrajectoryResponse)
+async def predict_cyclone_trajectory(payload: TrajectoryRequest):
+    """Forecast track and intensity to +48 h from a sequence of observed fixes.
+
+    Returns 422 when the observations cannot support a forecast at all - for instance a
+    position with no wind and no pressure anywhere in the sequence, where any intensity
+    would be invented rather than inferred.
+    """
+    observations = [observation.model_dump() for observation in payload.observations]
+    try:
+        result = await run_in_threadpool(trajectory_engine.forecast, payload.cyclone_id, observations)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    except Exception as exc:
+        LOGGER.exception("Trajectory forecast failed for %s", payload.cyclone_id)
+        raise HTTPException(503, "The trajectory forecast service is unavailable.") from exc
+    return TrajectoryResponse(**result)
+
 
 @app.post("/predict/forecast", response_model=ForecastResponse)
 def predict_cyclone_forecast(payload: ForecastRequest):

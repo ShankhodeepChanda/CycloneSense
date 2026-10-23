@@ -53,6 +53,99 @@ class ForecastResponse(BaseModel):
     landfall_intercept: Optional[CoastalIntercept] = None
 
 
+class TrajectoryObservation(BaseModel):
+    """One observed fix for the multi-metric forecaster.
+
+    Only position is required. Wind and central pressure are optional because live feeds
+    carry neither per fix; whatever is missing is derived and declared in the response.
+    """
+    lat: float = Field(..., ge=-90.0, le=90.0, description="Latitude in decimal degrees")
+    lon: float = Field(..., ge=-180.0, le=180.0, description="Longitude in decimal degrees")
+    wind_kt: Optional[float] = Field(None, ge=0.0, le=300.0, description="Sustained maximum wind in knots")
+    pressure_hpa: Optional[float] = Field(None, ge=800.0, le=1050.0, description="Minimum central pressure in hPa")
+    timestamp: Optional[str] = Field(None, description="ISO-8601 observation timestamp")
+
+
+class TrajectoryRequest(BaseModel):
+    """Request for a +6h to +48h track and intensity forecast."""
+    cyclone_id: str = Field(..., min_length=1, max_length=64, description="Storm name or feed identifier")
+    observations: List[TrajectoryObservation] = Field(
+        ..., min_length=1, description="Sequential observations, earliest to latest"
+    )
+
+
+class TrajectoryWaypoint(BaseModel):
+    """One forecast waypoint with its cone radius."""
+    forecast_hour: int = Field(..., description="Lead time in hours (+6 .. +48)")
+    lat: float
+    lon: float
+    wind_kt: float = Field(..., description="Predicted sustained wind in knots")
+    pressure_hpa: float = Field(..., description="Predicted central pressure in hPa")
+    uncertainty_radius_km: float = Field(
+        ..., description="Cone radius from the checkpoint's measured validation RMSE at this lead"
+    )
+    dist2land_km: float = Field(..., description="Distance from this waypoint to the nearest coastline")
+
+
+class CurrentMetrics(BaseModel):
+    """The latest observed state the forecast starts from."""
+    lat: float
+    lon: float
+    wind_kt: float
+    pressure_hpa: float
+    dist2land_km: float
+
+
+class LandfallEstimate(BaseModel):
+    """Projected coastal crossing, or an explicit statement that none is projected."""
+    projected: bool
+    location: Optional[str] = None
+    lat: Optional[float] = None
+    lon: Optional[float] = None
+    eta_hours: Optional[float] = None
+    note: str
+    threshold_km: float
+
+
+class ForecastSummary(BaseModel):
+    """Multi-metric headline numbers for the dashboard panel."""
+    peak_wind_kt: float = Field(..., description="Strongest wind anywhere on the forecast path")
+    min_pressure_hpa: float = Field(..., description="Deepest central pressure on the path")
+    peak_pressure_hpa: float = Field(..., description="Highest central pressure on the path")
+    pressure_change_hpa: float = Field(..., description="Signed net change from now to +48 h")
+    wind_change_kt: float = Field(..., description="Signed net change from now to +48 h")
+    max_deepening_hpa: float = Field(..., description="Deepest point minus now; zero or negative")
+    intensity_class: str
+    forecast_track_km: float
+
+
+class TrajectoryValidation(BaseModel):
+    """What the error figures behind the cone actually are."""
+    lead_track_rmse_km: List[float]
+    metrics: Dict[str, Any] = {}
+
+
+class TrajectoryResponse(BaseModel):
+    """Multi-metric trajectory forecast for a North Indian Ocean cyclone."""
+    status: str = "success"
+    cyclone_id: str
+    region: str
+    forecast_generated_at: str
+    source: str = Field(..., description="'trained-sequence-model' or 'physics-extrapolation'")
+    model: str
+    checkpoint: Optional[str] = None
+    observations_used: int
+    inputs_imputed: List[str] = Field(
+        default_factory=list, description="Inputs the engine derived rather than received"
+    )
+    current_metrics: CurrentMetrics
+    waypoints: List[TrajectoryWaypoint]
+    landfall_estimate: LandfallEstimate
+    summary: ForecastSummary
+    validation: TrajectoryValidation
+    disclaimer: str
+
+
 class PatternRequest(BaseModel):
     """Request to classify tropical cyclone satellite imagery into Dvorak structural patterns."""
     preset_pattern: Optional[str] = Field("eye", description="Standard benchmark preset: 'eye', 'central_dense_overcast', 'curved_band', 'developing', 'sheared', 'dissipating', 'clear'")
