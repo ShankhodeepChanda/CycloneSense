@@ -338,10 +338,14 @@ class CycloneSequenceDataset:
         windows: Sequence[SequenceWindow],
         image_root: str | Path | None = None,
         image_size: int = IMAGE_SIZE,
+        with_images: bool = True,
     ):
         self.windows = list(windows)
         self.image_root = Path(image_root) if image_root is not None else None
         self.image_size = image_size
+        # Tabular-only training sets this False: an all-zero (T,3,224,224) tensor per item
+        # is 2.4 MB of nothing, and the vision branch would ignore it anyway.
+        self.with_images = bool(with_images)
         self._transform = None
 
     def __len__(self) -> int:
@@ -370,8 +374,16 @@ class CycloneSequenceDataset:
 
         window = self.windows[index]
         steps = window.features.shape[0]
+        item = {
+            "tabular": torch.tensor(normalise(window.features), dtype=torch.float32),
+            "image_mask": torch.zeros(steps, dtype=torch.float32),
+            "target_delta": torch.tensor(window.target_coords, dtype=torch.float32),
+            "target_intensity": torch.tensor(window.target_intensity, dtype=torch.float32),
+        }
+        if not self.with_images:
+            return item
+
         images = torch.zeros(steps, 3, self.image_size, self.image_size, dtype=torch.float32)
-        mask = torch.zeros(steps, dtype=torch.float32)
         if self.image_root is not None:
             for step, relative in enumerate(window.image_paths):
                 if not relative:
@@ -379,15 +391,9 @@ class CycloneSequenceDataset:
                 tensor = self._load_image(relative)
                 if tensor is not None:
                     images[step] = tensor
-                    mask[step] = 1.0
-
-        return {
-            "tabular": torch.tensor(normalise(window.features), dtype=torch.float32),
-            "image": images,
-            "image_mask": mask,
-            "target_delta": torch.tensor(window.target_coords, dtype=torch.float32),
-            "target_intensity": torch.tensor(window.target_intensity, dtype=torch.float32),
-        }
+                    item["image_mask"][step] = 1.0
+        item["image"] = images
+        return item
 
 
 def describe_windows(windows: Iterable[SequenceWindow]) -> dict:
