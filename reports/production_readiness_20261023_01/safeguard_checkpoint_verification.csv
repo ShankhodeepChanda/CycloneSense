@@ -1,0 +1,9 @@
+model,partition,image_path,actual_wind_kt,saved_raw_prediction_kt,reproduced_raw_prediction_kt,application_prediction_kt,raw_matches_saved_within_0_001_kt,raw_prediction_preserved
+C,2018_2020_val_storm_heldout,images/ir/terra/2019242N14180_20190903.jpg,35.0,-15.107064247131348,-15.107063949108124,0.0,True,True
+A,2018_2020_val_storm_heldout,images/ir/terra/2019354N05151_20191220.jpg,15.0,-14.284605979919434,-14.284606277942657,0.0,True,True
+C,2018_2020_val_storm_heldout,images/ir/aqua/2018269N11220_20180926.jpg,25.0,-13.86471939086914,-13.864719867706299,0.0,True,True
+C,2021_2023_temporal_holdout,images/ir/terra/2022024S09090_20220125.jpg,20.0,-11.468172073364258,-11.468172073364258,0.0,True,True
+C,2021_2023_temporal_holdout,images/ir/terra/2023138N05151_20230519.jpg,20.0,-8.347633361816406,-8.347633481025696,0.0,True,True
+A,2018_2020_val_storm_heldout,images/ir/terra/2018082S12164_20180323.jpg,30.0,-7.106749534606934,-7.106749713420868,0.0,True,True
+A,2021_2023_temporal_holdout,images/ir/terra/2023231N15313_20230824.jpg,20.0,-5.48913049697876,-5.489130690693855,0.0,True,True
+A,2021_2023_temporal_holdout,images/ir/terra/2023231N15313_20230903.jpg,50.0,-4.1141676902771,-4.114167764782906,0.0,True,True

@@ -1,0 +1,159 @@
+{
+  "original_2018_2020": {
+    "images_index": "kaggle_multiyear45\\images_index.csv",
+    "tracks_csv": "kaggle_multiyear45\\tracks.csv",
+    "year_min": 2018,
+    "year_max": 2020,
+    "rows_by_split_all_channels": {
+      "train": {
+        "images_all_channels": 974,
+        "storms": 15
+      },
+      "val": {
+        "images_all_channels": 638,
+        "storms": 15
+      },
+      "test": {
+        "images_all_channels": 668,
+        "storms": 15
+      }
+    },
+    "channel_satellite_rows": [
+      {
+        "channel": "ir",
+        "satellite": "aqua",
+        "images": 565
+      },
+      {
+        "channel": "ir",
+        "satellite": "terra",
+        "images": 575
+      },
+      {
+        "channel": "truecolor",
+        "satellite": "aqua",
+        "images": 565
+      },
+      {
+        "channel": "truecolor",
+        "satellite": "terra",
+        "images": 575
+      }
+    ],
+    "missing_targets": 0,
+    "nonpositive_targets": 0,
+    "invalid_timestamps": 0,
+    "stored_category_mismatches": 0,
+    "duplicate_image_paths": 0,
+    "missing_image_files": 0,
+    "missing_image_examples": [],
+    "corrupt_image_files": 0,
+    "corrupt_image_examples": [],
+    "index_rows_without_exact_storm_time_track_match": 0,
+    "image_vs_track_wind_mismatches": 0,
+    "valid_fraction_min": 0.663,
+    "valid_fraction_below_0_6": 0,
+    "offset_over_3_hours": 0
+  },
+  "temporal_2021_2023": {
+    "images_index": "kaggle_temporal_test\\images_index.csv",
+    "tracks_csv": "kaggle_temporal_test\\tracks.csv",
+    "year_min": 2021,
+    "year_max": 2023,
+    "rows_by_split_all_channels": {
+      "temporal_test": {
+        "images_all_channels": 512,
+        "storms": 15
+      }
+    },
+    "channel_satellite_rows": [
+      {
+        "channel": "ir",
+        "satellite": "aqua",
+        "images": 255
+      },
+      {
+        "channel": "ir",
+        "satellite": "terra",
+        "images": 257
+      }
+    ],
+    "missing_targets": 0,
+    "nonpositive_targets": 0,
+    "invalid_timestamps": 0,
+    "stored_category_mismatches": 0,
+    "duplicate_image_paths": 0,
+    "missing_image_files": 0,
+    "missing_image_examples": [],
+    "corrupt_image_files": 0,
+    "corrupt_image_examples": [],
+    "index_rows_without_exact_storm_time_track_match": 0,
+    "image_vs_track_wind_mismatches": 0,
+    "valid_fraction_min": 0.644,
+    "valid_fraction_below_0_6": 0,
+    "offset_over_3_hours": 0
+  },
+  "storm_overlap_between_splits": {
+    "original_2018_2020:test__train": [],
+    "original_2018_2020:test__val": [],
+    "original_2018_2020:train__val": [],
+    "original_2018_2020_ir__temporal_2021_2023_ir": []
+  },
+  "category_definition": "TD <34; TS 34\u201363; C1 64\u201382; C2 83\u201395; C3 96\u2013112; C4 113\u2013136; C5 \u2265137 kt.",
+  "local_image_index_inventory": [
+    {
+      "index": "kaggle_dataset\\images_index.csv",
+      "rows": 841,
+      "ir_rows_2024_plus": 0,
+      "ir_storms_2024_plus": 0,
+      "year_min": 2003,
+      "year_max": 2003
+    },
+    {
+      "index": "kaggle_multiyear\\images_index.csv",
+      "rows": 1120,
+      "ir_rows_2024_plus": 0,
+      "ir_storms_2024_plus": 0,
+      "year_min": 2018,
+      "year_max": 2020
+    },
+    {
+      "index": "kaggle_multiyear45\\images_index.csv",
+      "rows": 2280,
+      "ir_rows_2024_plus": 0,
+      "ir_storms_2024_plus": 0,
+      "year_min": 2018,
+      "year_max": 2020
+    },
+    {
+      "index": "kaggle_temporal_test\\images_index.csv",
+      "rows": 512,
+      "ir_rows_2024_plus": 0,
+      "ir_storms_2024_plus": 0,
+      "year_min": 2021,
+      "year_max": 2023
+    },
+    {
+      "index": "kaggle_trial\\images_index.csv",
+      "rows": 415,
+      "ir_rows_2024_plus": 0,
+      "ir_storms_2024_plus": 0,
+      "year_min": 2018,
+      "year_max": 2018
+    }
+  ],
+  "local_2024_plus_paired_ir_rows": 0,
+  "local_raw_ibtracs_2024_plus": {
+    "path": "data\\raw\\ibtracs.since1980.list.v04r01.csv",
+    "present": true,
+    "records_2024_plus_by_year": {
+      "2024": 6076,
+      "2025": 6749,
+      "2026": 5186
+    },
+    "positive_USA_WIND_main_track_records_2024_plus_by_year": {
+      "2024": 4759,
+      "2025": 1706
+    }
+  }
+}

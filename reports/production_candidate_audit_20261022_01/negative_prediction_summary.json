@@ -1,0 +1,204 @@
+{
+  "scope": "Raw inference reproduction only; no hyperparameter selection or training. The original 2018-2020 test split was read only from its already-saved A/C prediction CSV.",
+  "prediction_count": 3304,
+  "negative_prediction_count": 50,
+  "nonfinite_prediction_count": 0,
+  "models": {
+    "A": {
+      "path": "models\\multiyear45_resnet18_ir_weighted.pt",
+      "sha256": "3ac72bfbd2675e2aa79ce131aa6eef138a4867dfb5ca0063bb4ac5b19068d6d8",
+      "architecture": "resnet18",
+      "channel": "ir",
+      "target": "wind_kt/100",
+      "fc_weight_shape": [
+        1,
+        512
+      ],
+      "fc_bias": [
+        -0.03777511045336723
+      ],
+      "all_parameters_finite": true,
+      "saved_validation_metrics_all_numeric_finite": true,
+      "training_loss_was_logged": false
+    },
+    "C": {
+      "path": "models\\multiyear45_resnet18_ir_weighted_lr1e4.pt",
+      "sha256": "ea11ce7eda1e3ef49a966eb50f10546e5937dc284c9e6d8ef2e84544f797810b",
+      "architecture": "resnet18",
+      "channel": "ir",
+      "target": "wind_kt/100",
+      "fc_weight_shape": [
+        1,
+        512
+      ],
+      "fc_bias": [
+        -0.038163650780916214
+      ],
+      "all_parameters_finite": true,
+      "saved_validation_metrics_all_numeric_finite": true,
+      "training_loss_was_logged": false
+    }
+  },
+  "model_a_reproduction_crosschecks": [
+    {
+      "partition": "2018_2020_train_and_validation",
+      "rows_compared": 806,
+      "missing_or_extra_rows": 0,
+      "max_abs_difference_kt": 2.842170943040401e-14,
+      "comparison_tolerance_kt": 1e-05,
+      "within_tolerance": true,
+      "saved_file": "models\\weighted_validation_predictions.csv"
+    },
+    {
+      "partition": "2021_2023_temporal",
+      "rows_compared": 512,
+      "missing_or_extra_rows": 0,
+      "max_abs_difference_kt": 0.0004974975585980701,
+      "comparison_tolerance_kt": 0.00051,
+      "within_tolerance": true,
+      "saved_file": "models\\temporal_test_predictions_weighted.csv"
+    }
+  ],
+  "negative_counts_by_model_and_partition": [
+    {
+      "model": "A",
+      "partition": "2018_2020_test_previously_saved",
+      "images": 334,
+      "storms": 15,
+      "negative_predictions": 3,
+      "nonfinite_predictions": 0,
+      "minimum_raw_prediction_kt": -12.165169715881348,
+      "maximum_raw_prediction_kt": 150.20860290527344
+    },
+    {
+      "model": "A",
+      "partition": "2018_2020_train_in_sample",
+      "images": 487,
+      "storms": 15,
+      "negative_predictions": 9,
+      "nonfinite_predictions": 0,
+      "minimum_raw_prediction_kt": -19.239120483398438,
+      "maximum_raw_prediction_kt": 188.28628540039062
+    },
+    {
+      "model": "A",
+      "partition": "2018_2020_val_storm_heldout",
+      "images": 319,
+      "storms": 15,
+      "negative_predictions": 3,
+      "nonfinite_predictions": 0,
+      "minimum_raw_prediction_kt": -14.284605979919434,
+      "maximum_raw_prediction_kt": 151.8158721923828
+    },
+    {
+      "model": "A",
+      "partition": "2021_2023_temporal_holdout",
+      "images": 512,
+      "storms": 15,
+      "negative_predictions": 3,
+      "nonfinite_predictions": 0,
+      "minimum_raw_prediction_kt": -5.48913049697876,
+      "maximum_raw_prediction_kt": 153.78131103515625
+    },
+    {
+      "model": "C",
+      "partition": "2018_2020_test_previously_saved",
+      "images": 334,
+      "storms": 15,
+      "negative_predictions": 7,
+      "nonfinite_predictions": 0,
+      "minimum_raw_prediction_kt": -16.866209030151367,
+      "maximum_raw_prediction_kt": 152.8760223388672
+    },
+    {
+      "model": "C",
+      "partition": "2018_2020_train_in_sample",
+      "images": 487,
+      "storms": 15,
+      "negative_predictions": 9,
+      "nonfinite_predictions": 0,
+      "minimum_raw_prediction_kt": -18.307523727416992,
+      "maximum_raw_prediction_kt": 164.46966552734375
+    },
+    {
+      "model": "C",
+      "partition": "2018_2020_val_storm_heldout",
+      "images": 319,
+      "storms": 15,
+      "negative_predictions": 7,
+      "nonfinite_predictions": 0,
+      "minimum_raw_prediction_kt": -15.107064247131348,
+      "maximum_raw_prediction_kt": 191.42520141601562
+    },
+    {
+      "model": "C",
+      "partition": "2021_2023_temporal_holdout",
+      "images": 512,
+      "storms": 15,
+      "negative_predictions": 9,
+      "nonfinite_predictions": 0,
+      "minimum_raw_prediction_kt": -11.468172073364258,
+      "maximum_raw_prediction_kt": 152.89662170410156
+    }
+  ],
+  "negative_storms_by_model_and_partition": {
+    "A/2018_2020_test_previously_saved": [
+      "MANGKHUT",
+      "RITA"
+    ],
+    "A/2018_2020_train_in_sample": [
+      "CLAUDIA",
+      "KIKO",
+      "MAHA",
+      "OWEN",
+      "UNNAMED"
+    ],
+    "A/2018_2020_val_storm_heldout": [
+      "IRIS",
+      "PHANFONE",
+      "WALAKA"
+    ],
+    "A/2021_2023_temporal_holdout": [
+      "GERT",
+      "MADELINE"
+    ],
+    "C/2018_2020_test_previously_saved": [
+      "GABRIELLE",
+      "LESLIE",
+      "SAUDEL",
+      "THETA",
+      "USAGI"
+    ],
+    "C/2018_2020_train_in_sample": [
+      "BONGOYO",
+      "FRANCISCO",
+      "KIKO",
+      "OMA",
+      "OWEN",
+      "UNNAMED"
+    ],
+    "C/2018_2020_val_storm_heldout": [
+      "BAVI",
+      "FAXAI",
+      "MICHAEL",
+      "PHANFONE",
+      "VONGFONG",
+      "WALAKA"
+    ],
+    "C/2021_2023_temporal_holdout": [
+      "BATSIRAI",
+      "DANIELLE",
+      "FRANKLIN",
+      "FREDDY",
+      "LINDA",
+      "MADELINE",
+      "MAWAR"
+    ]
+  },
+  "interpretation": [
+    "Raw head values are multiplied by 100 to convert the trained wind_kt/100 target back to knots.",
+    "Raw negative regression values are preserved; no clipping was applied to prediction CSVs or any scientific metric.",
+    "The train partition is in-sample. Validation and temporal predictions are diagnostic only and were not used for tuning.",
+    "The saved original test predictions are included only as previously recorded negative-output diagnostics; no test score was recomputed here."
+  ]
+}

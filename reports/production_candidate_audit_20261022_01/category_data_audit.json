@@ -1,0 +1,267 @@
+{
+  "category_definition": "TD <34 kt; TS 34-63; C1 64-82; C2 83-95; C3 96-112; C4 113-136; C5 >=137; recomputed using data/build_dataset.py::category.",
+  "primary_category_counts_by_split": {
+    "train": {
+      "TD": {
+        "images": 187,
+        "storms": 15
+      },
+      "TS": {
+        "images": 171,
+        "storms": 14
+      },
+      "C1": {
+        "images": 46,
+        "storms": 12
+      },
+      "C2": {
+        "images": 32,
+        "storms": 10
+      },
+      "C3": {
+        "images": 30,
+        "storms": 8
+      },
+      "C4": {
+        "images": 19,
+        "storms": 7
+      },
+      "C5": {
+        "images": 2,
+        "storms": 1
+      }
+    },
+    "val": {
+      "TD": {
+        "images": 114,
+        "storms": 14
+      },
+      "TS": {
+        "images": 101,
+        "storms": 15
+      },
+      "C1": {
+        "images": 34,
+        "storms": 11
+      },
+      "C2": {
+        "images": 19,
+        "storms": 8
+      },
+      "C3": {
+        "images": 19,
+        "storms": 8
+      },
+      "C4": {
+        "images": 27,
+        "storms": 7
+      },
+      "C5": {
+        "images": 5,
+        "storms": 3
+      }
+    },
+    "test": {
+      "TD": {
+        "images": 103,
+        "storms": 14
+      },
+      "TS": {
+        "images": 145,
+        "storms": 15
+      },
+      "C1": {
+        "images": 40,
+        "storms": 11
+      },
+      "C2": {
+        "images": 20,
+        "storms": 8
+      },
+      "C3": {
+        "images": 10,
+        "storms": 6
+      },
+      "C4": {
+        "images": 9,
+        "storms": 3
+      },
+      "C5": {
+        "images": 7,
+        "storms": 1
+      }
+    }
+  },
+  "quality_and_provenance": {
+    "original_2018_2020": {
+      "index_path": "kaggle_multiyear45\\images_index.csv",
+      "channel": "ir",
+      "year_range": [
+        2018,
+        2020
+      ],
+      "rows": 1140,
+      "split_summary": {
+        "train": {
+          "images": 487,
+          "storms": 15
+        },
+        "val": {
+          "images": 319,
+          "storms": 15
+        },
+        "test": {
+          "images": 334,
+          "storms": 15
+        }
+      },
+      "storm_overlap_between_splits": {
+        "train__val": [],
+        "train__test": [],
+        "val__test": []
+      },
+      "missing_targets": 0,
+      "nonfinite_targets": 0,
+      "nonpositive_targets": 0,
+      "stored_vs_recomputed_category_mismatches": 0,
+      "duplicate_image_paths": 0,
+      "missing_image_files": 0,
+      "missing_image_path_examples": [],
+      "valid_fraction_min": 0.663,
+      "valid_fraction_median": 0.998,
+      "valid_fraction_below_dataset_threshold_0_6": 0,
+      "max_abs_satellite_track_offset_hours": 3.0,
+      "offset_over_3_hours": 0
+    },
+    "temporal_2021_2023": {
+      "index_path": "kaggle_temporal_test\\images_index.csv",
+      "channel": "ir",
+      "year_range": [
+        2021,
+        2023
+      ],
+      "rows": 512,
+      "split_summary": {
+        "temporal_test": {
+          "images": 512,
+          "storms": 15
+        }
+      },
+      "storm_overlap_between_splits": {},
+      "missing_targets": 0,
+      "nonfinite_targets": 0,
+      "nonpositive_targets": 0,
+      "stored_vs_recomputed_category_mismatches": 0,
+      "duplicate_image_paths": 0,
+      "missing_image_files": 0,
+      "missing_image_path_examples": [],
+      "valid_fraction_min": 0.644,
+      "valid_fraction_median": 1.0,
+      "valid_fraction_below_dataset_threshold_0_6": 0,
+      "max_abs_satellite_track_offset_hours": 2.98,
+      "offset_over_3_hours": 0
+    },
+    "cross_dataset_storm_overlap_original_vs_temporal": [],
+    "original_index_to_tracks_alignment": {
+      "rows": 1140,
+      "rows_without_exact_sid_time_match": 0,
+      "rows_where_image_and_track_USA_wind_differ": 0,
+      "wmo_wind_available_rows": 930,
+      "note": "Image targets match the saved processed track values; this is an internal consistency check, not independent meteorological label verification."
+    },
+    "local_raw_ibtracs_2024_plus": {
+      "path": "data\\raw\\ibtracs.since1980.list.v04r01.csv",
+      "present": true,
+      "records_by_year_2024_plus": {
+        "2024": 6076,
+        "2025": 6749,
+        "2026": 5186
+      },
+      "main_track_records_with_positive_USA_WIND_by_year_2024_plus": {
+        "2024": 4759,
+        "2025": 1706
+      },
+      "USA_AGENCY_values_for_main_positive_records_2024_plus": {
+        "2024": {
+          " ": 2328,
+          "atcf": 9,
+          "hurdat_atl": 483,
+          "hurdat_epa": 347,
+          "jtwc_io": 112,
+          "jtwc_sh": 719,
+          "jtwc_wp": 761
+        },
+        "2025": {
+          " ": 832,
+          "hurdat_atl": 375,
+          "hurdat_epa": 499
+        }
+      }
+    },
+    "local_ir_chip_index_inventory": [
+      {
+        "index_path": "kaggle_dataset\\images_index.csv",
+        "ir_images": 420,
+        "ir_storms": 58,
+        "year_min": 2003,
+        "year_max": 2003
+      },
+      {
+        "index_path": "kaggle_multiyear\\images_index.csv",
+        "ir_images": 560,
+        "ir_storms": 18,
+        "year_min": 2018,
+        "year_max": 2020
+      },
+      {
+        "index_path": "kaggle_multiyear45\\images_index.csv",
+        "ir_images": 1140,
+        "ir_storms": 45,
+        "year_min": 2018,
+        "year_max": 2020
+      },
+      {
+        "index_path": "kaggle_temporal_test\\images_index.csv",
+        "ir_images": 512,
+        "ir_storms": 15,
+        "year_min": 2021,
+        "year_max": 2023
+      },
+      {
+        "index_path": "kaggle_trial\\images_index.csv",
+        "ir_images": 207,
+        "ir_storms": 31,
+        "year_min": 2018,
+        "year_max": 2018
+      }
+    ],
+    "finding_2024_plus": "Local raw IBTrACS track rows for 2024+ are present in the cache, but no indexed labeled IR image chips are present for 2024+; the newest paired IR index is the 2021-2023 temporal set.",
+    "training_category_weights_reconstructed": {
+      "formula": "min(3, sqrt(n_train/(7*category_image_count))) then normalize to image-weighted mean 1 and cap at 3",
+      "train_category_image_counts": {
+        "TD": 187,
+        "TS": 171,
+        "C1": 46,
+        "C2": 32,
+        "C3": 30,
+        "C4": 19,
+        "C5": 2
+      },
+      "weights": {
+        "TD": 0.7158940421246833,
+        "TS": 0.7486373597073432,
+        "C1": 1.4434130768227826,
+        "C2": 1.7305914837471261,
+        "C3": 1.7873471988376008,
+        "C4": 2.24591207912203,
+        "C5": 3.0
+      },
+      "note": "Loss weighting changes per-image influence; it does not add rare-category storms or independent examples."
+    }
+  },
+  "interpretation": [
+    "C4/C5 are severely sparse by image and storm in this small 45-storm sample; C5 has only 2 training images from one storm.",
+    "Internal category labels exactly agree with category thresholds applied to wind_kt, but this does not independently validate IBTrACS wind estimates.",
+    "No indexed IR image or label pair from 2024+ was found; local raw IBTrACS track rows do extend into 2024+."
+  ]
+}

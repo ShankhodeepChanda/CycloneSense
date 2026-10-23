@@ -1,0 +1,9 @@
+model,partition,images,storms,raw_negative_predictions,nonfinite_predictions
+A,2018_2020_test_previously_saved,334,15,3,0
+A,2018_2020_train_in_sample,487,15,9,0
+A,2018_2020_val_storm_heldout,319,15,3,0
+A,2021_2023_temporal_holdout,512,15,3,0
+C,2018_2020_test_previously_saved,334,15,7,0
+C,2018_2020_train_in_sample,487,15,9,0
+C,2018_2020_val_storm_heldout,319,15,7,0
+C,2021_2023_temporal_holdout,512,15,9,0

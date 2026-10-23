@@ -1,0 +1,31 @@
+CycloneSense production readiness checks
+Date: 2026-10-23
+Environment: D:\CycloneSense\.venv (Python 3.12.10)
+
+PASS: D:\CycloneSense\.venv\Scripts\python.exe -m compileall -q app ml data scripts tests
+PASS: D:\CycloneSense\.venv\Scripts\python.exe -m pytest tests -q --basetemp D:\CycloneSense\.venv\pytest-run-20261023-01
+      24 passed in 15.03s
+PASS: npm.cmd run test:web
+      9 passed, 0 failed
+PASS: git diff --check
+PASS: production checkpoint safeguard diagnostic
+      3,304 saved A/C prediction rows checked for separate raw/application values;
+      8 negative validation/temporal image cases rerun using full checkpoints;
+      all raw predictions matched saved values within 0.001 kt and remained negative;
+      application values were zero for those cases.
+
+Environment setup: pandas 2.3.3 and matplotlib 3.11.2, which were missing from the
+project-local test environment, were installed into .venv only. No global Python
+packages were changed. matplotlib's dependencies were resolved into the same .venv.
+
+Test runner note: the first full pytest run could not create pytest's default temp
+directory under the sandbox-managed Windows Temp path (18 passed, 6 setup errors).
+The successful full run used a fresh project-local --basetemp directory. An earlier
+collection attempt also identified the missing matplotlib package; after installing
+it locally, all 24 tests passed.
+
+Checkpoint integrity: Model A SHA-256 remained
+3ac72bfbd2675e2aa79ce131aa6eef138a4867dfb5ca0063bb4ac5b19068d6d8.
+Model C SHA-256 remained
+ea11ce7eda1e3ef49a966eb50f10546e5937dc284c9e6d8ef2e84544f797810b.
+Neither checkpoint was retrained or overwritten.
