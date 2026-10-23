@@ -57,7 +57,7 @@ JSON. Forecasts track and intensity at +6h through +48h from a sequence of obser
 }
 ```
 
-Only `lat` and `lon` are required per observation. The model consumes the last four fixes; a shorter sequence is padded by repeating the earliest, and the response reports `padded_input_steps` in `inputs_imputed`. Central pressure is derived from wind, or wind from pressure, through Atkinson-Holliday when one is missing, and the derived field is named in `inputs_imputed`. `dist2land_km` is always computed from `public/coast.json` rather than supplied.
+Supplying `timestamp` is strongly recommended: the model's motion features are per 6 hours, and without timestamps the engine has to assume that spacing. Only `lat` and `lon` are required per observation. The model consumes the last four fixes; a shorter sequence is padded by repeating the earliest, and the response reports `padded_input_steps` in `inputs_imputed`. Central pressure is derived from wind, or wind from pressure, through Atkinson-Holliday when one is missing, and the derived field is named in `inputs_imputed`. `dist2land_km` is always computed from `public/coast.json` rather than supplied.
 
 Success response (HTTP 200), abridged:
 
@@ -74,18 +74,20 @@ Success response (HTTP 200), abridged:
   "inputs_imputed": ["dist2land_km (derived from the Natural Earth coastline)"],
   "current_metrics": { "lat": 14.1, "lon": 86.4, "wind_kt": 145.0, "pressure_hpa": 901.0, "dist2land_km": 519.1 },
   "waypoints": [
-    { "forecast_hour": 24, "lat": 17.43, "lon": 87.32, "wind_kt": 124.8, "pressure_hpa": 931.9, "uncertainty_radius_km": 139.8, "dist2land_km": 298.0 }
+    { "forecast_hour": 24, "lat": 17.43, "lon": 87.32, "wind_kt": 124.8, "pressure_hpa": 931.9, "uncertainty_radius_km": 153.7, "dist2land_km": 298.0 }
   ],
   "landfall_estimate": { "projected": false, "location": null, "lat": null, "lon": null, "eta_hours": null, "note": "No coastal crossing within 48 h. ...", "threshold_km": 35.0 },
   "summary": { "peak_wind_kt": 145.0, "min_pressure_hpa": 901.0, "peak_pressure_hpa": 963.9, "pressure_change_hpa": 62.9, "wind_change_kt": -67.9, "max_deepening_hpa": 0.0, "intensity_class": "Super Cyclonic Storm (SuCS)", "forecast_track_km": 880.7 },
-  "validation": { "lead_track_rmse_km": [29.4, 61.8, 97.8, 139.8, 176.7, 217.8, 257.8, 301.5], "metrics": {} },
+  "validation": { "lead_track_rmse_km": [32.2, 65.5, 106.5, 153.7, 197.5, 237.7, 285.9, 337.2], "metrics": {} },
   "disclaimer": "Research forecast ... Verify against IMD and RSMC New Delhi advisories."
 }
 ```
 
 The sample shows field meanings; the numbers are one real run on AMPHAN fixes, not a guarantee. `waypoints` always covers the eight trained leads: 6, 12, 18, 24, 30, 36, 42 and 48 hours.
 
-`uncertainty_radius_km` is the checkpoint's measured validation track RMSE at that lead, not a chosen shape. `validation.lead_track_rmse_km` repeats the whole set so a client can show what the cone means.
+`uncertainty_radius_km` is the checkpoint's measured validation track RMSE at that lead, not a chosen shape. `validation.lead_track_rmse_km` repeats the whole set so a client can show what the cone means. An RMSE is about one standard deviation, so it is not a 90% containment radius; `validation.metrics` carries `model_selected_on_validation_set`, which is true, meaning the figure is selection-biased rather than a clean held-out estimate.
+
+`inputs_imputed` also reports when the engine had to rescale the input: the model's motion features are displacement per 6 hours, so a sequence whose `timestamp` values are 12-hourly is rescaled and says so. With no timestamps at all, the 6-hourly assumption is declared instead.
 
 `source` states where the numbers came from. With no checkpoint installed it is `physics-extrapolation`: the engine extrapolates the last observed motion vector, weakens the storm over land, and uses the measured per-lead RMSE of that same baseline as the cone. It is never presented as a model prediction.
 

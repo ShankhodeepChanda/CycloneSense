@@ -19,7 +19,9 @@ export interface TrackPoint {
 export interface CycloneTrack {
   eventId: string;
   name: string;
-  asOf: string | null; // `todate`: the latest observation GDACS holds
+  asOf: string | null; // the moment the observed track ends and the forecast begins
+  /** Which field asOf came from. "now" means GDACS supplied no usable date. */
+  asOfSource: "todate" | "datemodified" | "now" | "none";
   points: TrackPoint[];
   observed: TrackPoint[];
   forecast: TrackPoint[];
@@ -32,11 +34,23 @@ const emptyTrack = (): CycloneTrack => ({
   eventId: "",
   name: "",
   asOf: null,
+  asOfSource: "none",
   points: [],
   observed: [],
   forecast: [],
   cone: null,
 });
+
+/** Parse a GDACS date whether or not it carries a zone. GDACS sends naive UTC today,
+ *  but appending "Z" unconditionally turned an offset-bearing value into NaN, and a NaN
+ *  divider silently relabelled every forecast point as an observation. */
+export function parseGdacsDate(value: unknown): number | null {
+  const text = String(value ?? "").trim();
+  if (!text) return null;
+  const hasZone = /(Z|z|[+-]\d\d:?\d\d)$/.test(text);
+  const stamp = Date.parse(hasZone ? text : text + "Z");
+  return Number.isFinite(stamp) ? stamp : null;
+}
 
 function classIndex(value: unknown, prefix: string): number | null {
   const text = String(value ?? "");
@@ -90,22 +104,34 @@ export function parseCycloneTrack(geojson: any): CycloneTrack {
   if (!features.length) return emptyTrack();
 
   const first = features[0]?.properties ?? {};
-  const asOfMs = Date.parse(String(first.todate ?? "") + "Z");
-  const asOf = Number.isFinite(asOfMs) ? new Date(asOfMs).toISOString() : null;
+  // The divider between observed and forecast. Falling back to the event's last
+  // modification, then to the clock, keeps the split meaningful when `todate` is absent;
+  // defaulting to "everything is observed" would caption GDACS's forecast as fact.
+  const fromTodate = parseGdacsDate(first.todate);
+  const fromModified = parseGdacsDate(first.datemodified);
+  const dividerMs = fromTodate ?? fromModified ?? Date.now();
+  const asOfSource: CycloneTrack["asOfSource"] =
+    fromTodate !== null ? "todate" : fromModified !== null ? "datemodified" : "now";
+  const asOf = new Date(dividerMs).toISOString();
 
   const segments = features
     .map((feature) => ({ index: classIndex(feature?.properties?.Class, "Line_Line_"), geometry: feature?.geometry }))
     .filter((segment) => segment.index !== null && segment.geometry?.type === "LineString")
     .sort((a, b) => (a.index as number) - (b.index as number));
 
-  // Chain the segments: the first contributes both ends, each later one its far end.
+  // Chain the segments: a segment that starts where the last one ended contributes only
+  // its far end. Assuming that unconditionally deleted a real fix whenever GDACS split a
+  // track into separately anchored lines.
   let centres: [number, number][] = [];
   for (const segment of segments) {
     const pairs = (Array.isArray(segment.geometry.coordinates) ? segment.geometry.coordinates : [])
       .filter(isLonLat)
       .map((point: [number, number]) => [point[1], point[0]] as [number, number]);
     if (!pairs.length) continue;
-    centres.push(...(centres.length ? pairs.slice(1) : pairs));
+    const last = centres[centres.length - 1];
+    const joins =
+      last !== undefined && Math.abs(last[0] - pairs[0][0]) < 1e-6 && Math.abs(last[1] - pairs[0][1]) < 1e-6;
+    centres.push(...(joins ? pairs.slice(1) : pairs));
   }
 
   const labelled = features
@@ -117,6 +143,12 @@ export function parseCycloneTrack(geojson: any): CycloneTrack {
     .filter((point) => point.index !== null)
     .sort((a, b) => (a.index as number) - (b.index as number));
 
+  // Keyed by the parsed index, not by array position: GDACS omits radii polygons for some
+  // fixes, and reading them positionally put one point's timestamp on another's position.
+  const labelByIndex = new Map<number, unknown>(
+    labelled.map((point) => [point.index as number, point.properties?.polygonlabel]),
+  );
+
   if (!centres.length) {
     // No line segments: fall back to the centre of each point's radii polygon.
     centres = labelled.map((point) => ringCentre(point.geometry?.coordinates)).filter(Boolean) as [number, number][];
@@ -126,8 +158,8 @@ export function parseCycloneTrack(geojson: any): CycloneTrack {
   // silently becoming a forecast point.
   let observed = true;
   const points: TrackPoint[] = centres.map(([lat, lon], index) => {
-    const time = labelToIso(labelled[index]?.properties?.polygonlabel, first.fromdate);
-    if (time !== null && asOf !== null) observed = Date.parse(time) <= Date.parse(asOf);
+    const time = labelToIso(labelByIndex.get(index), first.fromdate);
+    if (time !== null) observed = Date.parse(time) <= dividerMs;
     return { lat, lon, time, observed };
   });
 
@@ -139,6 +171,7 @@ export function parseCycloneTrack(geojson: any): CycloneTrack {
     eventId: String(first.eventid ?? ""),
     name: String(first.eventname || first.name || "Unnamed system"),
     asOf,
+    asOfSource,
     points,
     observed: points.filter((point) => point.observed),
     forecast: points.filter((point) => !point.observed),

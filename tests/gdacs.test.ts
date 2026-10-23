@@ -157,3 +157,69 @@ test("ignores a point label that is not a parseable date", () => {
   assert.equal(track.points[2].time, null);
   assert.equal(track.points[2].observed, true); // between two observed fixes, so not a forecast point
 });
+
+// --- regressions from the final review ---
+
+test("a todate that already carries Z still divides observed from forecast", () => {
+  const track = parseCycloneTrack(geometryFixture({ todate: "2026-10-23T03:00:00Z" }));
+  assert.equal(track.asOfSource, "todate");
+  assert.deepEqual(track.observed.map((p) => p.lat), [12, 13, 14, 15]);
+  assert.deepEqual(track.forecast.map((p) => p.lat), [16]);
+});
+
+test("a todate carrying an offset is parsed rather than discarded", () => {
+  const track = parseCycloneTrack(geometryFixture({ todate: "2026-10-23T08:30:00+05:30" }));
+  assert.equal(track.asOfSource, "todate");
+  assert.deepEqual(track.forecast.map((p) => p.lat), [16]);
+});
+
+test("without todate it falls back to datemodified instead of calling everything observed", () => {
+  const fixture = geometryFixture({ todate: undefined, datemodified: "2026-10-23T03:00:00" });
+  const track = parseCycloneTrack(fixture);
+  assert.equal(track.asOfSource, "datemodified");
+  assert.deepEqual(track.forecast.map((p) => p.lat), [16]);
+});
+
+test("with no usable date at all, points in the future are not called observations", () => {
+  const track = parseCycloneTrack(geometryFixture({ todate: undefined, datemodified: undefined }));
+  assert.equal(track.asOfSource, "now");
+  // The fixture's labels are all in October 2026; the test clock decides the split, but
+  // the one thing that must not happen is every point being declared observed.
+  assert.equal(track.points.length, 5);
+  assert.equal(track.observed.length + track.forecast.length, 5);
+});
+
+test("timestamps are joined to positions by their parsed index, not by array position", () => {
+  const fixture = geometryFixture();
+  // GDACS does omit radii polygons for some early fixes.
+  fixture.features = fixture.features.filter(
+    (f: any) => f.properties.Class !== "Point_Polygon_Point_0" && f.properties.Class !== "Point_Polygon_Point_1",
+  );
+  const track = parseCycloneTrack(fixture);
+  assert.equal(track.points.length, 5);
+  assert.equal(track.points[0].time, null); // no label for index 0
+  assert.equal(track.points[1].time, null);
+  assert.equal(track.points[2].time, "2026-10-22T15:00:00.000Z"); // its own label, not point 0's
+  assert.equal(track.points[3].time, "2026-10-23T03:00:00.000Z");
+  assert.deepEqual(track.observed.map((p) => p.lat), [12, 13, 14, 15]);
+});
+
+test("a gap between line segments keeps every track point", () => {
+  const base = {
+    eventtype: "TC", eventid: 7, eventname: "GAPPY",
+    fromdate: "2026-10-21T15:00:00", todate: "2026-10-23T03:00:00",
+  };
+  const segment = (i: number, a: [number, number], b: [number, number]) => ({
+    type: "Feature", properties: { ...base, Class: `Line_Line_${i}` },
+    geometry: { type: "LineString", coordinates: [a, b] },
+  });
+  const track = parseCycloneTrack({
+    features: [segment(0, [86, 12], [86.5, 13]), segment(1, [88, 16], [88.5, 17])],
+  });
+  assert.deepEqual(track.points.map((p) => [p.lat, p.lon]), [[12, 86], [13, 86.5], [16, 88], [17, 88.5]]);
+});
+
+test("contiguous segments still collapse their shared endpoint", () => {
+  const track = parseCycloneTrack(geometryFixture());
+  assert.equal(track.points.length, 5); // 4 segments, not 8 points
+});

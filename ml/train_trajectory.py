@@ -10,11 +10,15 @@ fixes, so a random split would put almost every validation target in training to
 per-lead validation RMSE is written into the checkpoint, because that is what the API
 turns into a cone of uncertainty.
 
-Typical two-stage run (what produced the shipped checkpoint):
+Two-stage run (what produced the shipped checkpoint). Stage one deliberately excludes
+the North Indian Ocean, by storm and not merely by basin: PABUK, BULBUL and KROVANH each
+carry both NI and WP rows, so a plain `--basins WP,...` filter would still train stage one
+on storms stage two holds out. The resulting validation RMSE is what the API publishes as
+its cone of uncertainty, so :func:`train` refuses that combination outright.
 
-    python -m ml.train_trajectory --basins all --epochs 60 \
-        --checkpoint models/bob_trajectory_global.pt
-    python -m ml.train_trajectory --basins NI --epochs 120 --lr 5e-4 \
+    python -m ml.train_trajectory --basins WP,SI,EP,SP --exclude-storms-in-basins NI \
+        --epochs 45 --batch-size 64 --checkpoint models/bob_trajectory_global.pt
+    python -m ml.train_trajectory --basins NI --epochs 200 --lr 5e-4 --patience 60 \
         --init-from models/bob_trajectory_global.pt \
         --checkpoint models/bob_trajectory_gru.pt
 """
@@ -181,6 +185,7 @@ def _per_lead_report(
     report: dict[str, Any] = {
         "leads": list(TARGET_LEADS),
         "windows": len(windows),
+        "storms": sorted({window.sid for window in windows}),
         "track_rmse_km": [float(np.sqrt(np.mean(error_km[:, k] ** 2))) for k in range(error_km.shape[1])],
         "track_mae_km": [float(np.mean(np.abs(error_km[:, k]))) for k in range(error_km.shape[1])],
     }
@@ -243,6 +248,10 @@ class TrainConfig:
     images_index: str | Path | None = None
     image_root: str | Path | None = None
     basins: Sequence[str] | None = ("NI",)
+    #: Drop every storm that has any fix in these basins. A basin filter alone does not
+    #: hold a storm out: PABUK, BULBUL and KROVANH each carry both NI and WP rows, so a
+    #: WP pretrain would train on storms an NI fine-tune holds out.
+    exclude_storms_in_basins: Sequence[str] | None = None
     use_vision: bool = False
     pretrained_vision: bool = True
     epochs: int = 120
@@ -254,6 +263,7 @@ class TrainConfig:
     checkpoint: str | Path = DEFAULT_CHECKPOINT
     metrics_path: str | Path = DEFAULT_METRICS
     init_from: str | Path | None = None
+    allow_pretrain_overlap: bool = False
     max_windows: int | None = None
     patience: int = 40
     log_every: int = 10
@@ -264,6 +274,9 @@ def _load_windows(config: TrainConfig) -> list[SequenceWindow]:
     import pandas as pd
 
     frame = load_tracks(config.tracks)
+    if config.exclude_storms_in_basins:
+        excluded = set(frame[frame["basin"].isin(list(config.exclude_storms_in_basins))]["sid"])
+        frame = frame[~frame["sid"].isin(excluded)]
     index = pd.read_csv(config.images_index) if config.images_index else None
     windows = build_sequence_windows(frame, basins=config.basins, images_index=index)
     if not windows:
@@ -285,17 +298,36 @@ def train(config: TrainConfig) -> dict[str, Any]:
 
     windows = _load_windows(config)
     train_windows, val_windows = split_by_storm(windows, config.val_fraction, config.seed)
-    if not val_windows:  # a single-storm dataset cannot be split; score on itself and say so
+    if not val_windows:
+        # A single-storm dataset cannot be split. Scoring on the training set is the only
+        # option left, and metrics["validation_is_training_set"] records it so nothing
+        # downstream mistakes training error for a held-out estimate.
         val_windows = train_windows
+
+    validation_is_training_set = val_windows is train_windows
 
     model = BayOfBengalCycloneForecaster(use_vision=config.use_vision, pretrained=config.pretrained_vision)
     initialised_from = None
+    pretrain_overlap: list[str] = []
     if config.init_from:
-        source, _ = load_forecaster(config.init_from)
+        source, source_meta = load_forecaster(config.init_from)
         if source.use_vision != model.use_vision:
             raise ValueError(
                 f"{config.init_from} was trained with use_vision={source.use_vision}; "
                 f"this run asks for use_vision={model.use_vision}."
+            )
+        # The validation RMSE from this run becomes the API's cone radius, so a storm the
+        # pretrain already fitted must not be held out here. Refuse rather than report a
+        # number that understates the uncertainty a user is shown.
+        seen_in_pretrain = set(source_meta.get("train_storms") or [])
+        pretrain_overlap = sorted({window.sid for window in val_windows} & seen_in_pretrain)
+        if pretrain_overlap and not config.allow_pretrain_overlap:
+            raise ValueError(
+                f"{len(pretrain_overlap)} of this run's validation storms were already "
+                f"trained on by {config.init_from}: {', '.join(pretrain_overlap)}. "
+                "The resulting validation error is not out-of-sample, and it is published "
+                "as the forecast cone. Exclude this basin from the pretrain (for example "
+                "--basins WP,SI,EP,SP) or pass --allow-pretrain-overlap deliberately."
             )
         model.load_state_dict(source.state_dict(), strict=True)
         initialised_from = str(config.init_from)
@@ -347,6 +379,14 @@ def train(config: TrainConfig) -> dict[str, Any]:
         "baseline_track_mae_km": float(np.mean(baseline["track_mae_km"])),
         "epochs_run": len(history),
         "best_val_track_km": best_track_km,
+        "train_windows": len(train_windows),
+        "val_windows": len(val_windows),
+        # The weights are chosen by lowest validation error and then scored on that same
+        # set, so these figures are selection-biased, not a clean held-out estimate. A
+        # consumer that publishes them (the API does, as the cone) should know.
+        "model_selected_on_validation_set": True,
+        "validation_is_training_set": bool(validation_is_training_set),
+        "pretrain_overlap_storms": len(pretrain_overlap),
     }
 
     save_forecaster_checkpoint(
@@ -389,6 +429,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--images-index", default=None, help="CSV mapping storm fixes to satellite chips")
     parser.add_argument("--image-root", default=None, help="Directory the image paths are relative to")
     parser.add_argument("--basins", default="NI", help="Comma-separated basin codes, or 'all'")
+    parser.add_argument(
+        "--exclude-storms-in-basins",
+        default=None,
+        help="Drop every storm with any fix in these basins (e.g. NI), not just those rows",
+    )
     parser.add_argument("--use-vision", action="store_true", help="Enable the ResNet-18 branch")
     parser.add_argument("--no-pretrained-vision", action="store_true")
     parser.add_argument("--epochs", type=int, default=120)
@@ -400,6 +445,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--checkpoint", default=str(DEFAULT_CHECKPOINT))
     parser.add_argument("--metrics-path", default=str(DEFAULT_METRICS))
     parser.add_argument("--init-from", default=None)
+    parser.add_argument(
+        "--allow-pretrain-overlap",
+        action="store_true",
+        help="Permit validation storms the pretrain already trained on (not out-of-sample)",
+    )
     parser.add_argument("--max-windows", type=int, default=None)
     parser.add_argument("--patience", type=int, default=40)
     args = parser.parse_args(argv)
@@ -410,6 +460,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             images_index=args.images_index,
             image_root=args.image_root,
             basins=_parse_basins(args.basins),
+            exclude_storms_in_basins=_parse_basins(args.exclude_storms_in_basins),
             use_vision=args.use_vision,
             pretrained_vision=not args.no_pretrained_vision,
             epochs=args.epochs,
@@ -421,6 +472,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             checkpoint=args.checkpoint,
             metrics_path=args.metrics_path,
             init_from=args.init_from,
+            allow_pretrain_overlap=args.allow_pretrain_overlap,
             max_windows=args.max_windows,
             patience=args.patience,
         )

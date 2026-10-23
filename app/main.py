@@ -117,11 +117,13 @@ async def predict_wind_speed(
     multi_metric = None
     if pressure_hpa is not None:
         from_pressure = wind_from_pressure(pressure_hpa)
+        # Compare like with like: both sides of this block describe the raw estimate, so a
+        # negative raw output is not silently swapped for the clamped display value.
         difference = raw - from_pressure
         multi_metric = WindMultiMetric(
             observed_pressure_hpa=round(float(pressure_hpa), 1),
             pressure_derived_wind_kt=round(from_pressure, 1),
-            image_derived_pressure_hpa=round(pressure_from_wind(application), 1),
+            image_derived_pressure_hpa=round(pressure_from_wind(raw), 1),
             image_minus_pressure_kt=round(difference, 1),
             agreement="close" if abs(difference) <= 10 else "moderate" if abs(difference) <= 25 else "poor",
         )

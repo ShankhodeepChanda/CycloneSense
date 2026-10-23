@@ -97,9 +97,16 @@ export function conePolygon(origin: LatLng, waypoints: Waypoint[]): LatLng[] {
     // Local heading, in degrees, with longitude scaled so the perpendicular is a true
     // right angle on the ground rather than on an unprojected grid.
     const scale = Math.max(Math.cos((anchors[i].lat * Math.PI) / 180), 0.01);
-    const headingLat = next.lat - previous.lat;
-    const headingLon = (next.lon - previous.lon) * scale;
-    const length = Math.hypot(headingLat, headingLon) || 1;
+    let headingLat = next.lat - previous.lat;
+    let headingLon = (next.lon - previous.lon) * scale;
+    if (Math.hypot(headingLat, headingLon) < 1e-9) {
+      // A forecast that predicts no motion still has uncertainty, and the panel quotes it
+      // in km. Without a heading there is no perpendicular, so spread the cone east-west
+      // rather than drawing a zero-area ring over a figure of hundreds of km.
+      headingLat = 1;
+      headingLon = 0;
+    }
+    const length = Math.hypot(headingLat, headingLon);
     const { dLat, dLon } = kmToDegrees(anchors[i].radius, anchors[i].lat);
     // Perpendicular to the heading: (-headingLon, headingLat) normalised.
     const offsetLat = (-headingLon / length) * dLat;
@@ -111,15 +118,59 @@ export function conePolygon(origin: LatLng, waypoints: Waypoint[]): LatLng[] {
   return [...left, ...right.reverse(), left[0]];
 }
 
-/** Track points as Leaflet lat/lng pairs, oldest first. */
-export function trackLatLngs(points: { lat: number; lon: number; time?: string | null }[]): LatLng[] {
-  const timed = points.map((point, index) => ({ point, index, at: point.time ? Date.parse(point.time) : NaN }));
-  // Points without a timestamp keep their arrival order; timestamped ones sort by time.
-  timed.sort((a, b) => {
-    if (Number.isFinite(a.at) && Number.isFinite(b.at)) return a.at - b.at;
+type Stamped<T> = { point: T; index: number; at: number };
+
+/**
+ * Oldest first: timestamped points in time order, then any untimed ones in arrival order.
+ *
+ * Comparing a finite time against NaN and falling back to the index is not a consistent
+ * total order, and V8 is free to order such an array arbitrarily once it passes ten
+ * elements. Ranking untimed points after timed ones keeps the comparator transitive.
+ */
+function chronological<T extends { time?: string | null }>(points: T[]): Stamped<T>[] {
+  const stamped: Stamped<T>[] = points.map((point, index) => ({
+    point,
+    index,
+    at: point.time ? Date.parse(point.time) : NaN,
+  }));
+  stamped.sort((a, b) => {
+    const aTimed = Number.isFinite(a.at);
+    const bTimed = Number.isFinite(b.at);
+    if (aTimed && bTimed) return a.at - b.at || a.index - b.index;
+    if (aTimed !== bTimed) return aTimed ? -1 : 1;
     return a.index - b.index;
   });
-  return timed.map(({ point }) => [point.lat, point.lon] as LatLng);
+  return stamped;
+}
+
+/** Track points as Leaflet lat/lng pairs, oldest first. */
+export function trackLatLngs(points: { lat: number; lon: number; time?: string | null }[]): LatLng[] {
+  return chronological(points).map(({ point }) => [point.lat, point.lon] as LatLng);
+}
+
+/** Hemisphere-correct position, so a Southern or Western storm is not labelled N and E. */
+export function formatPosition(lat: number, lon: number): string {
+  const ns = lat < 0 ? "S" : "N";
+  const ew = lon < 0 ? "W" : "E";
+  return `${Math.abs(lat).toFixed(1)}\u00b0${ns} ${Math.abs(lon).toFixed(1)}\u00b0${ew}`;
+}
+
+/** Plain words for a signed pressure change, including the zero case. */
+export function describePressureChange(hpa: number): string {
+  if (Math.abs(hpa) < 0.5) return "no net change";
+  return hpa > 0 ? "filling, so weakening" : "deepening";
+}
+
+/** One sentence for the landfall panel, preferring the engine's own explanation. */
+export function describeLandfall(landfall: LandfallEstimate): string {
+  if (!landfall.projected) return landfall.note;
+  if (landfall.eta_hours === null || landfall.eta_hours < 1) return landfall.note;
+  return `Projected landfall: ${landfall.location} in about ${Math.round(landfall.eta_hours)} hours.`;
+}
+
+/** True when the forecaster is being used outside the basin it was trained on. */
+export function isOutsideHomeBasin(region: string): boolean {
+  return region.startsWith("Outside");
 }
 
 /**
@@ -134,12 +185,9 @@ export function observationsFromTrack(
   currentWindKt: number | null,
   steps = 4,
 ): Observation[] {
-  const ordered = points
-    .map((point, index) => ({ point, index, at: point.time ? Date.parse(point.time) : NaN }))
-    .sort((a, b) => (Number.isFinite(a.at) && Number.isFinite(b.at) ? a.at - b.at : a.index - b.index))
-    .map(({ point }) => point);
-
-  const window = ordered.slice(-steps);
+  const window = chronological(points)
+    .map(({ point }) => point)
+    .slice(-steps);
   return window.map((point, index) => {
     const observation: Observation = { lat: point.lat, lon: point.lon };
     if (point.time) observation.timestamp = point.time;

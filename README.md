@@ -38,15 +38,17 @@ minutes (a global pre-train across all basins, then a North Indian Ocean fine-tu
 
 ```bash
 pip install -r requirements-dev.txt
-python -m ml.train_trajectory --basins all --epochs 45 --batch-size 64 \
-    --checkpoint models/bob_trajectory_global.pt
+python -m ml.train_trajectory --basins WP,SI,EP,SP --exclude-storms-in-basins NI \
+    --epochs 45 --batch-size 64 --checkpoint models/bob_trajectory_global.pt
 python -m ml.train_trajectory --basins NI --epochs 200 --lr 5e-4 --patience 60 \
     --init-from models/bob_trajectory_global.pt \
     --checkpoint models/bob_trajectory_gru.pt
 python -m pytest -q
 ```
 
-The script prints per-lead validation error next to a straight-line baseline it must beat.
+The script prints per-lead validation error next to the straight-line baseline it has to
+beat, and refuses a two-stage run whose pre-train already saw the storms the fine-tune holds
+out. It beats that baseline at seven of eight leads and loses at +6 h.
 See `docs/MODEL.md` for the architecture and the measured numbers, and `docs/API.md` for the
 request and response shapes.
 

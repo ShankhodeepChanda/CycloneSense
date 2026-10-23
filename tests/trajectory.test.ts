@@ -4,6 +4,10 @@ import assert from "node:assert/strict";
 import {
   WAYPOINT_HIGHLIGHTS,
   conePolygon,
+  describeLandfall,
+  describePressureChange,
+  formatPosition,
+  isOutsideHomeBasin,
   kmToDegrees,
   observationsFromTrack,
   trackLatLngs,
@@ -144,4 +148,92 @@ test("a waypoint with no coastline coverage still draws a cone", () => {
   const ring = conePolygon([14.0, 87.0], [uncovered(6, 15, 87), uncovered(12, 16, 87)]);
   assert.equal(ring.length, 2 * 3 + 1);
   assert.ok(ring.every(([lat, lon]) => Number.isFinite(lat) && Number.isFinite(lon)));
+});
+
+// --- regressions from the final review ---
+
+test("a stationary forecast still draws a cone with area", () => {
+  // One observation and no checkpoint gives zero motion at every lead. The panel still
+  // quotes hundreds of km of uncertainty, so a zero-area ring would hide it.
+  const still: Waypoint[] = [6, 12, 24, 48].map((hour) => waypoint(hour, 14.1, 86.4, 30 * (hour / 6)));
+  const ring = conePolygon([14.1, 86.4], still);
+  const lons = ring.map(([, lon]) => lon);
+  const lats = ring.map(([lat]) => lat);
+  const spread = Math.max(...lons) - Math.min(...lons) + (Math.max(...lats) - Math.min(...lats));
+  assert.ok(spread > 0.5, `expected a visible cone, got a spread of ${spread}`);
+});
+
+test("mixed timestamped and untimed points sort deterministically", () => {
+  const points = Array.from({ length: 14 }, (_, i) => ({
+    lat: 10 + i,
+    lon: 80,
+    time: i % 2 === 0 ? `2026-10-${String(10 + i).padStart(2, "0")}T00:00:00.000Z` : null,
+  }));
+  const first = trackLatLngs(points);
+  const second = trackLatLngs([...points]);
+  assert.deepEqual(first, second);
+  // Every timestamped point keeps ascending time order.
+  const timed = points.filter((p) => p.time).map((p) => p.lat);
+  const orderInResult = first.map(([lat]) => lat).filter((lat) => timed.includes(lat));
+  assert.deepEqual(orderInResult, timed);
+});
+
+test("positions name the hemisphere they are actually in", () => {
+  assert.equal(formatPosition(14.1, 86.4), "14.1\u00b0N 86.4\u00b0E");
+  assert.equal(formatPosition(-18.0, -170.0), "18.0\u00b0S 170.0\u00b0W");
+  assert.equal(formatPosition(0, 0), "0.0\u00b0N 0.0\u00b0E");
+});
+
+test("a pressure change of zero is not described as deepening", () => {
+  assert.match(describePressureChange(0), /no net change/i);
+  assert.match(describePressureChange(12), /filling|weaken/i);
+  assert.match(describePressureChange(-12), /deepening/i);
+});
+
+test("a landfall already in progress is not described as being in zero hours", () => {
+  const already = describeLandfall({
+    projected: true,
+    location: "West Bengal / Sundarbans coast",
+    lat: 21.6,
+    lon: 88.3,
+    eta_hours: 0,
+    note: "The storm centre is already at the coast at the latest observation.",
+    threshold_km: 35,
+  });
+  assert.doesNotMatch(already, /0 hours/);
+  assert.match(already, /already at the coast/i);
+});
+
+test("a projected landfall still reports its location and timing", () => {
+  const soon = describeLandfall({
+    projected: true,
+    location: "Odisha coast near Puri",
+    lat: 19.8,
+    lon: 85.8,
+    eta_hours: 13,
+    note: "Projected crossing: ...",
+    threshold_km: 35,
+  });
+  assert.match(soon, /Odisha coast near Puri/);
+  assert.match(soon, /13 hours/);
+});
+
+test("no projected landfall shows the engine's own explanation", () => {
+  const none = describeLandfall({
+    projected: false,
+    location: null,
+    lat: null,
+    lon: null,
+    eta_hours: null,
+    note: "No coastal crossing within 48 h. The forecast track stays 38 km offshore at its closest.",
+    threshold_km: 35,
+  });
+  assert.match(none, /38 km offshore/);
+});
+
+test("a storm outside the North Indian Ocean is recognised as out of basin", () => {
+  assert.equal(isOutsideHomeBasin("Outside the North Indian Ocean"), true);
+  assert.equal(isOutsideHomeBasin("Bay of Bengal"), false);
+  assert.equal(isOutsideHomeBasin("Arabian Sea"), false);
+  assert.equal(isOutsideHomeBasin("North Indian Ocean"), false);
 });

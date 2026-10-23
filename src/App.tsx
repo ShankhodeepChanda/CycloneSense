@@ -5,7 +5,10 @@ import { LAYERS, iso, resolveNrt, slotAt, type Variant } from "./gibs";
 import { fetchWeather, type Weather } from "./weather";
 import { Card, Gauge, Icon, PressureChart } from "./panels";
 import { WindEstimator } from "./WindEstimator";
-import { WAYPOINT_HIGHLIGHTS, fetchTrajectory, observationsFromTrack, trackLatLngs, type TrajectoryForecast } from "./trajectory";
+import {
+  WAYPOINT_HIGHLIGHTS, describeLandfall, describePressureChange, fetchTrajectory, formatPosition,
+  isOutsideHomeBasin, observationsFromTrack, trackLatLngs, type TrajectoryForecast,
+} from "./trajectory";
 
 const DAY = 86_400_000;
 const utcDay = (d: Date) => d.toISOString().slice(0, 10);
@@ -322,15 +325,23 @@ export function App() {
               )}
               {fc.s === "ok" && (
                 <>
+                  <p className="tj-region">
+                    {fc.f.region} · started from {formatPosition(fc.f.current_metrics.lat, fc.f.current_metrics.lon)}
+                  </p>
+                  {isOutsideHomeBasin(fc.f.region) && (
+                    <p className="warn">
+                      This storm is outside the North Indian Ocean. The forecaster was trained on Bay of
+                      Bengal and Arabian Sea storms, and the cone below is its error measured there, so
+                      both the track and its uncertainty are unvalidated here.
+                    </p>
+                  )}
                   <p className={`tj-landfall${fc.f.landfall_estimate.projected ? " on" : ""}`}>
-                    {fc.f.landfall_estimate.projected
-                      ? `Projected landfall: ${fc.f.landfall_estimate.location} in about ${Math.round(fc.f.landfall_estimate.eta_hours ?? 0)} hours.`
-                      : fc.f.landfall_estimate.note}
+                    {describeLandfall(fc.f.landfall_estimate)}
                   </p>
                   <dl className="tj-metrics">
                     <div><dt>Peak wind</dt><dd>{Math.round(fc.f.summary.peak_wind_kt)} kt<small>{kmh(fc.f.summary.peak_wind_kt)} km/h</small></dd></div>
                     <div><dt>Lowest pressure</dt><dd>{Math.round(fc.f.summary.min_pressure_hpa)} hPa<small>deepest on the path</small></dd></div>
-                    <div><dt>Pressure to +48 h</dt><dd>{fc.f.summary.pressure_change_hpa > 0 ? "+" : ""}{Math.round(fc.f.summary.pressure_change_hpa)} hPa<small>{fc.f.summary.pressure_change_hpa > 0 ? "filling, so weakening" : "deepening"}</small></dd></div>
+                    <div><dt>Pressure to +48 h</dt><dd>{fc.f.summary.pressure_change_hpa > 0 ? "+" : ""}{Math.round(fc.f.summary.pressure_change_hpa)} hPa<small>{describePressureChange(fc.f.summary.pressure_change_hpa)}</small></dd></div>
                     <div><dt>Track length</dt><dd>{Math.round(fc.f.summary.forecast_track_km)} km<small>over 48 hours</small></dd></div>
                   </dl>
                   <p className="tj-class">{fc.f.summary.intensity_class}</p>
@@ -341,7 +352,7 @@ export function App() {
                       {fc.f.waypoints.filter((w) => WAYPOINT_HIGHLIGHTS.includes(w.forecast_hour)).map((w) => (
                         <tr key={w.forecast_hour}>
                           <th scope="row">+{w.forecast_hour} h</th>
-                          <td>{w.lat.toFixed(1)}&deg;N {w.lon.toFixed(1)}&deg;E</td>
+                          <td>{formatPosition(w.lat, w.lon)}</td>
                           <td>{Math.round(w.wind_kt)} kt</td>
                           <td>{Math.round(w.pressure_hpa)} hPa</td>
                           <td>&plusmn;{Math.round(w.uncertainty_radius_km)} km</td>

@@ -27,9 +27,18 @@ class TrajectoryPoint(BaseModel):
     pred_lon: float = Field(..., description="Predicted longitude")
     pred_wind_kts: float = Field(..., description="Predicted sustained surface wind in knots")
     pred_pressure_hpa: float = Field(..., description="Predicted central pressure in hPa")
-    cone_radius_km: float = Field(..., description="90% track cone of uncertainty radius in km")
+    cone_radius_km: float = Field(
+        ...,
+        description=(
+            "Cone radius in km: the forecaster's measured validation track RMSE at this lead, "
+            "which is about one standard deviation, not a 90% containment radius"
+        ),
+    )
     is_landfall: bool = Field(False, description="True if cyclone center crosses coastline at this tau")
     landfall_location: Optional[str] = Field(None, description="Landmark or district name if coastal crossing occurs")
+    extrapolated_beyond_training: bool = Field(
+        False, description="True for leads past the model's trained horizon of +48 h"
+    )
 
 
 class CoastalIntercept(BaseModel):

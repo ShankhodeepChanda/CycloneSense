@@ -94,10 +94,14 @@ for early gradient stability. Intensity loss is MSE on normalised wind and press
 Validation is **grouped by storm id**. Windows inside one storm overlap by up to 11 of their
 12 fixes, so a random split would leak nearly every validation target into training.
 
-Two stages produced the shipped checkpoint:
+Two stages produced the shipped checkpoint. Stage one excludes the North Indian Ocean
+**by storm, not by basin**: PABUK, BULBUL and KROVANH each carry both NI and WP rows in
+`kaggle_trial/tracks.csv`, so a plain `--basins WP,SI,EP,SP` filter would still train stage
+one on storms stage two holds out. `train()` refuses that combination rather than publishing
+a contaminated error as the forecast cone.
 
-    python -m ml.train_trajectory --basins all --epochs 45 --batch-size 64 \
-        --checkpoint models/bob_trajectory_global.pt
+    python -m ml.train_trajectory --basins WP,SI,EP,SP --exclude-storms-in-basins NI \
+        --epochs 45 --batch-size 64 --checkpoint models/bob_trajectory_global.pt
 
     python -m ml.train_trajectory --basins NI --epochs 200 --lr 5e-4 --patience 60 \
         --init-from models/bob_trajectory_global.pt \
@@ -105,27 +109,42 @@ Two stages produced the shipped checkpoint:
 
 ### Measured results
 
-North Indian Ocean fine-tune: 330 windows over 20 storms, validation held out by storm
-(LUBAN, GAJA, PABUK, PAWAN, BUREVI). Per-lead validation track RMSE in km, against
-persistence of the last observed 6-hourly motion vector:
+North Indian Ocean fine-tune: 330 windows over 20 storms, 247 training and 83 validation
+windows, validation held out by storm (LUBAN, GAJA, PABUK, PAWAN, BUREVI). Per-lead
+validation track RMSE in km, against persistence of the last observed 6-hourly motion
+vector:
 
 | Lead | Model | Linear baseline |
 |---|---|---|
-| +6 h | 29.4 | 30.7 |
-| +12 h | 61.8 | 67.4 |
-| +18 h | 97.8 | 111.7 |
-| +24 h | **139.8** | 160.7 |
-| +30 h | 176.7 | 210.8 |
-| +36 h | 217.8 | 259.1 |
-| +42 h | 257.8 | 309.8 |
-| +48 h | **301.5** | 364.1 |
+| +6 h | 32.2 | **30.7** |
+| +12 h | 65.5 | 67.4 |
+| +18 h | **106.5** | 111.7 |
+| +24 h | **153.7** | 160.7 |
+| +30 h | **197.5** | 210.8 |
+| +36 h | **237.7** | 259.1 |
+| +42 h | **285.9** | 309.8 |
+| +48 h | **337.2** | 364.1 |
 
-Wind MAE 12.6 kt and pressure MAE 7.9 hPa, both averaged over the eight leads. The model
-beats the baseline at every lead.
+Wind MAE 13.5 kt and pressure MAE 8.4 hPa, both averaged over the eight leads.
 
-These are not operational-grade errors: IMD's +24h track error is roughly 80-100 km. 330
-training windows is a small dataset, and the figures should be read as a research result on
-this repository's data rather than as forecast skill.
+The model beats persistence at seven of the eight leads and **loses at +6 h**, where simply
+continuing the last observed motion vector is already very hard to improve on. The margin
+grows with lead time, from 3% at +12 h to 7% at +48 h, which is the shape you would expect:
+persistence degrades as a track curves, and curvature is what the model has learned.
+
+An earlier run of this recipe pre-trained on `--basins all`, which showed stage one four of
+the five storms stage two held out. That reported +24 h 139.8 km and +48 h 301.5 km and
+claimed every lead; the figures above are what the same recipe gives once the stages are
+storm-disjoint, so the contamination was worth about 10% of the result.
+
+These are not operational-grade errors: IMD's +24 h track error is roughly 80-100 km. 330
+windows is a small dataset, and the figures should be read as a research result on this
+repository's data rather than as forecast skill.
+
+Two caveats travel with the numbers, both recorded in the checkpoint's `metrics`:
+`model_selected_on_validation_set` is true, so the weights were chosen by lowest validation
+error and then scored on that same set, which is a selection-biased estimate; and
+`validation_is_training_set` reports when a dataset was too small to split at all.
 
 The per-lead RMSE column is written into the checkpoint as `lead_track_rmse_km` and becomes
 the API's cone of uncertainty, so the cone is a measurement rather than a chosen shape.

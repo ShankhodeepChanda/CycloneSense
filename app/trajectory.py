@@ -35,6 +35,7 @@ from ml.sequence_dataset import (
     NORM,
     PRESSURE_CEILING_HPA,
     PRESSURE_FLOOR_HPA,
+    STEP_HOURS,
     TARGET_LEADS,
     denormalise_intensity,
     normalise,
@@ -66,10 +67,33 @@ BASELINE_LEAD_RMSE_KM: list[float] = [30.7, 67.4, 111.7, 160.7, 210.8, 259.1, 30
 FALLBACK_OVERLAND_DECAY = 0.86
 DECAY_ONSET_KM = 60.0
 
-DISCLAIMER = (
-    "Research forecast from a model trained on 330 North Indian Ocean best-track windows. "
-    "Not an official warning. Verify against IMD and RSMC New Delhi advisories."
+_ADVISORY = "Not an official warning. Verify against IMD and RSMC New Delhi advisories."
+
+#: Served when the extrapolation fallback produced the numbers. It has to deny the model
+#: outright: the UI prints this line directly under the model name.
+FALLBACK_DISCLAIMER = (
+    "This is not a model forecast. With no trained checkpoint installed, the track is a "
+    "straight-line extrapolation of the last observed motion vector and the cone is that "
+    f"method's own measured error. {_ADVISORY}"
 )
+
+
+def trained_disclaimer(metadata: dict[str, Any]) -> str:
+    """Describe the actual training and validation sets, read from the checkpoint.
+
+    Counting from the checkpoint rather than hardcoding a number keeps this honest across
+    retrains; a figure written here by hand drifts the moment the model is trained again.
+    """
+    trained_on = len(metadata.get("train_storms") or [])
+    held_out = len(metadata.get("val_storms") or [])
+    if trained_on and held_out:
+        scope = (
+            f"a sequence model trained on {trained_on} North Indian Ocean storms and "
+            f"validated on {held_out} held-out storms"
+        )
+    else:
+        scope = "a sequence model trained on North Indian Ocean best-track windows"
+    return f"Research forecast from {scope}. {_ADVISORY}"
 
 
 @dataclass(frozen=True)
@@ -105,6 +129,16 @@ def wind_from_pressure(pressure_hpa: float) -> float:
     """Atkinson-Holliday forward relation: wind in knots from central pressure."""
     drop = max(0.0, 1010.0 - float(pressure_hpa))
     return float(np.clip(6.7 * (drop ** 0.644), 0.0, WIND_CEILING_KT))
+
+
+def wrap_degrees(delta: float) -> float:
+    """Shortest signed angular step, so a dateline crossing is 0.7 degrees, not -359.3."""
+    return (float(delta) + 180.0) % 360.0 - 180.0
+
+
+def wrap_longitude(lon: float) -> float:
+    """Fold a longitude back into [-180, 180)."""
+    return (float(lon) + 180.0) % 360.0 - 180.0
 
 
 def haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -149,13 +183,18 @@ COASTAL_GAZETTEER: list[tuple[str, float, float]] = [
 ]
 
 
+#: A gazetteer entry further than this from the crossing describes somewhere else.
+#: At 400 km, Great Nicobar was being reported as a landfall near Port Blair.
+GAZETTEER_RADIUS_KM = 150.0
+
+
 def nearest_coastal_place(lat: float, lon: float) -> str:
     """The gazetteer entry closest to a position, or a plain description if none is near."""
     name, distance = min(
         ((entry[0], haversine_km(lat, lon, entry[1], entry[2])) for entry in COASTAL_GAZETTEER),
         key=lambda pair: pair[1],
     )
-    if distance > 400.0:
+    if distance > GAZETTEER_RADIUS_KM:
         return f"coast near {abs(lat):.1f}°{'N' if lat >= 0 else 'S'} {abs(lon):.1f}°{'E' if lon >= 0 else 'W'}"
     return name
 
@@ -177,6 +216,9 @@ class CoastlineIndex:
     #: Beyond this, a "nearest coast" result is evidence of missing data, not of distance.
     COVERAGE_LIMIT_KM = 2800.0
 
+    #: Width of the longitude bins used to detect the file's data holes.
+    COVERAGE_BIN_DEG = 5.0
+
     _shared: "CoastlineIndex | None" = None
     _shared_lock = threading.Lock()
 
@@ -190,6 +232,14 @@ class CoastlineIndex:
         self.lon = np.radians(points[:, 0])
         self.lat = np.radians(points[:, 1])
         self._lonlat = points
+        # Which longitude bins hold any coastline at all. The shipped file has one
+        # contiguous hole from 165W to 20W (the Americas), and a nearest-vertex answer
+        # for a position inside it describes the wrong continent: off the Azores it
+        # returns mainland Portugal, ~1900 km away, which passes the distance guard.
+        edges = np.arange(-180.0, 180.0 + self.COVERAGE_BIN_DEG, self.COVERAGE_BIN_DEG)
+        counts, _ = np.histogram(points[:, 0], bins=edges)
+        self._bin_edges = edges
+        self._bin_populated = counts > 0
 
     @classmethod
     def shared(cls) -> "CoastlineIndex":
@@ -215,8 +265,20 @@ class CoastlineIndex:
         vertex = self._lonlat[index]
         return float(distances[index]), (float(vertex[1]), float(vertex[0]))
 
+    def _longitude_is_mapped(self, lon: float) -> bool:
+        index = int(np.searchsorted(self._bin_edges, wrap_longitude(lon), side="right")) - 1
+        index = min(max(index, 0), len(self._bin_populated) - 1)
+        return bool(self._bin_populated[index])
+
     def distance_to_land_km(self, lat: float, lon: float) -> float | None:
-        """Distance in km to the nearest coast, or None where this file has no coverage."""
+        """Distance in km to the nearest coast, or None where this file has no coverage.
+
+        Two guards, because either alone lets a wrong number through: the longitude must
+        fall in a band this file actually maps, and the nearest vertex must be inside the
+        Point Nemo bound.
+        """
+        if not self._longitude_is_mapped(lon):
+            return None
         nearest = float(np.min(self._distances(lat, lon)))
         return None if nearest > self.COVERAGE_LIMIT_KM else nearest
 
@@ -237,6 +299,30 @@ class PreparedSequence:
     dist2land0: float | None
     observations_used: int
     imputed: list[str]
+
+
+def _parse_timestamp(value: Any) -> float | None:
+    """Observation time in epoch hours, or None when it is absent or unreadable."""
+    if value is None:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    try:
+        parsed = datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.timestamp() / 3600.0
+
+
+def _spacing_hours(earlier: dict[str, Any], later: dict[str, Any]) -> float | None:
+    """Hours between two observations, or None when either time is unknown."""
+    if earlier.get("at") is None or later.get("at") is None:
+        return None
+    gap = later["at"] - earlier["at"]
+    return gap if gap > 0 else None
 
 
 def _first_finite(values: Sequence[float | None]) -> float | None:
@@ -274,6 +360,7 @@ def prepare_sequence(
                 "lon": float(lon),
                 "wind_kt": None if wind is None else float(wind),
                 "pressure_hpa": None if pressure is None else float(pressure),
+                "at": _parse_timestamp(raw.get("timestamp")),
             }
         )
 
@@ -323,14 +410,24 @@ def prepare_sequence(
 
     rows: list[list[float]] = []
     uncovered = False
+    rescaled_from: list[float] = []
     for index, step in enumerate(window):
         if index == 0:
             previous = cleaned[-input_steps - 1] if len(cleaned) > input_steps else None
-            dlat = step["lat"] - previous["lat"] if previous else 0.0
-            dlon = step["lon"] - previous["lon"] if previous else 0.0
         else:
-            dlat = step["lat"] - window[index - 1]["lat"]
-            dlon = step["lon"] - window[index - 1]["lon"]
+            previous = window[index - 1]
+        if previous is None:
+            dlat = dlon = 0.0
+        else:
+            # The model's motion features are displacement per 6 hours. When the caller
+            # supplied timestamps, honour them: a 12-hourly feed otherwise hands the model
+            # a step twice the size it was trained on, and every lead inherits the error.
+            spacing = _spacing_hours(previous, step)
+            factor = 1.0 if spacing is None else float(np.clip(STEP_HOURS / spacing, 0.25, 4.0))
+            if spacing is not None and abs(spacing - STEP_HOURS) > 0.1 * STEP_HOURS:
+                rescaled_from.append(spacing)
+            dlat = (step["lat"] - previous["lat"]) * factor
+            dlon = wrap_degrees(step["lon"] - previous["lon"]) * factor
         distance = coastline.distance_to_land_km(step["lat"], step["lon"])
         if distance is None:
             # Feed the model the neutral value for this feature rather than a wrong one.
@@ -347,12 +444,21 @@ def prepare_sequence(
         }
         rows.append([float(values[name]) for name in FEATURES])
 
-    imputed.append(
-        "dist2land_km unavailable: the shipped coastline does not cover this longitude, "
-        f"so the model was given its neutral value of {NORM['dist2land_km'][0]:.0f} km"
-        if uncovered
-        else "dist2land_km (derived from the Natural Earth coastline)"
-    )
+    if uncovered:
+        imputed.append(
+            "dist2land_km unavailable: the shipped coastline does not cover this position, "
+            f"so the model was given its neutral value of {NORM['dist2land_km'][0]:.0f} km"
+        )
+    if rescaled_from:
+        worst = max(rescaled_from, key=lambda hours: abs(hours - STEP_HOURS))
+        imputed.append(
+            f"motion rescaled from {worst:.1f} h observation spacing to the model's "
+            f"{STEP_HOURS} h step"
+        )
+    elif len(cleaned) > 1 and all(step["at"] is None for step in cleaned):
+        imputed.append(
+            f"observation spacing assumed to be {STEP_HOURS}-hourly (no timestamps supplied)"
+        )
 
     last = window[-1]
     last_distance = coastline.distance_to_land_km(last["lat"], last["lon"])
@@ -574,14 +680,20 @@ class TrajectoryEngine:
         deltas = np.zeros((len(TARGET_LEADS), 2), dtype=np.float64)
         intensity = np.zeros((len(TARGET_LEADS), 2), dtype=np.float64)
         wind = prepared.wind0
+        # Anchor pressure to the observed value and move it only by the change the wind
+        # change implies. Recomputing it outright would report a trend this method does
+        # not predict: Atkinson-Holliday runs several hPa below this basin's own fixes, so
+        # a constant-wind forecast came out as a 9 hPa deepening.
+        reference = pressure_from_wind(prepared.wind0)
         for step in range(len(TARGET_LEADS)):
             deltas[step] = ((step + 1) * dlat, (step + 1) * dlon)
             projected_lat = prepared.lat0 + deltas[step][0]
-            projected_lon = prepared.lon0 + deltas[step][1]
+            projected_lon = wrap_longitude(prepared.lon0 + deltas[step][1])
             distance = self.coastline.distance_to_land_km(projected_lat, projected_lon)
             if distance is not None and distance < DECAY_ONSET_KM:
                 wind *= FALLBACK_OVERLAND_DECAY
-            intensity[step] = (wind, pressure_from_wind(wind))
+            pressure = prepared.pressure0 + (pressure_from_wind(wind) - reference)
+            intensity[step] = (wind, pressure)
         return deltas, intensity
 
     def forecast(
@@ -602,16 +714,18 @@ class TrajectoryEngine:
                 f"({self._meta.get('architecture', 'bob-gru')}, "
                 f"basins={self._meta.get('basins', 'NI')})"
             )
+            disclaimer = trained_disclaimer(self._meta)
         else:
             deltas, intensity = self._extrapolated_deltas(prepared)
             source = "physics-extrapolation"
             model_name = "Straight-line extrapolation of the last observed motion vector"
+            disclaimer = FALLBACK_DISCLAIMER
 
         radii = self.lead_radii_km()
         waypoints: list[dict[str, Any]] = []
         for index, lead in enumerate(TARGET_LEADS):
             lat = prepared.lat0 + float(deltas[index][0])
-            lon = prepared.lon0 + float(deltas[index][1])
+            lon = wrap_longitude(prepared.lon0 + float(deltas[index][1]))
             wind, pressure = _clamp_intensity(float(intensity[index][0]), float(intensity[index][1]))
             waypoints.append(
                 {
@@ -675,7 +789,7 @@ class TrajectoryEngine:
                 "lead_track_rmse_km": [round(value, 1) for value in radii],
                 "metrics": self._meta.get("metrics", {}),
             },
-            "disclaimer": DISCLAIMER,
+            "disclaimer": disclaimer,
         }
 
     def legacy_forecast(self, cyclone_id: str, observations: Sequence[dict[str, Any]]) -> dict[str, Any]:
@@ -686,7 +800,9 @@ class TrajectoryEngine:
         response marks it as extrapolated past the trained horizon.
         """
         if not observations:
-            observations = [{"lat": 18.42, "lon": 71.18, "wind_kts": 95, "pressure_hpa": 954}]
+            # This used to substitute a hardcoded Arabian Sea storm and return it as a
+            # successful forecast for whatever id the caller passed.
+            raise ValueError("At least one observation is required to forecast a trajectory.")
         forecast = self.forecast(cyclone_id, observations)
         by_hour = {point["forecast_hour"]: point for point in forecast["waypoints"]}
 
@@ -703,13 +819,14 @@ class TrajectoryEngine:
                     "cone_radius_km": point["uncertainty_radius_km"],
                     "is_landfall": False,
                     "landfall_location": None,
+                    "extrapolated_beyond_training": False,
                 }
             )
 
         at42, at48 = by_hour[42], by_hour[48]
         steps_beyond = 4  # +72 h is four 6-hourly steps past the trained horizon
         lat72 = at48["lat"] + steps_beyond * (at48["lat"] - at42["lat"])
-        lon72 = at48["lon"] + steps_beyond * (at48["lon"] - at42["lon"])
+        lon72 = wrap_longitude(at48["lon"] + steps_beyond * wrap_degrees(at48["lon"] - at42["lon"]))
         wind72 = max(0.0, at48["wind_kt"] - 15.0)  # unconstrained beyond training; weaken
         trajectory.append(
             {
@@ -721,6 +838,7 @@ class TrajectoryEngine:
                 "cone_radius_km": round(at48["uncertainty_radius_km"] * 1.45, 1),
                 "is_landfall": False,
                 "landfall_location": None,
+                "extrapolated_beyond_training": True,
             }
         )
 
@@ -731,9 +849,15 @@ class TrajectoryEngine:
                 point["landfall_location"] = landfall["location"]
                 break
 
+        # Only observations that actually carry a wind can evidence intensification.
+        # Coercing a missing wind to 0.0 made a pressure-only first fix look like a 60 kt
+        # jump; it also made a genuine 0 kt indistinguishable from no measurement.
         winds = [
-            float(observation.get("wind_kt", observation.get("wind_kts")) or 0.0)
-            for observation in observations
+            float(value)
+            for value in (
+                observation.get("wind_kt", observation.get("wind_kts")) for observation in observations
+            )
+            if value is not None and math.isfinite(float(value))
         ]
         rapid_intensification = len(winds) >= 2 and (winds[-1] - winds[0]) >= 25.0
 

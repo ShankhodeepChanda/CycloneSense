@@ -233,7 +233,9 @@ class TestTrainEntryPoint:
         train(
             TrainConfig(
                 tracks="kaggle_trial/tracks.csv",
-                basins=None,
+                # Deliberately excludes NI: pre-training on every basin would show this
+                # stage the storms the fine-tune holds out, and train() now refuses that.
+                basins=("WP", "SI", "EP", "SP"),
                 epochs=1,
                 batch_size=64,
                 checkpoint=pretrained,
@@ -270,3 +272,195 @@ class TestTrainEntryPoint:
                     metrics_path=tmp_path / "none.json",
                 )
             )
+
+
+class TestPretrainContamination:
+    """A two-stage run must not fine-tune against storms stage one already saw.
+
+    The published cone radius is this validation RMSE, so contamination here understates
+    the uncertainty shown to every user.
+    """
+
+    def _csv(self, tmp_path, sids=("STORM_A", "STORM_B", "STORM_C", "STORM_D")):
+        frames = []
+        for offset, sid in enumerate(sids):
+            rows = 20
+            times = pd.date_range(f"2020-0{offset + 1}-01", periods=rows, freq="6h")
+            frames.append(
+                pd.DataFrame(
+                    {
+                        "sid": sid,
+                        "name": sid,
+                        "basin": "NI",
+                        "time": times,
+                        "lat": [10.0 + 0.3 * i + offset for i in range(rows)],
+                        "lon": [86.0 + 0.2 * i for i in range(rows)],
+                        "wind_kt": [40.0 + 2.0 * i for i in range(rows)],
+                        "pres_hpa": [1000.0 - 2.0 * i for i in range(rows)],
+                        "dist2land_km": [500.0 - 10.0 * i for i in range(rows)],
+                        "dlat": [np.nan] + [0.3] * (rows - 1),
+                        "dlon": [np.nan] + [0.2] * (rows - 1),
+                    }
+                )
+            )
+        path = tmp_path / "tracks.csv"
+        pd.concat(frames, ignore_index=True).to_csv(path, index=False)
+        return path
+
+    def _config(self, tmp_path, tracks, name, **overrides):
+        settings = {
+            "tracks": tracks,
+            "basins": ("NI",),
+            "epochs": 1,
+            "batch_size": 16,
+            "checkpoint": tmp_path / f"{name}.pt",
+            "metrics_path": tmp_path / f"{name}.json",
+            "seed": 0,
+        }
+        settings.update(overrides)
+        return TrainConfig(**settings)
+
+    def test_fine_tuning_on_a_storm_the_pretrain_saw_is_refused(self, tmp_path):
+        tracks = self._csv(tmp_path)
+        # Seed 0 holds out STORM_C, seed 1 holds out STORM_A, so stage one trained on the
+        # storm stage two holds out.
+        train(self._config(tmp_path, tracks, "stage1", seed=0))
+        with pytest.raises(ValueError, match="pretrain|trained on"):
+            train(self._config(tmp_path, tracks, "stage2", seed=1, init_from=tmp_path / "stage1.pt"))
+
+    def test_the_overlap_can_be_accepted_deliberately(self, tmp_path):
+        tracks = self._csv(tmp_path)
+        train(self._config(tmp_path, tracks, "s1", seed=0))
+        result = train(
+            self._config(
+                tmp_path, tracks, "s2", seed=1, init_from=tmp_path / "s1.pt", allow_pretrain_overlap=True
+            )
+        )
+        assert result["metrics"]["pretrain_overlap_storms"] >= 1
+
+    def test_a_disjoint_pretrain_is_accepted(self, tmp_path):
+        tracks = self._csv(tmp_path)
+        # Stage one on two storms, stage two validated on one of the other two.
+        first = TrainConfig(
+            tracks=tracks, basins=("NI",), epochs=1, batch_size=16, seed=0, val_fraction=0.5,
+            checkpoint=tmp_path / "disjoint1.pt", metrics_path=tmp_path / "disjoint1.json",
+        )
+        pretrained = train(first)
+        held_out = set(pretrained["validation"]["storms"]) if "storms" in pretrained["validation"] else None
+        assert held_out is None or held_out
+        # Reusing the same seed and fraction reproduces the same split, so the storms the
+        # pretrain validated on are exactly the ones it did not train on.
+        second = TrainConfig(
+            tracks=tracks, basins=("NI",), epochs=1, batch_size=16, seed=0, val_fraction=0.5,
+            checkpoint=tmp_path / "disjoint2.pt", metrics_path=tmp_path / "disjoint2.json",
+            init_from=tmp_path / "disjoint1.pt", allow_pretrain_overlap=False,
+        )
+        assert train(second)["metrics"]["pretrain_overlap_storms"] == 0
+
+
+class TestValidationHonesty:
+    def test_metrics_record_that_selection_used_the_validation_set(self, tmp_path):
+        result = train(
+            TrainConfig(
+                tracks="kaggle_trial/tracks.csv", basins=("NI",), epochs=2, batch_size=32, seed=0,
+                checkpoint=tmp_path / "v.pt", metrics_path=tmp_path / "v.json",
+            )
+        )
+        assert result["metrics"]["model_selected_on_validation_set"] is True
+        assert result["metrics"]["validation_is_training_set"] is False
+
+    def test_a_single_storm_dataset_says_its_validation_is_its_training_set(self, tmp_path):
+        rows = 20
+        times = pd.date_range("2020-05-01", periods=rows, freq="6h")
+        frame = pd.DataFrame(
+            {
+                "sid": "ONLY", "name": "ONLY", "basin": "NI", "time": times,
+                "lat": [10.0 + 0.3 * i for i in range(rows)],
+                "lon": [86.0 + 0.2 * i for i in range(rows)],
+                "wind_kt": [40.0 + 2.0 * i for i in range(rows)],
+                "pres_hpa": [1000.0 - 2.0 * i for i in range(rows)],
+                "dist2land_km": [500.0 - 10.0 * i for i in range(rows)],
+                "dlat": [np.nan] + [0.3] * (rows - 1),
+                "dlon": [np.nan] + [0.2] * (rows - 1),
+            }
+        )
+        tracks = tmp_path / "one.csv"
+        frame.to_csv(tracks, index=False)
+        result = train(
+            TrainConfig(
+                tracks=tracks, basins=("NI",), epochs=1, batch_size=8, seed=0,
+                checkpoint=tmp_path / "one.pt", metrics_path=tmp_path / "one.json",
+            )
+        )
+        assert result["metrics"]["validation_is_training_set"] is True
+        model, meta = load_forecaster(tmp_path / "one.pt")
+        assert meta["metrics"]["validation_is_training_set"] is True
+
+
+class TestCrossBasinStormExclusion:
+    """A storm can carry rows in two basins, so a basin filter does not hold it out.
+
+    PABUK, BULBUL and KROVANH each have both NI and WP rows in kaggle_trial/tracks.csv:
+    pre-training on WP therefore trains on storms the NI fine-tune holds out.
+    """
+
+    def _cross_basin_csv(self, tmp_path):
+        frames = []
+        # The WP leg needs at least 12 fixes of its own, or the storm yields no window
+        # from that basin and the exclusion would look effective when it was not.
+        for sid, basins in (("CROSSER", ["WP"] * 14 + ["NI"] * 10), ("WP_ONLY", ["WP"] * 20)):
+            rows = len(basins)
+            times = pd.date_range("2020-01-01", periods=rows, freq="6h")
+            frames.append(
+                pd.DataFrame(
+                    {
+                        "sid": sid, "name": sid, "basin": basins, "time": times,
+                        "lat": [10.0 + 0.3 * i for i in range(rows)],
+                        "lon": [100.0 - 0.5 * i for i in range(rows)],
+                        "wind_kt": [40.0 + 2.0 * i for i in range(rows)],
+                        "pres_hpa": [1000.0 - 2.0 * i for i in range(rows)],
+                        "dist2land_km": [400.0] * rows,
+                        "dlat": [np.nan] + [0.3] * (rows - 1),
+                        "dlon": [np.nan] + [-0.5] * (rows - 1),
+                    }
+                )
+            )
+        path = tmp_path / "cross.csv"
+        pd.concat(frames, ignore_index=True).to_csv(path, index=False)
+        return path
+
+    def test_a_storm_with_rows_in_an_excluded_basin_is_dropped_entirely(self, tmp_path):
+        tracks = self._cross_basin_csv(tmp_path)
+        result = train(
+            TrainConfig(
+                tracks=tracks, basins=("WP",), exclude_storms_in_basins=("NI",),
+                epochs=1, batch_size=16, seed=0,
+                checkpoint=tmp_path / "x.pt", metrics_path=tmp_path / "x.json",
+            )
+        )
+        assert "CROSSER" not in result["dataset"]["names"]
+        assert "WP_ONLY" in result["dataset"]["names"]
+
+    def test_without_the_exclusion_the_cross_basin_storm_is_kept(self, tmp_path):
+        tracks = self._cross_basin_csv(tmp_path)
+        result = train(
+            TrainConfig(
+                tracks=tracks, basins=("WP",), epochs=1, batch_size=16, seed=0,
+                checkpoint=tmp_path / "y.pt", metrics_path=tmp_path / "y.json",
+            )
+        )
+        assert "CROSSER" in result["dataset"]["names"]
+
+    def test_the_real_north_indian_ocean_storms_are_fully_excluded(self):
+        """PABUK, BULBUL and KROVANH must not survive a WP-side pretrain."""
+        import pandas as pd_
+
+        from ml.sequence_dataset import build_sequence_windows, load_tracks
+
+        frame = load_tracks("kaggle_trial/tracks.csv")
+        ni_sids = set(frame[frame["basin"] == "NI"]["sid"])
+        windows = build_sequence_windows(
+            frame[~frame["sid"].isin(ni_sids)], basins=("WP", "SI", "EP", "SP")
+        )
+        assert windows
+        assert not ({w.sid for w in windows} & ni_sids)
