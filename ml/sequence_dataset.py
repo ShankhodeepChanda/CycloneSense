@@ -18,7 +18,11 @@ from pathlib import Path
 from typing import Iterable, Sequence
 
 import numpy as np
-import pandas as pd
+
+# pandas is imported inside the functions that build datasets rather than at module
+# level. app/trajectory.py imports this module for its normalisation frame alone, and
+# that path is deployed to a serverless function with a 250 MB budget: pandas is 67 MB
+# of it and nothing in the serving path touches a DataFrame.
 
 FEATURES: list[str] = [
     "lat",
@@ -89,7 +93,7 @@ class SequenceWindow:
     sid: str
     name: str
     basin: str
-    t0: pd.Timestamp
+    t0: "pd.Timestamp"
     features: np.ndarray  # (INPUT_STEPS, len(FEATURES)) in raw physical units
     target_coords: np.ndarray  # (len(TARGET_LEADS), 2) cumulative dlat/dlon from t0, degrees
     target_intensity: np.ndarray  # (len(TARGET_LEADS), 2) absolute wind_kt and pres_hpa
@@ -97,14 +101,18 @@ class SequenceWindow:
     was_imputed: dict[str, bool]
 
 
-def load_tracks(path: str | Path) -> pd.DataFrame:
+def load_tracks(path: str | Path) -> "pd.DataFrame":
     """Read an IBTrACS-derived tracks CSV with `time` parsed and rows ordered per storm."""
+    import pandas as pd
+
     frame = pd.read_csv(path)
     frame["time"] = pd.to_datetime(frame["time"])
     return frame.sort_values(["sid", "time"]).reset_index(drop=True)
 
 
-def _image_lookup(images_index: pd.DataFrame | None, channel: str) -> dict[tuple[str, pd.Timestamp], str]:
+def _image_lookup(images_index, channel: str) -> dict:
+    import pandas as pd
+
     if images_index is None or len(images_index) == 0:
         return {}
     index = images_index.copy()
@@ -118,8 +126,10 @@ def _image_lookup(images_index: pd.DataFrame | None, channel: str) -> dict[tuple
     }
 
 
-def _contiguous_runs(group: pd.DataFrame, step_hours: int) -> list[pd.DataFrame]:
+def _contiguous_runs(group, step_hours: int) -> list:
     """Split one storm's fixes into runs spaced exactly `step_hours` apart."""
+    import pandas as pd
+
     if len(group) == 0:
         return []
     gaps = group["time"].diff()
@@ -130,11 +140,11 @@ def _contiguous_runs(group: pd.DataFrame, step_hours: int) -> list[pd.DataFrame]
 
 
 def build_sequence_windows(
-    df: pd.DataFrame,
+    df: "pd.DataFrame",
     basins: Sequence[str] | None = ("NI",),
     input_steps: int = INPUT_STEPS,
     leads: Sequence[int] = tuple(TARGET_LEADS),
-    images_index: pd.DataFrame | None = None,
+    images_index: "pd.DataFrame | None" = None,
     step_hours: int = STEP_HOURS,
     image_channel: str = "ir",
 ) -> list[SequenceWindow]:
@@ -144,6 +154,8 @@ def build_sequence_windows(
     A window is dropped when position or wind is missing anywhere in it; central pressure
     is imputed instead, because it is absent from many fixes and from every live feed.
     """
+    import pandas as pd
+
     leads = list(leads)
     if df.empty:
         return []
@@ -183,12 +195,14 @@ def build_sequence_windows(
 
 
 def _build_one_window(
-    rows: pd.DataFrame,
+    rows,
     sid: str,
     input_steps: int,
     lead_offsets: Sequence[int],
-    lookup: dict[tuple[str, pd.Timestamp], str],
+    lookup: dict,
 ) -> SequenceWindow | None:
+    import pandas as pd
+
     rows = rows.reset_index(drop=True)
     inputs = rows.iloc[:input_steps]
     t0_index = input_steps - 1

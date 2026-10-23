@@ -144,6 +144,9 @@ class TrajectoryResponse(BaseModel):
     forecast_generated_at: str
     source: str = Field(..., description="'trained-sequence-model' or 'physics-extrapolation'")
     model: str
+    runtime: str = Field(
+        "none", description="Inference path that ran: 'numpy', 'torch', or 'none' for the fallback"
+    )
     checkpoint: Optional[str] = None
     observations_used: int
     inputs_imputed: List[str] = Field(

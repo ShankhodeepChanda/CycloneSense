@@ -607,8 +607,12 @@ class TrajectoryEngine:
         coastline: CoastlineIndex | None = None,
     ):
         self.checkpoint_path = Path(checkpoint_path) if checkpoint_path else DEFAULT_TRAJECTORY_CHECKPOINT
+        #: Exported torch-free weights, preferred when present. The deployed API cannot
+        #: import torch (534 MB against a 250 MB function limit), so serving reads these.
+        self.exported_path = self.checkpoint_path.with_suffix(".npz")
         self._coastline = coastline
         self._model = None
+        self._runtime = "none"
         self._meta: dict[str, Any] = {}
         self._load_attempted = False
         self._load_error: str | None = None
@@ -627,16 +631,34 @@ class TrajectoryEngine:
             if self._load_attempted:
                 return
             self._load_attempted = True
+
+            # Exported weights first: they need only numpy, so this is the path that runs
+            # in deployment. The torch checkpoint is the local and training-time path.
+            if self.exported_path.exists():
+                try:
+                    from ml.numpy_forecaster import NumpyForecaster
+
+                    self._model, self._meta = NumpyForecaster.load(self.exported_path)
+                    self._runtime = "numpy"
+                    return
+                except Exception as exc:
+                    self._load_error = f"Could not load {self.exported_path}: {exc}"
+                    LOGGER.warning("%s Trying the torch checkpoint.", self._load_error)
+
             if not self.checkpoint_path.exists():
-                self._load_error = f"No trajectory checkpoint at {self.checkpoint_path}."
+                if not self._load_error:
+                    self._load_error = (
+                        f"No trajectory weights at {self.exported_path} or {self.checkpoint_path}."
+                    )
                 LOGGER.info("%s Falling back to straight-line extrapolation.", self._load_error)
                 return
             try:
                 from ml.trajectory_model import load_forecaster
 
                 self._model, self._meta = load_forecaster(self.checkpoint_path)
+                self._runtime = "torch"
             except Exception as exc:  # a bad checkpoint must not take the API down
-                self._model, self._meta = None, {}
+                self._model, self._meta, self._runtime = None, {}, "none"
                 self._load_error = f"Could not load {self.checkpoint_path}: {exc}"
                 LOGGER.warning("%s Falling back to straight-line extrapolation.", self._load_error)
 
@@ -645,6 +667,12 @@ class TrajectoryEngine:
         """True when a trained checkpoint is loaded and inference will use it."""
         self._ensure_loaded()
         return self._model is not None
+
+    @property
+    def runtime(self) -> str:
+        """Which inference path is live: "numpy", "torch", or "none" for the fallback."""
+        self._ensure_loaded()
+        return self._runtime
 
     @property
     def metadata(self) -> dict[str, Any]:
@@ -660,14 +688,20 @@ class TrajectoryEngine:
         return list(BASELINE_LEAD_RMSE_KM)
 
     def _model_deltas(self, prepared: PreparedSequence) -> tuple[np.ndarray, np.ndarray]:
-        import torch
+        """Run whichever runtime is loaded. Both are pinned to the same outputs by test."""
+        features = normalise(prepared.features)[None, ...].astype(np.float32)
+        if self._runtime == "numpy":
+            outputs = self._model.forward(features)
+            delta = np.asarray(outputs["delta"])[0]
+            intensity = np.asarray(outputs["intensity"])[0]
+        else:
+            import torch
 
-        tensor = torch.tensor(normalise(prepared.features), dtype=torch.float32).unsqueeze(0)
-        with torch.inference_mode():
-            outputs = self._model(tensor)
-        delta = outputs["delta"][0].cpu().numpy() * DELTA_SCALE_DEG
-        intensity = denormalise_intensity(outputs["intensity"][0].cpu().numpy())
-        return delta, intensity
+            with torch.inference_mode():
+                predicted = self._model(torch.tensor(features))
+            delta = predicted["delta"][0].cpu().numpy()
+            intensity = predicted["intensity"][0].cpu().numpy()
+        return delta * DELTA_SCALE_DEG, denormalise_intensity(intensity)
 
     def _extrapolated_deltas(self, prepared: PreparedSequence) -> tuple[np.ndarray, np.ndarray]:
         """Straight-line motion with overland weakening. The labelled fallback."""
@@ -757,6 +791,7 @@ class TrajectoryEngine:
             "forecast_generated_at": (generated_at or datetime.now(timezone.utc)).isoformat(),
             "source": source,
             "model": model_name,
+            "runtime": self._runtime,
             "checkpoint": self.checkpoint_path.name if self._model is not None else None,
             "observations_used": prepared.observations_used,
             "inputs_imputed": prepared.imputed,

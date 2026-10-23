@@ -34,6 +34,8 @@ export interface TrajectoryForecast {
   forecast_generated_at: string;
   source: "trained-sequence-model" | "physics-extrapolation" | string;
   model: string;
+  /** Which inference path served it: "numpy" in deployment, "torch" locally. */
+  runtime?: "numpy" | "torch" | "none" | string;
   checkpoint: string | null;
   observations_used: number;
   inputs_imputed: string[];

@@ -49,6 +49,18 @@ python -m pytest -q
 The script prints per-lead validation error next to the straight-line baseline it has to
 beat, and refuses a two-stage run whose pre-train already saw the storms the fine-tune holds
 out. It beats that baseline at seven of eight leads and loses at +6 h.
+
+## 3. Deploying a shareable link
+
+```bash
+npm i -g vercel && vercel login && vercel --prod
+```
+
+The forecast runs on Vercel without PyTorch: the trained weights are exported to
+`models/bob_trajectory_gru.npz` (544 KB) and served by a numpy-only forward pass, because
+torch is 534 MB against a 250 MB serverless limit. The wind estimator is the one feature
+that cannot deploy there, and it says so instead of failing vaguely. See
+`docs/DEPLOYMENT.md` for the Cloud Run route if you need the full PyTorch service.
 See `docs/MODEL.md` for the architecture and the measured numbers, and `docs/API.md` for the
 request and response shapes.
 

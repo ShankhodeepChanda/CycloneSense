@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import pathlib
 from datetime import datetime, timezone
 
 import pytest
@@ -548,3 +549,76 @@ class TestImputationListIsNotDiluted:
         western = [{"lat": 15.7 + 0.5 * i, "lon": -104.1, "wind_kt": 105.0} for i in range(4)]
         result = TrajectoryEngine().forecast("VANCE", western)
         assert any("dist2land_km" in entry for entry in result["inputs_imputed"])
+
+
+class TestTorchFreeServing:
+    """Deployment runs without torch, so the engine must serve from exported weights."""
+
+    def _npz_only(self, tmp_path):
+        """A directory holding only the .npz, as a serverless bundle would."""
+        import shutil
+
+        source = pathlib.Path("models/bob_trajectory_gru.npz")
+        if not source.is_file():
+            pytest.skip("Export the shipped checkpoint first: python -m ml.numpy_forecaster")
+        target = tmp_path / "bob_trajectory_gru.npz"
+        shutil.copyfile(source, target)
+        return TrajectoryEngine(checkpoint_path=tmp_path / "bob_trajectory_gru.pt")
+
+    def test_exported_weights_alone_are_enough_to_serve_the_trained_model(self, tmp_path):
+        engine = self._npz_only(tmp_path)
+        result = engine.forecast("AMPHAN", AMPHAN)
+        assert engine.available is True
+        assert result["source"] == "trained-sequence-model"
+        assert result["runtime"] == "numpy"
+
+    def test_the_cone_still_comes_from_the_measured_per_lead_error(self, tmp_path):
+        result = self._npz_only(tmp_path).forecast("AMPHAN", AMPHAN)
+        radii = [waypoint["uncertainty_radius_km"] for waypoint in result["waypoints"]]
+        assert radii == sorted(radii)
+        assert radii[3] == pytest.approx(153.7, abs=0.2)
+
+    def _pt_only(self, tmp_path):
+        """A directory holding only the torch checkpoint, so the npz cannot shadow it."""
+        import shutil
+
+        source = pathlib.Path("models/bob_trajectory_gru.pt")
+        if not source.is_file():
+            pytest.skip("No torch checkpoint on this machine.")
+        target = tmp_path / "torch_only" / "bob_trajectory_gru.pt"
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(source, target)
+        return TrajectoryEngine(checkpoint_path=target)
+
+    def test_both_runtimes_produce_the_same_forecast(self, tmp_path):
+        """A deployed forecast must match the one the developer saw locally.
+
+        Each engine is pointed at a directory holding only its own weight file, or the
+        exported npz would shadow the torch path and this would compare numpy to itself.
+        """
+        numpy_result = self._npz_only(tmp_path).forecast("AMPHAN", AMPHAN)
+        torch_engine = self._pt_only(tmp_path)
+        torch_result = torch_engine.forecast("AMPHAN", AMPHAN)
+        assert torch_engine.runtime == "torch"
+        for left, right in zip(numpy_result["waypoints"], torch_result["waypoints"]):
+            assert left["lat"] == pytest.approx(right["lat"], abs=0.02)
+            assert left["lon"] == pytest.approx(right["lon"], abs=0.02)
+            assert left["wind_kt"] == pytest.approx(right["wind_kt"], abs=0.2)
+            assert left["pressure_hpa"] == pytest.approx(right["pressure_hpa"], abs=0.2)
+
+    def test_the_torch_runtime_reports_itself_when_it_is_the_one_loaded(self, tmp_path):
+        assert self._pt_only(tmp_path).forecast("AMPHAN", AMPHAN)["runtime"] == "torch"
+
+    def test_exported_weights_take_precedence_when_both_files_exist(self):
+        """Serving should not depend on torch being installed, even where it is."""
+        engine = TrajectoryEngine()
+        if not engine.available:
+            pytest.skip("No checkpoint on this machine.")
+        assert engine.runtime == "numpy"
+
+    def test_with_neither_file_the_fallback_still_answers(self, tmp_path):
+        engine = TrajectoryEngine(checkpoint_path=tmp_path / "nothing.pt")
+        result = engine.forecast("AMPHAN", AMPHAN)
+        assert result["source"] == "physics-extrapolation"
+        assert result["runtime"] == "none"
+        assert len(result["waypoints"]) == 8

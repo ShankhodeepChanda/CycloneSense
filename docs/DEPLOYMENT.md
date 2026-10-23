@@ -1,4 +1,69 @@
-# 🚀 Cloud Deployment Guide: Google Cloud Run
+# Deployment
+
+Two supported targets. **Vercel** gives one shareable link with the forecast working and
+is the easiest path; **Cloud Run** is for running the full PyTorch service, including the
+Model A wind estimator.
+
+---
+
+## Vercel: one link, whole app (recommended for sharing)
+
+```bash
+npm i -g vercel
+vercel login
+vercel --prod
+```
+
+That is the whole deploy. `vercel.json` already describes it: Vite builds the frontend to
+`dist/`, and everything under `api/` becomes a serverless function.
+
+| Route | Runtime | What it does |
+|---|---|---|
+| `/api/active-cyclones` | Node | GDACS live storm list |
+| `/api/cyclone-track` | Node | One storm's observed track and GDACS cone |
+| `/api/predict/trajectory` | **Python** | The trained forecast |
+| `/api/predict/wind` | Node | Returns 503 with an explanation (see below) |
+
+### Why the forecast runs without PyTorch
+
+PyTorch is **534 MB** installed. A Vercel serverless function is capped at **250 MB**
+unzipped, so torch cannot be deployed there at any setting.
+
+The trained model is small (149,344 parameters) and entirely standard — an MLP, a
+LayerNorm, one GRU layer, two linear heads — so `ml/numpy_forecaster.py` runs its forward
+pass in numpy alone (34 MB). `ml/export_numpy_weights` converts the torch checkpoint into
+`models/bob_trajectory_gru.npz` (544 KB), which is committed, and
+`app/trajectory.py` prefers it over the `.pt` wherever both exist.
+
+`tests/test_numpy_forecaster.py` pins the numpy path against PyTorch on random, real and
+extreme inputs **including the checkpoint actually being served**, and asserts that
+importing the serving path pulls in neither torch nor pandas. That test is the reason a
+hand-written forward pass is trustworthy here: serving is where the model meets users, so
+a divergence would be a wrong forecast rather than a failing test.
+
+To regenerate the exported weights after retraining:
+
+```bash
+python -m ml.numpy_forecaster --checkpoint models/bob_trajectory_gru.pt
+```
+
+### What does not work on Vercel
+
+The **wind estimator** (Model A) is a ResNet-18 and needs torch, so it cannot run there.
+`api/predict/wind.ts` returns 503 with that explanation rather than letting the UI report
+a vague failure. Its checkpoint is not in the repository either. Everything else — the
+map, NASA GIBS layers, the GDACS feed and tracks, the Open-Meteo panel, and the full
+trajectory forecast with its cone — works.
+
+### Pointing the frontend at an external API instead
+
+Leave `VITE_API_URL` unset and the browser calls the same-origin `/api/*` routes above.
+Set it at build time and the browser calls `<VITE_API_URL>/predict/trajectory` directly,
+which is how you would front a Cloud Run FastAPI service with a Vercel frontend.
+
+---
+
+# 🚀 Cloud Run: full PyTorch service
 
 This guide explains how to deploy CycloneSense AI to **Google Cloud Run** with public access, resolving the *"You don't have access to this page"* error when accessing from mobile devices or other browsers.
 

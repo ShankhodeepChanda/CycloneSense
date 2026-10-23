@@ -6,6 +6,11 @@ __pycache__/
 node_modules/
 dist/
 models/*.pt
+# The trajectory weights are small enough to ship (593 KB torch, 544 KB numpy) and the
+# deployed API needs the .npz, so a clone or a Vercel build gets the real trained
+# forecast instead of the labelled extrapolation fallback. Model A's ResNet stays out.
+!models/bob_trajectory_gru.pt
+!models/bob_trajectory_gru.npz
 data/raw/*
 data/processed/*
 !.gitkeep
