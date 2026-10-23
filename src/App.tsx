@@ -4,6 +4,7 @@ import { LiveMap, PLACES } from "./LiveMap";
 import { LAYERS, iso, resolveNrt, slotAt, type Variant } from "./gibs";
 import { fetchWeather, type Weather } from "./weather";
 import { Card, Gauge, Icon, PressureChart } from "./panels";
+import { WindEstimator } from "./WindEstimator";
 
 const DAY = 86_400_000;
 const utcDay = (d: Date) => d.toISOString().slice(0, 10);
@@ -291,7 +292,8 @@ export function App() {
 
         <section id="research" className="about">
           <Reveal><h2>The research</h2>
-            <p>CycloneSense also builds an open dataset: NOAA IBTrACS storm records joined with NASA MODIS satellite chips, split by storm so no storm is in both training and test data. A ResNet-18 estimates wind speed from a chip and is scored against a predict-the-average baseline. Results will be published after the full training run.</p></Reveal>
+            <p>CycloneSense joins NOAA IBTrACS storm records with NASA MODIS satellite chips and keeps all observations from each storm in one split. Model A estimates wind speed from infrared imagery. This research estimate is not an official intensity advisory.</p></Reveal>
+          <Reveal delay={80}><WindEstimator /></Reveal>
           <Reveal delay={120}><h2 id="safety">Official warnings come first</h2>
             <p>CycloneSense is a research project, not a warning system. For warnings and evacuation advice, follow the India Meteorological Department and your state disaster authority.</p>
             <p><a href="https://mausam.imd.gov.in/" target="_blank" rel="noreferrer">IMD weather and cyclone bulletins</a></p></Reveal>

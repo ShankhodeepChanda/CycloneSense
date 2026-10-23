@@ -1,15 +1,38 @@
 """FastAPI entry point for CycloneSense AI."""
 from __future__ import annotations
-import hashlib, io, time
+import hashlib, io, logging, threading, time
+from pathlib import Path
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse
+from starlette.concurrency import run_in_threadpool
 from PIL import Image, ImageStat, UnidentifiedImageError
-from app.schemas import ForecastRequest, ForecastResponse, PatternResponse, HealthResponse
+from app.schemas import ForecastRequest, ForecastResponse, PatternResponse, HealthResponse, WindPredictionResponse
 from app.model import engine
+from data.build_dataset import category as wind_category
+from ml.wind_inference import (
+    InvalidWindImageError, NonFiniteModelOutputError, load_wind_model,
+    predict_wind, preprocess_wind_image,
+)
 
 START_TIME = time.time()
 CLASSES = ["clear", "developing", "curved_band", "central_dense_overcast", "eye", "sheared", "dissipating"]
+MAX_WIND_UPLOAD_BYTES = 10 * 1024 * 1024
+_wind_model = None
+_wind_device = None
+_wind_model_lock = threading.Lock()
+LOGGER = logging.getLogger(__name__)
+
+
+def _get_wind_model():
+    """Load Model A at most once per API process; failures are retried on next request."""
+    global _wind_model, _wind_device
+    if _wind_model is None:
+        with _wind_model_lock:
+            if _wind_model is None:
+                model, device = load_wind_model()
+                _wind_model, _wind_device = model, device
+    return _wind_model, _wind_device
 
 def analyze_uploaded_image(data: bytes) -> dict:
     try:
@@ -36,7 +59,7 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=False,
 
 @app.get("/health", response_model=HealthResponse)
 def get_health():
-    return HealthResponse(status="ok", service="cyclonesense-api-python", version="1.3.0", uptime_seconds=round(time.time()-START_TIME,1), hardware={"engine":engine.device,"gpu":engine.device,"model_mode":"image-analysis-baseline"}, models_loaded={"image_analyzer":True,"trajectory_engine":True,"gradcam_engine":False}, telemetry={"satellite_sources":["INSAT-3D/3DR VHRR","Himawai-9","GOES-16"],"spatial_coverage":"North Indian Ocean"})
+    return HealthResponse(status="ok", service="cyclonesense-api-python", version="1.3.0", uptime_seconds=round(time.time()-START_TIME,1), hardware={"engine":engine.device,"gpu":engine.device,"model_mode":"image-analysis-baseline"}, models_loaded={"image_analyzer":True,"trajectory_engine":True,"gradcam_engine":False,"wind_regression":_wind_model is not None}, telemetry={"satellite_sources":["INSAT-3D/3DR VHRR","Himawai-9","GOES-16"],"spatial_coverage":"North Indian Ocean"})
 
 @app.post("/predict/pattern", response_model=PatternResponse)
 async def predict_cyclone_pattern(file: UploadFile = File(...)):
@@ -46,6 +69,46 @@ async def predict_cyclone_pattern(file: UploadFile = File(...)):
     if len(data) > 10*1024*1024: raise HTTPException(413,"Image exceeds the 10 MB limit.")
     try: return PatternResponse(**analyze_uploaded_image(data))
     except ValueError as exc: raise HTTPException(400,str(exc)) from exc
+
+
+@app.post("/predict/wind", response_model=WindPredictionResponse)
+async def predict_wind_speed(file: UploadFile = File(...)):
+    """Estimate wind from one IR-style image using the preserved Model A checkpoint."""
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(415, "Please upload an image file (PNG, JPEG, or another supported image format).")
+    data = await file.read(MAX_WIND_UPLOAD_BYTES + 1)
+    if not data:
+        raise HTTPException(400, "The uploaded image is empty.")
+    if len(data) > MAX_WIND_UPLOAD_BYTES:
+        raise HTTPException(413, "Image exceeds the 10 MB limit.")
+    try:
+        image_tensor = preprocess_wind_image(data)
+    except InvalidWindImageError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    try:
+        model, device = await run_in_threadpool(_get_wind_model)
+    except Exception as exc:
+        LOGGER.exception("Could not load the configured wind checkpoint")
+        raise HTTPException(503, "The wind estimation model is unavailable. Check the Model A checkpoint installation.") from exc
+    try:
+        prediction = await run_in_threadpool(predict_wind, model, image_tensor, device)
+    except NonFiniteModelOutputError as exc:
+        LOGGER.error("Wind model emitted a non-finite output: %s", exc)
+        raise HTTPException(503, "The wind model returned an invalid numeric result. No estimate was produced.") from exc
+    except Exception as exc:
+        LOGGER.exception("Wind prediction failed")
+        raise HTTPException(503, "Wind estimation failed. Please try a different satellite image.") from exc
+    raw = float(prediction.raw_prediction_kt[0])
+    application = float(prediction.application_prediction_kt[0])
+    return WindPredictionResponse(
+        model="Model A ResNet-18 IR wind regression",
+        checkpoint=Path("models/multiyear45_resnet18_ir_weighted.pt").name,
+        normalized_model_output=float(prediction.normalized_model_output[0]),
+        raw_prediction_kt=raw,
+        application_prediction_kt=application,
+        predicted_wind_kt=application,
+        category=wind_category(raw),
+    )
 
 @app.post("/predict/forecast", response_model=ForecastResponse)
 def predict_cyclone_forecast(payload: ForecastRequest):

@@ -1,0 +1,11 @@
+{
+  "protected_artifact_count_before": 58,
+  "protected_artifact_count_after": 58,
+  "protected_artifacts_unchanged": true,
+  "changed_or_missing_paths": [],
+  "model_a_sha256_before": "3ac72bfbd2675e2aa79ce131aa6eef138a4867dfb5ca0063bb4ac5b19068d6d8",
+  "model_a_sha256_after": "3ac72bfbd2675e2aa79ce131aa6eef138a4867dfb5ca0063bb4ac5b19068d6d8",
+  "model_a_bytes": 44791115,
+  "historical_metrics_and_prediction_artifacts_unchanged": true,
+  "historical_fingerprint_scope": "All existing reports files, metrics-named files, prediction-named files, and the production Model A checkpoint; excludes this new integration report directory."
+}

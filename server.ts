@@ -2,6 +2,7 @@ import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
 import { getActiveCyclones } from "./server/gdacs";
+import { registerWindPredictionProxy } from "./server/windProxy";
 
 async function startServer() {
   const app = express();
@@ -10,6 +11,8 @@ async function startServer() {
   const health = (_req: express.Request, res: express.Response) => res.json({ status: "ok", service: "cyclonesense" });
   app.get("/health", health);
   app.get("/api/health", health);
+
+  registerWindPredictionProxy(app);
 
   app.get("/api/active-cyclones", async (_req, res) => {
     res.set("Cache-Control", "public, max-age=300");

@@ -15,10 +15,12 @@ display_values_kt = batch.application_prediction_kt
 
 Preprocessing must match training/evaluation: convert to RGB, resize to 224 pixels, convert to tensor, then normalize with ImageNet means `[0.485, 0.456, 0.406]` and standard deviations `[0.229, 0.224, 0.225]`. Training augmentation remains the existing random resized crop (scale 0.8–1.0) and random rotation (±30°), without horizontal flips.
 
-## Application wiring status
+## Application wiring
 
-The current website does not load the wind regression checkpoint. `/predict/pattern` is a separate image-feature heuristic, while `/predict/forecast` calls the existing `CycloneSenseEngine` trajectory routine. The map uses external cyclone/weather feeds. Do not describe those routes as Model A inference. When Model A is connected to a route, call this boundary after the shared preprocessing step, return the application value for display, and retain the raw value in research logs and metrics. Convert `NonFiniteModelOutputError` into an explicit failed inference response.
+FastAPI route `POST /predict/wind` loads Model A lazily once per process through `load_wind_model`, preprocesses an uploaded image with `preprocess_wind_image`, and returns the response described in [API.md](API.md). The website's research estimator posts to same-origin `/api/predict/wind`; the Express server streams the multipart request to `PYTHON_API_URL` (default `http://127.0.0.1:8000`). Docker Compose sets the internal API address. The static Vercel build must use `VITE_API_URL` for a separately hosted API origin.
+
+The endpoint returns `raw_prediction_kt` unchanged for scientific use and a separate `application_prediction_kt = max(raw, 0)` display safeguard. `predicted_wind_kt` is a compatibility alias for the display value. `NonFiniteModelOutputError` maps to HTTP 503 and never becomes a zero prediction. Invalid files return 400/413/415; a missing or incompatible checkpoint returns 503. Existing `/predict/pattern` and `/predict/forecast` behavior remains separate and unchanged.
 
 ## Checks
 
-The regression tests cover positive, negative, zero, and non-finite outputs; raw-output preservation; category behavior; strict metadata/state loading; and the factor-of-100 conversion. The production readiness report records CPU checks against both saved checkpoints. No checkpoint is trained or modified by this module.
+The regression tests cover positive, negative, zero, and non-finite outputs; raw-output preservation; category behavior; strict metadata/state loading; scaling; preprocessing; API failures; existing pattern-route compatibility; and the production route with Model A when the checkpoint is available. No checkpoint is trained or modified by this module.

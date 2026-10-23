@@ -16,3 +16,13 @@ data
 models
 *.md
 !README.md
+
+# The Python inference image needs only the model checkpoint and dataset source
+# module (for the existing category thresholds); never send local datasets.
+!data/
+data/*
+!data/__init__.py
+!data/build_dataset.py
+!models/
+models/*
+!models/multiyear45_resnet18_ir_weighted.pt

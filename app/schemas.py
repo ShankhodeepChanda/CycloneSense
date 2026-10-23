@@ -75,6 +75,20 @@ class PatternResponse(BaseModel):
     disclaimer: str = "Operational Cyclone Research Decision Support · Verify against official IMD/RSMC advisories"
 
 
+class WindPredictionResponse(BaseModel):
+    """Wind estimate response with raw science output and a separate display safeguard."""
+    status: str = "success"
+    model: str
+    checkpoint: str
+    unit: str = "kt"
+    normalized_model_output: float
+    raw_prediction_kt: float
+    application_prediction_kt: float
+    predicted_wind_kt: float
+    category: str
+    disclaimer: str = "Research estimate from a satellite image; not an official warning or operational intensity estimate."
+
+
 class HealthResponse(BaseModel):
     """System health, hardware state, and model inference telemetry."""
     status: str

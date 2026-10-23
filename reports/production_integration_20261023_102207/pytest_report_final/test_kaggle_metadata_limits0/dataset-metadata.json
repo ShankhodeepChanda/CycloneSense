@@ -1,0 +1,18 @@
+{
+  "title": "CycloneSense: Satellite Chips + Best Track",
+  "id": "someone/cyclonesense-tc-satellite",
+  "subtitle": "Real MODIS chips and IBTrACS labels, split by storm",
+  "description": "Real tropical-cyclone dataset. Labels: NOAA IBTrACS v04r01 best-track (USA 1-minute sustained wind, pressure, position, all basins). Images: NASA GIBS MODIS Terra/Aqua chips centred on the storm (10 degree box, true colour and Band-31 brightness temperature rendered with GIBS palette), nearest daytime overpass.\n\nSplit by storm ID (70/15/15): never random by image. Files: tracks.csv (every 6-hourly record, with 6 h deltas and 24 h rapid-intensification flag), images_index.csv (one row per image). `valid_fraction` is the share of pixels with data; `offset_h` is hours between the best-track time and the satellite pass. Limitations: one daytime pass per day (no night IR), storms near the dateline are skipped, wind agencies differ by basin so use `category`/`wind_kt` consistently. Seven Dvorak pattern labels are NOT included: IBTrACS has none.\n\nSources / citation: Knapp et al. 2010 (IBTrACS), NOAA NCEI; NASA GIBS / MODIS (NASA EOSDIS). Check each source's current terms before redistribution.",
+  "licenses": [
+    {
+      "name": "other"
+    }
+  ],
+  "keywords": [
+    "weather",
+    "satellite imagery",
+    "cyclone",
+    "remote sensing",
+    "deep learning"
+  ]
+}

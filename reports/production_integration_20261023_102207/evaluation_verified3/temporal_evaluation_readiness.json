@@ -1,0 +1,31 @@
+{
+  "status": "blocked_no_valid_pairs",
+  "data_dir": "D:\\CycloneSense\\reports\\production_integration_20261023_102207\\candidate_data_final",
+  "checkpoint": "models\\multiyear45_resnet18_ir_weighted.pt",
+  "checkpoint_sha256": "3ac72bfbd2675e2aa79ce131aa6eef138a4867dfb5ca0063bb4ac5b19068d6d8",
+  "expected_checkpoint_sha256": "3ac72bfbd2675e2aa79ce131aa6eef138a4867dfb5ca0063bb4ac5b19068d6d8",
+  "checkpoint_frozen_digest_matches": true,
+  "existing_storm_sources": [
+    "kaggle_dataset\\images_index.csv",
+    "kaggle_dataset\\tracks.csv",
+    "kaggle_multiyear45\\images_index.csv",
+    "kaggle_multiyear45\\tracks.csv",
+    "kaggle_multiyear\\images_index.csv",
+    "kaggle_multiyear\\tracks.csv",
+    "kaggle_temporal_test\\images_index.csv",
+    "kaggle_temporal_test\\tracks.csv",
+    "kaggle_trial\\images_index.csv",
+    "kaggle_trial\\tracks.csv"
+  ],
+  "overlap_storms_excluded": [],
+  "candidate_images": 0,
+  "valid_images": 0,
+  "valid_storms": 0,
+  "invalid_image_rows": 0,
+  "duplicate_rows_excluded": 0,
+  "model_inference_performed": false,
+  "metrics": null,
+  "blockers": [
+    "No images_index.csv exists. Candidate track jobs are not paired with local images."
+  ]
+}

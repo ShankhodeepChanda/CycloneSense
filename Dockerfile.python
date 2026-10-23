@@ -17,7 +17,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app/ ./app/
 COPY ml/ ./ml/
 COPY data/ ./data/
-COPY tests/ ./tests/
+COPY models/multiyear45_resnet18_ir_weighted.pt ./models/multiyear45_resnet18_ir_weighted.pt
 COPY run_server.py .
 
 EXPOSE 8000

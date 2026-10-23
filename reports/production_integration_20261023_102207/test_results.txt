@@ -1,0 +1,37 @@
+CycloneSense production integration validation
+Run date: 2026-10-23
+
+PASS: Python compilation
+  .venv\Scripts\python.exe -m py_compile ml/wind_inference.py app/main.py app/schemas.py scripts/prepare_temporal_2024plus.py scripts/evaluate_temporal_2024plus.py tests/test_wind_api.py tests/test_temporal_2024plus.py
+
+PASS: Full Python suite
+  .venv\Scripts\python.exe -m pytest tests --basetemp reports/production_integration_20261023_102207/pytest_report_final -q
+  Result: 36 passed; 1 Starlette/AnyIO deprecation warning. Includes exact SID/time/wind/coordinate temporal alignment and per-year metric coverage.
+  The custom basetemp is required because the sandbox's default Windows temp location is not writable.
+
+PASS: Model A route integration on a synthetic RGB image
+  The real saved checkpoint loaded on CPU and returned a finite response. No expected prediction value was asserted or presented as an observed scientific result.
+
+PASS: Web tests
+  npm run test:web
+  Result: 10 passed, including multipart forwarding through the same-origin Express proxy and MIME rejection.
+
+PASS: Production frontend/server build
+  npm run build
+  Vite and esbuild completed. The declared Bricolage Grotesque dependency was absent from the supplied node_modules, so the locked package was restored into the local ignored dependency directory; package.json and package-lock.json were not changed by that restore.
+
+PASS: Impeccable frontend detector
+  C:\Users\piyus_4jvzbh\.agents\skills\impeccable\scripts\impeccable.cmd detect --json src/App.tsx src/WindEstimator.tsx src/styles.css
+  Result: no remaining findings. Existing one-sided alert/summary accents reported by the first scan were replaced with full subtle surfaces/borders.
+
+PASS: Docker context review
+  Dockerfile.python copies the preserved checkpoint and required dataset source module. .dockerignore excludes raw and processed data directories. Docker image build itself was not run.
+
+PASS: git diff --check
+
+BLOCKED BY DATA READINESS: 2024+ temporal inference
+  The local indexes contain zero paired 2024+ IR images. All 120 candidate track SIDs with planned satellite jobs overlap existing local train/validation/test SID tables. No satellite imagery was fetched; metrics remain null.
+
+Not run: Docker build/deployment, external hosting, full browser screenshot validation (localhost dev server was unreachable from the attached browser sandbox), data downloads, or training.
+
+Environment note: the temporary npm dependency restoration reported one moderate advisory. No audit fix or dependency-manifest update was applied.

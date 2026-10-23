@@ -20,7 +20,7 @@ npm run build && npm start
 npm run test:web     # feed parser tests
 ```
 
-Deploy with the existing `Dockerfile` (Cloud Run, Render, Railway; the server reads `PORT`).
+The Research section includes a Model A wind estimator. Run the Python service alongside the web app with `python run_server.py --host 0.0.0.0 --port 8000`; the Node server proxies `/api/predict/wind` to `http://127.0.0.1:8000` by default. Set `PYTHON_API_URL` when the API runs elsewhere. For an integrated local stack, use `docker compose up --build` (packages the Model A checkpoint into the Python image). The root `Dockerfile` alone serves the website and proxy, so its Python API must be configured separately.
 
 ## 2. Real dataset -> Kaggle
 
@@ -56,15 +56,38 @@ training mean" baseline to compare against. No horizontal flips (they mirror the
 ## Tests
 
 ```bash
-pytest tests/test_dataset_pipeline.py tests/test_train_chips.py
+pytest tests
 npm run test:web
+npm run build
 ```
 
-## Not included yet
+## Model A wind inference
 
-The FastAPI service in `app/` and the 7-class Dvorak classifier in `ml/model.py` are not connected to the
-website and have no trained checkpoint in this repo. Wire the model from step 3 into the site once you
-have real metrics worth showing.
+`POST /predict/wind` accepts multipart form field `file` and serves the preserved checkpoint `models/multiyear45_resnet18_ir_weighted.pt`. It validates images (10 MB upload and 40 megapixel decode limits), converts to RGB, applies the deterministic training/evaluation preprocessing (`Resize(224)`, `ToTensor`, ImageNet normalization), and returns knots. `raw_prediction_kt` is the unmodified model output converted from `wind_kt / 100`; `application_prediction_kt` and compatibility alias `predicted_wind_kt` are independently bounded at zero for application display. A non-finite result or missing checkpoint returns an explicit service error. See [docs/API.md](docs/API.md) and [docs/INFERENCE.md](docs/INFERENCE.md).
+
+The frontend posts to same-origin `/api/predict/wind`; Express streams the upload to FastAPI. For a static Vercel build, set `VITE_API_URL` at build time to a separately hosted FastAPI origin. No deployment is performed by this repository integration.
+
+## Prepare an independent 2024+ holdout
+
+The default command reads local IBTrACS and writes a candidate manifest only. Choose a new output directory; existing paths are refused:
+
+```bash
+python scripts/prepare_temporal_2024plus.py --out-dir reports/temporal_2024plus_candidate
+```
+
+Fetching is opt-in and limited to an explicit request count (maximum 500 per invocation):
+
+```bash
+python scripts/prepare_temporal_2024plus.py --out-dir data/temporal_2024plus_ir --fetch --max-requests 50
+```
+
+Review `readiness.json`, source provenance, track agency/status fields, overlap exclusions, and every image before use. The evaluator refuses existing output directories, checks SID overlap with all local indexes/tracks, requires exact SID/time/wind/coordinate joins to the paired temporal `tracks.csv`, validates source/image hashes, labels and 256×256 images, verifies Model A's frozen SHA-256, and writes raw and separately clipped metrics:
+
+```bash
+python scripts/evaluate_temporal_2024plus.py --data-dir data/temporal_2024plus_ir --out-dir reports/temporal_2024plus_evaluation
+```
+
+Do not tune the checkpoint or configuration on this holdout. When the candidate manifest has no paired local chips, evaluation reports readiness blockers and no metrics. Reuse the original training augmentation in any later training experiment.
 
 Data: NOAA NCEI IBTrACS (Knapp et al. 2010); NASA GIBS / EOSDIS; JMA Himawari; GDACS. Check each source's
 terms before redistributing.
@@ -73,4 +96,4 @@ terms before redistributing.
 
 Import the repo at https://vercel.com/new (framework Vite is detected; `vercel.json` sets the build).
 The static site comes from `dist/`, and `api/active-cyclones.ts` serves the cyclone feed as a serverless function.
-No environment variables are needed. `Dockerfile` + `server.ts` remain for Cloud Run/Render.
+For wind estimation, configure `VITE_API_URL` to a separately hosted FastAPI service before the Vite build; the browser calls that origin directly. No Python deployment is provisioned by the static Vercel project. `Dockerfile` + `server.ts` provide the Node site and same-origin proxy, while `docker-compose.yml` wires both services for a local integrated stack.

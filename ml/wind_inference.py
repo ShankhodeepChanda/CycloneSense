@@ -6,12 +6,15 @@ application prediction is constrained to be nonnegative.
 from __future__ import annotations
 
 from dataclasses import dataclass
+import io
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 import torch
 from torch import nn
+from PIL import Image, UnidentifiedImageError
+from torchvision import transforms as T
 
 from ml.model import CycloneImageClassifier
 
@@ -21,10 +24,36 @@ PRODUCTION_CHECKPOINT = (
     / "multiyear45_resnet18_ir_weighted.pt"
 )
 TARGET_SCALE_KT = 100.0
+MAX_IMAGE_PIXELS = 40_000_000
+WIND_IMAGE_TRANSFORM = T.Compose([
+    T.Resize(224),
+    T.ToTensor(),
+    T.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+])
 
 
 class NonFiniteModelOutputError(ValueError):
     """Raised when a model emits NaN or infinity; callers must surface the failure."""
+
+
+class InvalidWindImageError(ValueError):
+    """Raised when uploaded bytes cannot safely be prepared for the wind model."""
+
+
+def preprocess_wind_image(data: bytes) -> torch.Tensor:
+    """Decode one image and apply the deterministic training/evaluation transform."""
+    try:
+        with Image.open(io.BytesIO(data)) as image:
+            width, height = image.size
+            if width < 1 or height < 1 or width * height > MAX_IMAGE_PIXELS:
+                raise InvalidWindImageError("Image dimensions are invalid or exceed the 40 megapixel limit.")
+            image.load()
+            rgb = image.convert("RGB")
+    except InvalidWindImageError:
+        raise
+    except (UnidentifiedImageError, Image.DecompressionBombError, OSError, ValueError) as exc:
+        raise InvalidWindImageError("The uploaded file is not a valid readable image.") from exc
+    return WIND_IMAGE_TRANSFORM(rgb).unsqueeze(0)
 
 
 @dataclass(frozen=True)
