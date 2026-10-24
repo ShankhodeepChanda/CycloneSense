@@ -2,8 +2,18 @@
 // GDACS (UN/EC Global Disaster Alert and Coordination System) is a real, keyless feed.
 // Parsing is defensive on purpose: unknown fields are ignored, never invented.
 
+// Per-event track geometry lives alongside, and is re-exported so callers have one import.
+export {
+  getCycloneTrack,
+  parseCycloneTrack,
+  type CycloneTrack,
+  type CycloneTrackResult,
+  type TrackPoint,
+} from "./gdacsTrack";
+
 export interface ActiveCyclone {
   id: string;
+  episodeId: string | null; // needed to ask GDACS for this storm's track geometry
   name: string;
   nio: boolean; // inside the North Indian Ocean box (Arabian Sea + Bay of Bengal)
   alert: string; // Green | Orange | Red (GDACS humanitarian alert level, not an IMD category)
@@ -43,6 +53,7 @@ export function parseActiveCyclones(geojson: any): ActiveCyclone[] {
     const id = String(p.eventid ?? `${p.eventname}-${lat}-${lon}`);
     byEvent.set(id, {
       id,
+      episodeId: p.episodeid === undefined || p.episodeid === null ? null : String(p.episodeid),
       name: String(p.eventname || p.name || "Unnamed system"),
       nio: lat >= NIO.minLat && lat <= NIO.maxLat && lon >= NIO.minLon && lon <= NIO.maxLon,
       alert: String(p.alertlevel || "Green"),
@@ -81,7 +92,7 @@ export async function getActiveCyclones(): Promise<ActiveCycloneResult> {
   }
   try {
     const ctl = new AbortController();
-    const timer = setTimeout(() => ctl.abort(), 10_000);
+    const timer = setTimeout(() => ctl.abort(), 25_000); // GDACS answers in 6-8 s under load
     const res = await fetch(gdacsUrl(), { signal: ctl.signal, headers: { accept: "application/json", "user-agent": "CycloneSense/1.0 (research project)" } });
     clearTimeout(timer);
     if (!res.ok) throw new Error(`GDACS responded ${res.status}`);

@@ -2,13 +2,18 @@
 from __future__ import annotations
 import hashlib, io, logging, threading, time
 from pathlib import Path
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, Form, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse
 from starlette.concurrency import run_in_threadpool
 from PIL import Image, ImageStat, UnidentifiedImageError
-from app.schemas import ForecastRequest, ForecastResponse, PatternResponse, HealthResponse, WindPredictionResponse
+from app.schemas import (
+    ForecastRequest, ForecastResponse, PatternResponse, HealthResponse,
+    TrajectoryRequest, TrajectoryResponse, WindMultiMetric, WindPredictionResponse,
+)
 from app.model import engine
+from app.trajectory import engine as trajectory_engine
+from app.trajectory import pressure_from_wind, wind_from_pressure
 from data.build_dataset import category as wind_category
 from ml.wind_inference import (
     InvalidWindImageError, NonFiniteModelOutputError, load_wind_model,
@@ -59,7 +64,7 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=False,
 
 @app.get("/health", response_model=HealthResponse)
 def get_health():
-    return HealthResponse(status="ok", service="cyclonesense-api-python", version="1.3.0", uptime_seconds=round(time.time()-START_TIME,1), hardware={"engine":engine.device,"gpu":engine.device,"model_mode":"image-analysis-baseline"}, models_loaded={"image_analyzer":True,"trajectory_engine":True,"gradcam_engine":False,"wind_regression":_wind_model is not None}, telemetry={"satellite_sources":["INSAT-3D/3DR VHRR","Himawai-9","GOES-16"],"spatial_coverage":"North Indian Ocean"})
+    return HealthResponse(status="ok", service="cyclonesense-api-python", version="1.3.0", uptime_seconds=round(time.time()-START_TIME,1), hardware={"engine":engine.device,"gpu":engine.device,"model_mode":"image-analysis-baseline"}, models_loaded={"image_analyzer":True,"trajectory_engine":True,"gradcam_engine":False,"wind_regression":_wind_model is not None,"trajectory_sequence_model":trajectory_engine.available}, telemetry={"satellite_sources":["INSAT-3D/3DR VHRR","Himawai-9","GOES-16"],"spatial_coverage":"North Indian Ocean"})
 
 @app.post("/predict/pattern", response_model=PatternResponse)
 async def predict_cyclone_pattern(file: UploadFile = File(...)):
@@ -72,8 +77,17 @@ async def predict_cyclone_pattern(file: UploadFile = File(...)):
 
 
 @app.post("/predict/wind", response_model=WindPredictionResponse)
-async def predict_wind_speed(file: UploadFile = File(...)):
-    """Estimate wind from one IR-style image using the preserved Model A checkpoint."""
+async def predict_wind_speed(
+    file: UploadFile = File(...),
+    pressure_hpa: float | None = Form(None, ge=800.0, le=1050.0),
+):
+    """Estimate wind from one IR-style image using the preserved Model A checkpoint.
+
+    An optional observed central pressure adds a second, independent estimate through the
+    Atkinson-Holliday relation. It is reported alongside the image estimate and never
+    folded into it: Model A takes pixels only, and moving its output with a typed number
+    would misrepresent what the model did.
+    """
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(415, "Please upload an image file (PNG, JPEG, or another supported image format).")
     data = await file.read(MAX_WIND_UPLOAD_BYTES + 1)
@@ -100,6 +114,19 @@ async def predict_wind_speed(file: UploadFile = File(...)):
         raise HTTPException(503, "Wind estimation failed. Please try a different satellite image.") from exc
     raw = float(prediction.raw_prediction_kt[0])
     application = float(prediction.application_prediction_kt[0])
+    multi_metric = None
+    if pressure_hpa is not None:
+        from_pressure = wind_from_pressure(pressure_hpa)
+        # Compare like with like: both sides of this block describe the raw estimate, so a
+        # negative raw output is not silently swapped for the clamped display value.
+        difference = raw - from_pressure
+        multi_metric = WindMultiMetric(
+            observed_pressure_hpa=round(float(pressure_hpa), 1),
+            pressure_derived_wind_kt=round(from_pressure, 1),
+            image_derived_pressure_hpa=round(pressure_from_wind(raw), 1),
+            image_minus_pressure_kt=round(difference, 1),
+            agreement="close" if abs(difference) <= 10 else "moderate" if abs(difference) <= 25 else "poor",
+        )
     return WindPredictionResponse(
         model="Model A ResNet-18 IR wind regression",
         checkpoint=Path("models/multiyear45_resnet18_ir_weighted.pt").name,
@@ -108,7 +135,27 @@ async def predict_wind_speed(file: UploadFile = File(...)):
         application_prediction_kt=application,
         predicted_wind_kt=application,
         category=wind_category(raw),
+        multi_metric=multi_metric,
     )
+
+@app.post("/predict/trajectory", response_model=TrajectoryResponse)
+async def predict_cyclone_trajectory(payload: TrajectoryRequest):
+    """Forecast track and intensity to +48 h from a sequence of observed fixes.
+
+    Returns 422 when the observations cannot support a forecast at all - for instance a
+    position with no wind and no pressure anywhere in the sequence, where any intensity
+    would be invented rather than inferred.
+    """
+    observations = [observation.model_dump() for observation in payload.observations]
+    try:
+        result = await run_in_threadpool(trajectory_engine.forecast, payload.cyclone_id, observations)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    except Exception as exc:
+        LOGGER.exception("Trajectory forecast failed for %s", payload.cyclone_id)
+        raise HTTPException(503, "The trajectory forecast service is unavailable.") from exc
+    return TrajectoryResponse(**result)
+
 
 @app.post("/predict/forecast", response_model=ForecastResponse)
 def predict_cyclone_forecast(payload: ForecastRequest):

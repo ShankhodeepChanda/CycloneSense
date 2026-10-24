@@ -1,5 +1,12 @@
 {
   "framework": "vite",
   "buildCommand": "npx vite build",
-  "outputDirectory": "dist"
+  "outputDirectory": "dist",
+  "functions": {
+    "api/predict/trajectory.py": {
+      "includeFiles": "{app,ml,models,public}/**",
+      "maxDuration": 30,
+      "memory": 1024
+    }
+  }
 }

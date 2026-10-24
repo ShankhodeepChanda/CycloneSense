@@ -5,6 +5,10 @@ import { LAYERS, iso, resolveNrt, slotAt, type Variant } from "./gibs";
 import { fetchWeather, type Weather } from "./weather";
 import { Card, Gauge, Icon, PressureChart } from "./panels";
 import { WindEstimator } from "./WindEstimator";
+import {
+  WAYPOINT_HIGHLIGHTS, describeLandfall, describePressureChange, fetchTrajectory, formatPosition,
+  isOutsideHomeBasin, observationsFromTrack, trackLatLngs, type TrajectoryForecast,
+} from "./trajectory";
 
 const DAY = 86_400_000;
 const utcDay = (d: Date) => d.toISOString().slice(0, 10);
@@ -45,6 +49,9 @@ export function App() {
   const [showCoast, setShowCoast] = useState(true);
   const [showLabels, setShowLabels] = useState(true);
   const [showStorms, setShowStorms] = useState(true);
+  const [showTrajectory, setShowTrajectory] = useState(true);
+  const [pastTrack, setPastTrack] = useState<[number, number][]>([]);
+  const [fc, setFc] = useState<{ s: "idle" } | { s: "loading" } | { s: "ok"; f: TrajectoryForecast } | { s: "err"; msg: string }>({ s: "idle" });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [view, setView] = useState<{ center: [number, number]; zoom: number; n: number }>({ center: [20, 128], zoom: 3, n: 0 });
   const [blank, setBlank] = useState(false);
@@ -88,6 +95,35 @@ export function App() {
     return () => clearInterval(t);
   }, []);
   useEffect(() => { const t = setInterval(() => setClock(new Date()), 30_000); return () => clearInterval(t); }, []);
+
+  // The selected storm's observed track, then a forecast from its last fixes. The track
+  // is a nicety: without it the forecast still runs from the single reported position,
+  // and the API reports that it had to pad the input.
+  useEffect(() => {
+    if (!sel) { setPastTrack([]); setFc({ s: "idle" }); return; }
+    const ctl = new AbortController();
+    setPastTrack([]);
+    setFc({ s: "loading" });
+    (async () => {
+      let observed: { lat: number; lon: number; time: string | null }[] = [];
+      try {
+        const query = new URLSearchParams({ eventId: sel.id });
+        if (sel.episodeId) query.set("episodeId", sel.episodeId);
+        const body = await fetch(`/api/cyclone-track?${query}`, { signal: ctl.signal }).then((r) => r.json());
+        observed = Array.isArray(body?.track?.observed) ? body.track.observed : [];
+        if (observed.length) setPastTrack(trackLatLngs(observed));
+      } catch { /* no track geometry: fall back to the reported centre below */ }
+      const observations = observed.length
+        ? observationsFromTrack(observed, sel.windKt)
+        : [{ lat: sel.lat, lon: sel.lon, ...(sel.windKt ? { wind_kt: sel.windKt } : {}) }];
+      try {
+        setFc({ s: "ok", f: await fetchTrajectory(sel.name, observations, ctl.signal) });
+      } catch (cause) {
+        if (!ctl.signal.aborted) setFc({ s: "err", msg: String((cause as Error)?.message ?? cause).slice(0, 180) });
+      }
+    })();
+    return () => ctl.abort();
+  }, [sel?.id, sel?.episodeId, sel?.lat, sel?.lon, sel?.windKt, sel?.name]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { const t = setTimeout(() => fly([17, 82], 4), 300); return () => clearTimeout(t); }, [fly]); // the opening fly-in
 
   // Weather for the chosen city, refreshed every 15 minutes.
@@ -177,6 +213,7 @@ export function App() {
           <Card id="map" title="Live satellite map" icon="map" i={1} className="map-card" aside={<span className="pill">{layer.label}</span>}>
             <div className="map-wrap">
               <LiveMap layer={layer} variant={variant} under={under} time={time} opacity={opacity} showCoast={showCoast} showLabels={showLabels} showStorms={showStorms}
+                showTrajectory={showTrajectory} pastTrack={pastTrack} forecast={fc.s === "ok" ? fc.f : null}
                 cyclones={all} selectedId={sel?.id ?? null} onSelect={setSelectedId} view={view} onTileProblem={onTileProblem} />
               <details className="layers" open={layersOpen}>
                 <summary><Icon name="layers" size={16} />Layers</summary>
@@ -192,6 +229,7 @@ export function App() {
                 <label className="chk"><input type="checkbox" checked={showCoast} onChange={(e) => setShowCoast(e.target.checked)} />Coastlines</label>
                 <label className="chk"><input type="checkbox" checked={showLabels} onChange={(e) => setShowLabels(e.target.checked)} />City and sea names</label>
                 <label className="chk"><input type="checkbox" checked={showStorms} onChange={(e) => setShowStorms(e.target.checked)} />Cyclone markers</label>
+                <label className="chk"><input type="checkbox" checked={showTrajectory} onChange={(e) => setShowTrajectory(e.target.checked)} />Track and forecast cone</label>
               </details>
               {(blank || (wanted.kind === "nrt" && nrt === null)) && (
                 <p className="banner" role="status">
@@ -276,6 +314,59 @@ export function App() {
                 <Gauge value={all.length} max={10} text={String(all.length)} label="Worldwide" caption="active storms" color="var(--teal)" />
                 <Gauge value={isNrt ? delayMin : step} max={isNrt ? 360 : 7} text={isNrt ? `${delayMin}m` : `${step}d`} label="Image age" caption={isNrt ? "behind real time" : "days back"} color="var(--violet)" />
               </div>
+            </Card>
+
+            <Card id="trajectory" title="Trajectory and multi-metric forecast" icon="storm" i={7} className="tj-card"
+              aside={fc.s === "ok" ? <span className="pill">{fc.f.source === "trained-sequence-model" ? "Trained model" : "Extrapolation"}</span> : undefined}>
+              {!sel && <p className="muted">Select a storm to forecast its track and intensity.</p>}
+              {sel && fc.s === "loading" && <p className="muted">Forecasting {sel.name}…</p>}
+              {sel && fc.s === "err" && (
+                <p className="warn">No forecast for {sel.name}.<small> Reason: {fc.msg}</small></p>
+              )}
+              {fc.s === "ok" && (
+                <>
+                  <p className="tj-region">
+                    {fc.f.region} · started from {formatPosition(fc.f.current_metrics.lat, fc.f.current_metrics.lon)}
+                  </p>
+                  {isOutsideHomeBasin(fc.f.region) && (
+                    <p className="warn">
+                      This storm is outside the North Indian Ocean. The forecaster was trained on Bay of
+                      Bengal and Arabian Sea storms, and the cone below is its error measured there, so
+                      both the track and its uncertainty are unvalidated here.
+                    </p>
+                  )}
+                  <p className={`tj-landfall${fc.f.landfall_estimate.projected ? " on" : ""}`}>
+                    {describeLandfall(fc.f.landfall_estimate)}
+                  </p>
+                  <dl className="tj-metrics">
+                    <div><dt>Peak wind</dt><dd>{Math.round(fc.f.summary.peak_wind_kt)} kt<small>{kmh(fc.f.summary.peak_wind_kt)} km/h</small></dd></div>
+                    <div><dt>Lowest pressure</dt><dd>{Math.round(fc.f.summary.min_pressure_hpa)} hPa<small>deepest on the path</small></dd></div>
+                    <div><dt>Pressure to +48 h</dt><dd>{fc.f.summary.pressure_change_hpa > 0 ? "+" : ""}{Math.round(fc.f.summary.pressure_change_hpa)} hPa<small>{describePressureChange(fc.f.summary.pressure_change_hpa)}</small></dd></div>
+                    <div><dt>Track length</dt><dd>{Math.round(fc.f.summary.forecast_track_km)} km<small>over 48 hours</small></dd></div>
+                  </dl>
+                  <p className="tj-class">{fc.f.summary.intensity_class}</p>
+                  <table className="tj-table">
+                    <caption>Waypoints, with the cone radius from the model&rsquo;s measured error at each lead</caption>
+                    <thead><tr><th scope="col">Lead</th><th scope="col">Position</th><th scope="col">Wind</th><th scope="col">Pressure</th><th scope="col">Cone</th></tr></thead>
+                    <tbody>
+                      {fc.f.waypoints.filter((w) => WAYPOINT_HIGHLIGHTS.includes(w.forecast_hour)).map((w) => (
+                        <tr key={w.forecast_hour}>
+                          <th scope="row">+{w.forecast_hour} h</th>
+                          <td>{formatPosition(w.lat, w.lon)}</td>
+                          <td>{Math.round(w.wind_kt)} kt</td>
+                          <td>{Math.round(w.pressure_hpa)} hPa</td>
+                          <td>&plusmn;{Math.round(w.uncertainty_radius_km)} km</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <p className="note">
+                    {fc.f.model}. Started from {fc.f.observations_used} observed {fc.f.observations_used === 1 ? "fix" : "fixes"}.
+                    {fc.f.inputs_imputed.length > 0 && ` Derived rather than observed: ${fc.f.inputs_imputed.join(", ")}.`}
+                    {" "}{fc.f.disclaimer}
+                  </p>
+                </>
+              )}
             </Card>
 
             <Card title="Storm strength" icon="storm" i={6} aside={<span className="pill">{alertCount("Red")} red · {alertCount("Orange")} orange · {alertCount("Green")} green</span>}>

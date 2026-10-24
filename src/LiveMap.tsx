@@ -3,6 +3,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import type { ActiveCyclone } from "../server/gdacs";
 import { LAYERS, tileUrl, type SatLayer, type Variant } from "./gibs";
+import { WAYPOINT_HIGHLIGHTS, conePolygon, type TrajectoryForecast } from "./trajectory";
 
 export const PLACES: [string, number, number, "city" | "sea"][] = [
   ["Bay of Bengal", 14, 88, "sea"], ["Arabian Sea", 15, 64, "sea"], ["Indian Ocean", 2, 78, "sea"],
@@ -48,6 +49,13 @@ const tiles = (x: Variant, time: string, opts: L.TileLayerOptions): L.TileLayer 
 
 const ALERT_COLOR: Record<string, string> = { Red: "#ef4444", Orange: "#f97316", Green: "#22c55e" };
 
+// Observed track, forecast path and cone. Distinct enough to tell apart over bright
+// true-colour cloud and over dark infrared alike.
+const TRACK_PAST = "#22d3ee";
+const TRACK_FUTURE = "#f472b6";
+const CONE_FILL = "#f472b6";
+const esc = (value: string) => value.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+
 interface Props {
   layer: SatLayer;
   variant: Variant;
@@ -57,14 +65,19 @@ interface Props {
   showCoast: boolean;
   showLabels: boolean;
   showStorms: boolean;
+  showTrajectory: boolean;
   cyclones: ActiveCyclone[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  /** Observed track of the selected storm, oldest first. */
+  pastTrack: [number, number][];
+  /** Model forecast for the selected storm, or null while it loads or fails. */
+  forecast: TrajectoryForecast | null;
   view: { center: [number, number]; zoom: number; n: number }; // n changes to re-trigger the same view
   onTileProblem: (problem: boolean) => void;
 }
 
-export function LiveMap({ layer, variant, under, time, opacity, showCoast, showLabels, showStorms, cyclones, selectedId, onSelect, view, onTileProblem }: Props) {
+export function LiveMap({ layer, variant, under, time, opacity, showCoast, showLabels, showStorms, showTrajectory, cyclones, selectedId, onSelect, pastTrack, forecast, view, onTileProblem }: Props) {
   const el = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
   const sat = useRef<L.TileLayer | null>(null);
@@ -73,6 +86,7 @@ export function LiveMap({ layer, variant, under, time, opacity, showCoast, showL
   const coast = useRef<L.GeoJSON | null>(null);
   const markers = useRef<L.LayerGroup | null>(null);
   const labels = useRef<L.LayerGroup | null>(null);
+  const trajectory = useRef<L.LayerGroup | null>(null);
   const op = useRef(opacity);
   op.current = opacity;
 
@@ -90,6 +104,8 @@ export function LiveMap({ layer, variant, under, time, opacity, showCoast, showL
     fetch("/coast.json").then((r) => r.json()).then((g) => {
       if (map.current) coast.current = L.geoJSON(g, { interactive: false, style: { color: "#fff", weight: 1.1, opacity: 0.85 } });
     }).catch(() => {}); // coastline is decoration; the map works without it
+    // Below the storm pins (pane zIndex 600) so a track never covers a marker.
+    trajectory.current = L.layerGroup().addTo(m);
     markers.current = L.layerGroup().addTo(m);
     map.current = m;
     return () => { m.remove(); map.current = null; };
@@ -148,6 +164,88 @@ export function LiveMap({ layer, variant, under, time, opacity, showCoast, showL
       mk.bindTooltip(name, { permanent: true, direction: "right", offset: [14, 0] });
     }
   }, [cyclones, selectedId, showStorms, onSelect]);
+
+  // Observed track, cone of uncertainty, forecast path, then the labelled waypoints.
+  // Everything is rebuilt from scratch each time, so layers cannot accumulate across
+  // selections or re-renders.
+  useEffect(() => {
+    const group = trajectory.current;
+    if (!group) return;
+    group.clearLayers();
+    if (!showTrajectory) return;
+
+    if (pastTrack.length > 1) {
+      L.polyline(pastTrack, { color: "#0b1220", weight: 5, opacity: 0.45, interactive: false }).addTo(group);
+      L.polyline(pastTrack, { color: TRACK_PAST, weight: 2.5, opacity: 0.95, interactive: false })
+        .addTo(group)
+        .bindTooltip("Observed track", { sticky: true });
+    }
+
+    if (!forecast || !forecast.waypoints.length) return;
+    const origin: [number, number] = [forecast.current_metrics.lat, forecast.current_metrics.lon];
+    const path: [number, number][] = [origin, ...forecast.waypoints.map((w) => [w.lat, w.lon] as [number, number])];
+
+    const ring = conePolygon(origin, forecast.waypoints);
+    if (ring.length) {
+      L.polygon(ring, {
+        color: CONE_FILL,
+        weight: 1,
+        opacity: 0.5,
+        fillColor: CONE_FILL,
+        fillOpacity: 0.14,
+        interactive: false,
+      }).addTo(group);
+    }
+
+    L.polyline(path, {
+      color: TRACK_FUTURE,
+      weight: 2.5,
+      opacity: 0.95,
+      dashArray: "7 6",
+      interactive: false,
+    }).addTo(group);
+
+    for (const point of forecast.waypoints) {
+      const highlight = WAYPOINT_HIGHLIGHTS.includes(point.forecast_hour);
+      const marker = L.circleMarker([point.lat, point.lon], {
+        radius: highlight ? 6 : 3.5,
+        color: "#0b1220",
+        weight: 1.5,
+        fillColor: TRACK_FUTURE,
+        fillOpacity: 1,
+      }).addTo(group);
+      marker.bindTooltip(
+        `<b>+${point.forecast_hour} h</b><br>${point.wind_kt.toFixed(0)} kt · ${point.pressure_hpa.toFixed(0)} hPa` +
+          `<br>±${point.uncertainty_radius_km.toFixed(0)} km`,
+        { direction: "top" },
+      );
+      if (highlight) {
+        L.marker([point.lat, point.lon], {
+          interactive: false,
+          keyboard: false,
+          icon: L.divIcon({ className: "", html: `<span class="cy-wp">+${point.forecast_hour}h</span>`, iconSize: [0, 0] }),
+        }).addTo(group);
+      }
+    }
+
+    const landfall = forecast.landfall_estimate;
+    if (landfall.projected && landfall.lat !== null && landfall.lon !== null) {
+      L.circleMarker([landfall.lat, landfall.lon], {
+        radius: 7,
+        color: "#fff",
+        weight: 2,
+        fillColor: "#ef4444",
+        fillOpacity: 1,
+      })
+        .addTo(group)
+        // Feed-supplied place names are escaped: a name can never inject HTML.
+        .bindTooltip(
+          `<b>Projected landfall</b><br>${esc(landfall.location ?? "coast")}` +
+            `<br>about +${landfall.eta_hours?.toFixed(0) ?? "?"} h`,
+          { direction: "top" },
+        );
+    }
+  }, [pastTrack, forecast, showTrajectory]);
 
   useEffect(() => {
     const m = map.current;
