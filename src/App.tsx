@@ -124,6 +124,11 @@ export function App() {
     const actual = hindcastActual(demoStorm, demoIndex, demoSet?.future_fixes ?? 8);
     setPastTrack(observed.map((f) => [f.lat, f.lon] as [number, number]));
     setActualTrack(actual.map((f) => [f.lat, f.lon] as [number, number]));
+    // Centre on the whole episode, otherwise the track is a thumbnail in one corner.
+    const shown = [...observed, ...actual];
+    const lats = shown.map((f) => f.lat);
+    const lons = shown.map((f) => f.lon);
+    fly([(Math.min(...lats) + Math.max(...lats)) / 2, (Math.min(...lons) + Math.max(...lons)) / 2], 5);
     setScore(null);
     setFc({ s: "loading" });
     fetchTrajectory(demoStorm.name, hindcastObservations(demoStorm, demoIndex, demoSet?.input_fixes ?? 4), ctl.signal)
@@ -135,7 +140,7 @@ export function App() {
         if (!ctl.signal.aborted) setFc({ s: "err", msg: String((cause as Error)?.message ?? cause).slice(0, 180) });
       });
     return () => ctl.abort();
-  }, [demoStorm, demoIndex, demoSet]);
+  }, [demoStorm, demoIndex, demoSet, fly]);
 
   // The selected storm's observed track, then a forecast from its last fixes. The track
   // is a nicety: without it the forecast still runs from the single reported position,
@@ -288,7 +293,9 @@ export function App() {
                   {wanted.kind === "nrt" && nrt === null ? "The near real-time layer is not answering, so true colour is shown." : "This image is not available yet. Use the timeline to step back."}
                 </p>
               )}
-              {sel && (
+              {/* Hidden during a hindcast: the map is showing a historical storm, so a
+                  card describing a different, live one belongs to a different picture. */}
+              {sel && !demoName && (
                 <div className="storm" aria-live="polite">
                   <div className="s-head"><b>{sel.name}</b><span className="alert" style={{ background: ALERT_COLOR[sel.alert] ?? "var(--mute)" }}>{ALERT_TEXT[sel.alert] ?? sel.alert}</span></div>
                   <dl>
@@ -347,27 +354,6 @@ export function App() {
           </div>
 
           <div className="bottom">
-            <Card id="timeline" title="Timeline playback" icon="clock" i={4}>
-              <div className="tl">
-                <button className="round" onClick={() => setPlaying((p) => !p)} aria-label={playing ? "Pause" : "Play"}><Icon name={playing ? "pause" : "play"} size={18} /></button>
-                <button className="round ghost" onClick={() => { setStep(0); setPlaying(false); }} aria-label="Jump to latest image" title="Latest"><Icon name="skip" size={16} /></button>
-                <div className="seg" role="group" aria-label="Playback speed">{[1, 2, 4].map((s) => <button key={s} aria-pressed={speed === s} onClick={() => setSpeed(s)}>{s}x</button>)}</div>
-                <output className="frame">{frameLabel}</output>
-              </div>
-              <input className="scrub" type="range" min="0" max={maxStep} value={maxStep - step} aria-label="Image time" onChange={(e) => { setStep(maxStep - +e.target.value); setPlaying(false); }} />
-              <div className="ticks"><span>{isNrt ? "6 hours earlier" : "7 days earlier"}</span><span>Latest</span></div>
-              <p className="note">{isNrt ? "Each step is 10 minutes." : "Each step is one day."} Frames load as they play, so the first loop can be slow.</p>
-            </Card>
-
-            <Card title="Live indicators" icon="dash" i={5}>
-              <div className="gauges">
-                <Gauge value={strongest?.windKt ?? 0} max={180} text={strongest?.windKt ? String(strongest.windKt) : "–"} label="Strongest wind" caption="knots, scale to 180" color="var(--blue)" />
-                <Gauge value={nioList.length} max={5} text={String(nioList.length)} label="Near India" caption="active storms" color="var(--orange)" />
-                <Gauge value={all.length} max={10} text={String(all.length)} label="Worldwide" caption="active storms" color="var(--teal)" />
-                <Gauge value={isNrt ? delayMin : step} max={isNrt ? 360 : 7} text={isNrt ? `${delayMin}m` : `${step}d`} label="Image age" caption={isNrt ? "behind real time" : "days back"} color="var(--violet)" />
-              </div>
-            </Card>
-
             <Card id="trajectory" title="Trajectory and multi-metric forecast" icon="storm" i={7} className="tj-card"
               aside={fc.s === "ok" ? <span className="pill">{fc.f.source === "trained-sequence-model" ? "Trained model" : "Extrapolation"}</span> : undefined}>
               {demoSet && (
@@ -379,7 +365,8 @@ export function App() {
                     {demoSet.storms.map((storm) => (
                       <button key={storm.name} className={demoName === storm.name ? "on" : ""}
                         onClick={() => { setDemoName(storm.name); setDemoStart(storm.default_start_index); }}
-                        title={describeProvenance(storm.provenance)}>
+                        title={describeProvenance(storm.provenance)}
+                        aria-label={`${storm.name} ${storm.season}. ${describeProvenance(storm.provenance)}`}>
                         {storm.name} <small>{storm.season}</small>
                         {storm.provenance === "held-out" && <b className="unseen">unseen</b>}
                       </button>
@@ -486,6 +473,27 @@ export function App() {
                   </p>
                 </>
               )}
+            </Card>
+
+            <Card id="timeline" title="Timeline playback" icon="clock" i={4}>
+              <div className="tl">
+                <button className="round" onClick={() => setPlaying((p) => !p)} aria-label={playing ? "Pause" : "Play"}><Icon name={playing ? "pause" : "play"} size={18} /></button>
+                <button className="round ghost" onClick={() => { setStep(0); setPlaying(false); }} aria-label="Jump to latest image" title="Latest"><Icon name="skip" size={16} /></button>
+                <div className="seg" role="group" aria-label="Playback speed">{[1, 2, 4].map((s) => <button key={s} aria-pressed={speed === s} onClick={() => setSpeed(s)}>{s}x</button>)}</div>
+                <output className="frame">{frameLabel}</output>
+              </div>
+              <input className="scrub" type="range" min="0" max={maxStep} value={maxStep - step} aria-label="Image time" onChange={(e) => { setStep(maxStep - +e.target.value); setPlaying(false); }} />
+              <div className="ticks"><span>{isNrt ? "6 hours earlier" : "7 days earlier"}</span><span>Latest</span></div>
+              <p className="note">{isNrt ? "Each step is 10 minutes." : "Each step is one day."} Frames load as they play, so the first loop can be slow.</p>
+            </Card>
+
+            <Card title="Live indicators" icon="dash" i={5}>
+              <div className="gauges">
+                <Gauge value={strongest?.windKt ?? 0} max={180} text={strongest?.windKt ? String(strongest.windKt) : "–"} label="Strongest wind" caption="knots, scale to 180" color="var(--blue)" />
+                <Gauge value={nioList.length} max={5} text={String(nioList.length)} label="Near India" caption="active storms" color="var(--orange)" />
+                <Gauge value={all.length} max={10} text={String(all.length)} label="Worldwide" caption="active storms" color="var(--teal)" />
+                <Gauge value={isNrt ? delayMin : step} max={isNrt ? 360 : 7} text={isNrt ? `${delayMin}m` : `${step}d`} label="Image age" caption={isNrt ? "behind real time" : "days back"} color="var(--violet)" />
+              </div>
             </Card>
 
             <Card title="Storm strength" icon="storm" i={6} aside={<span className="pill">{alertCount("Red")} red · {alertCount("Orange")} orange · {alertCount("Green")} green</span>}>

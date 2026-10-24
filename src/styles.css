@@ -196,6 +196,10 @@ select { font: inherit; font-size: .88rem; padding: .25rem .5rem; border: 1px so
    relying on the page background. */
 .cy-wp { position: absolute; transform: translate(10px, -50%); white-space: nowrap; font-size: 11px; font-weight: 700; color: #fff; text-shadow: 0 0 3px #000, 0 0 6px #000; pointer-events: none; }
 
+/* The richest card on the page: a picker, a metric grid, and two tables. In the
+   auto-fit bottom row it was being handed a 260px column, which stacked the metrics
+   into a single file and clipped the tables. Give it a row of its own. */
+.tj-card { grid-column: 1 / -1; }
 .tj-card .pill { background: #f3eaff; color: var(--violet); }
 .tj-landfall { margin: .2rem 0 .8rem; padding: .55rem .75rem; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); font-size: .92rem; }
 .tj-landfall.on { border-color: #efb5ad; background: #fff1ec; color: #8b2118; font-weight: 600; }
@@ -205,7 +209,8 @@ select { font: inherit; font-size: .88rem; padding: .25rem .5rem; border: 1px so
 .tj-metrics dd { margin: 0; font-weight: 700; font-size: 1.05rem; font-variant-numeric: tabular-nums; }
 .tj-metrics dd small { display: block; font-weight: 500; font-size: .75rem; }
 .tj-class { margin: .7rem 0 0; font-weight: 700; color: var(--violet); }
-.tj-table { width: 100%; border-collapse: collapse; margin-top: .7rem; font-size: .86rem; }
+.tj-table { width: 100%; border-collapse: collapse; margin-top: .7rem; font-size: .86rem; display: block; overflow-x: auto; }
+@media (min-width: 540px) { .tj-table { display: table; overflow-x: visible; } }
 .tj-table caption { caption-side: bottom; margin-top: .4rem; color: var(--mute); font-size: .8rem; text-align: left; }
 .tj-table th, .tj-table td { padding: .35rem .4rem; text-align: left; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
 .tj-table thead th { color: var(--mute); font-weight: 600; font-size: .8rem; }
@@ -245,7 +250,8 @@ select { font: inherit; font-size: .88rem; padding: .25rem .5rem; border: 1px so
 .tj-score-sum { margin: .5rem 0 0; font-size: .88rem; color: var(--ink); font-weight: 600; }
 
 /* Map legend for the three track lines. */
-.tj-legend { position: absolute; left: .6rem; bottom: .6rem; z-index: 500; margin: 0; padding: .45rem .6rem; list-style: none; display: grid; gap: .22rem; background: rgba(8, 15, 30, .72); border-radius: 10px; backdrop-filter: blur(3px); pointer-events: none; }
+/* Bottom-right, clear of the Layers panel on the left and the zoom buttons below. */
+.tj-legend { position: absolute; right: .6rem; bottom: 4.6rem; z-index: 500; margin: 0; padding: .45rem .6rem; list-style: none; display: grid; gap: .22rem; background: rgba(8, 15, 30, .72); border-radius: 10px; backdrop-filter: blur(3px); pointer-events: none; }
 .tj-legend li { display: flex; align-items: center; gap: .4rem; color: #fff; font-size: .75rem; font-weight: 600; text-shadow: 0 1px 2px #000; }
 .tj-legend i { width: 18px; height: 0; border-top: 3px solid; border-radius: 2px; flex: none; }
 .tj-legend i.observed { border-color: #22d3ee; }
