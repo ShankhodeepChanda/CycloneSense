@@ -20,3 +20,5 @@ coverage.xml
 
 kaggle_dataset/
 metrics.json
+.vercel
+.env*

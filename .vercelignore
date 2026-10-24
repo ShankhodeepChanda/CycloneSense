@@ -1,0 +1,26 @@
+# Keep the upload and the serverless bundle small.
+#
+# The deployed function needs app/, ml/, models/ and public/ only (see includeFiles in
+# vercel.json). Everything here is training data, analysis output or tooling.
+
+kaggle_trial/
+kaggle_multiyear/
+kaggle_multiyear45/
+kaggle_temporal_test/
+reports/
+data/
+tests/
+docs/
+scripts/
+.superpowers/
+.github/
+*.bak
+
+# Vercel installs the Python function's dependencies from the ROOT requirements.txt,
+# which is why that file is the minimal serving set (numpy). The heavy stack would
+# resolve to 5.8 GB with torch's CUDA dependencies, so it must not be visible here.
+requirements-ml.txt
+requirements-dev.txt
+
+# Built locally; Vercel runs the build itself.
+dist/

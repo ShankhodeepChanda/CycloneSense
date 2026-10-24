@@ -1,5 +1,5 @@
 # Development, Linting & Testing Requirements
--r requirements.txt
+-r requirements-ml.txt
 pytest>=8.0.0
 pytest-cov>=4.1.0
 ruff>=0.3.0

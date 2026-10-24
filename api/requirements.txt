@@ -1,4 +1,0 @@
-# Dependencies for the Vercel Python function (api/predict/trajectory.py).
-# Deliberately minimal: torch is 534 MB and pandas 67 MB against a 250 MB function
-# limit, and tests/test_numpy_forecaster.py asserts the serving path imports neither.
-numpy>=1.26.0

@@ -91,6 +91,15 @@ class handler(BaseHTTPRequestHandler):  # noqa: N801  (Vercel requires this name
         self.end_headers()
         self.wfile.write(payload)
 
+    def _discard(self, length: int, cap: int = 16 * 1024 * 1024, chunk: int = 64 * 1024) -> None:
+        """Read and throw away a rejected body so the client's write can complete."""
+        remaining = min(length, cap)
+        while remaining > 0:
+            block = self.rfile.read(min(chunk, remaining))
+            if not block:
+                return
+            remaining -= len(block)
+
     def do_POST(self) -> None:  # noqa: N802  (http.server's interface)
         try:
             length = int(self.headers.get("content-length") or 0)
@@ -101,6 +110,10 @@ class handler(BaseHTTPRequestHandler):  # noqa: N801  (Vercel requires this name
             self._send(400, {"detail": "Send the observations as a JSON body."})
             return
         if length > MAX_BODY_BYTES:
+            # Drain before replying. Rejecting on content-length alone leaves the client
+            # still writing into a socket nobody is reading, which surfaces as a
+            # connection reset instead of the 413 that explains the problem.
+            self._discard(length)
             self._send(413, {"detail": "That request is too large. Send the storm's recent fixes, not a dataset."})
             return
 
