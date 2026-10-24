@@ -64,12 +64,13 @@ jobs:
           cache: pip
           cache-dependency-path: |
             requirements.txt
+            requirements-ml.txt
             requirements-dev.txt
 
       - name: Validate Python dependencies manifest
         run: |
           python -m pip install --upgrade pip
-          pip install --dry-run -r requirements.txt
+          pip install --dry-run -r requirements-ml.txt
           echo "Python dependency specifications verified successfully."
 
   docker:

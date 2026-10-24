@@ -229,3 +229,121 @@ export async function fetchTrajectory(
   }
   return payload as TrajectoryForecast;
 }
+
+// ---------------------------------------------------------------------------
+// Hindcast demo
+//
+// GDACS reports no storm for most of the year, which hides the whole forecast. Replaying
+// a past storm shows it, and shows it better: a historical case has a known outcome, so
+// the map can draw the forecast next to the track the storm actually took and the error
+// is something the viewer reads rather than something the page asserts.
+// ---------------------------------------------------------------------------
+
+const EARTH_RADIUS_KM = 6371.0;
+
+export interface DemoFix {
+  time: string;
+  lat: number;
+  lon: number;
+  wind_kt: number | null;
+  pressure_hpa: number | null;
+  dist2land_km: number | null;
+  category: string | null;
+}
+
+export interface DemoStorm {
+  id: string;
+  name: string;
+  /** "trained-on" means its error is in-sample; "held-out" means the model never saw it. */
+  provenance: "trained-on" | "held-out" | "unknown" | string;
+  season: number;
+  basin: string;
+  peak_wind_kt: number;
+  min_pressure_hpa: number;
+  fixes: DemoFix[];
+  /** Index of the first fix that reached the coast, or null if it never did. */
+  landfall_index: number | null;
+  default_start_index: number;
+  usable_start_range: [number, number];
+}
+
+export interface DemoStormSet {
+  source: string;
+  note: string;
+  provenance_note: string;
+  input_fixes: number;
+  future_fixes: number;
+  step_hours: number;
+  storms: DemoStorm[];
+}
+
+export interface HindcastScore {
+  leads: number[];
+  /** Great-circle distance from forecast to outcome at each lead; null past the record. */
+  errorKm: (number | null)[];
+  windErrorKt: (number | null)[];
+  meanErrorKm: number | null;
+}
+
+/** Great-circle distance in kilometres. */
+export function haversineKm(aLat: number, aLon: number, bLat: number, bLon: number): number {
+  const toRad = Math.PI / 180;
+  const dLat = (bLat - aLat) * toRad;
+  const dLon = (bLon - aLon) * toRad;
+  const inner =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(aLat * toRad) * Math.cos(bLat * toRad) * Math.sin(dLon / 2) ** 2;
+  return 2 * EARTH_RADIUS_KM * Math.asin(Math.min(1, Math.sqrt(inner)));
+}
+
+/** The observations the model forecasts from: the fixes ending at `startIndex`. */
+export function hindcastObservations(storm: DemoStorm, startIndex: number, inputFixes = 4): Observation[] {
+  const end = Math.max(0, Math.min(startIndex, storm.fixes.length - 1));
+  return storm.fixes.slice(Math.max(0, end - inputFixes + 1), end + 1).map((fix) => {
+    const observation: Observation = { lat: fix.lat, lon: fix.lon, timestamp: fix.time };
+    if (fix.wind_kt !== null) observation.wind_kt = fix.wind_kt;
+    if (fix.pressure_hpa !== null) observation.pressure_hpa = fix.pressure_hpa;
+    return observation;
+  });
+}
+
+/** What the storm actually did next: the fixes after `startIndex`. */
+export function hindcastActual(storm: DemoStorm, startIndex: number, futureFixes = 8): DemoFix[] {
+  return storm.fixes.slice(startIndex + 1, startIndex + 1 + futureFixes);
+}
+
+/** Score a forecast against the outcome, lead by lead. */
+export function scoreHindcast(waypoints: Waypoint[], actual: DemoFix[]): HindcastScore {
+  const leads = waypoints.map((waypoint) => waypoint.forecast_hour);
+  const errorKm = waypoints.map((waypoint, index) => {
+    const outcome = actual[index];
+    return outcome ? haversineKm(waypoint.lat, waypoint.lon, outcome.lat, outcome.lon) : null;
+  });
+  const windErrorKt = waypoints.map((waypoint, index) => {
+    const outcome = actual[index];
+    return outcome && outcome.wind_kt !== null ? waypoint.wind_kt - outcome.wind_kt : null;
+  });
+  const scored = errorKm.filter((km): km is number => km !== null);
+  return {
+    leads,
+    errorKm,
+    windErrorKt,
+    meanErrorKm: scored.length ? scored.reduce((sum, km) => sum + km, 0) / scored.length : null,
+  };
+}
+
+/** Load the committed demo storms. */
+export async function fetchDemoStorms(signal?: AbortSignal): Promise<DemoStormSet> {
+  const response = await fetch("/demo-storms.json", { signal });
+  if (!response.ok) throw new Error("Could not load the demo storms.");
+  return (await response.json()) as DemoStormSet;
+}
+
+/** How a hindcast result should be read, given whether the model fitted that storm. */
+export function describeProvenance(provenance: string): string {
+  if (provenance === "held-out")
+    return "The model never saw this storm in training, so this error is the honest one.";
+  if (provenance === "trained-on")
+    return "The model was trained on this storm, so this error is in-sample and flatters it.";
+  return "Whether the model trained on this storm is not recorded.";
+}

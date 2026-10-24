@@ -6,8 +6,10 @@ import { fetchWeather, type Weather } from "./weather";
 import { Card, Gauge, Icon, PressureChart } from "./panels";
 import { WindEstimator } from "./WindEstimator";
 import {
-  WAYPOINT_HIGHLIGHTS, describeLandfall, describePressureChange, fetchTrajectory, formatPosition,
-  isOutsideHomeBasin, observationsFromTrack, trackLatLngs, type TrajectoryForecast,
+  WAYPOINT_HIGHLIGHTS, describeLandfall, describePressureChange, describeProvenance, fetchDemoStorms,
+  fetchTrajectory, formatPosition, hindcastActual, hindcastObservations, isOutsideHomeBasin,
+  observationsFromTrack, scoreHindcast, trackLatLngs,
+  type DemoStorm, type DemoStormSet, type HindcastScore, type TrajectoryForecast,
 } from "./trajectory";
 
 const DAY = 86_400_000;
@@ -51,7 +53,14 @@ export function App() {
   const [showStorms, setShowStorms] = useState(true);
   const [showTrajectory, setShowTrajectory] = useState(true);
   const [pastTrack, setPastTrack] = useState<[number, number][]>([]);
+  const [actualTrack, setActualTrack] = useState<[number, number][]>([]);
   const [fc, setFc] = useState<{ s: "idle" } | { s: "loading" } | { s: "ok"; f: TrajectoryForecast } | { s: "err"; msg: string }>({ s: "idle" });
+  // Hindcast demo: GDACS reports no storm for most of the year, so a past storm is the
+  // only way to show the forecast at all, and it comes with a known outcome to judge.
+  const [demoSet, setDemoSet] = useState<DemoStormSet | null>(null);
+  const [demoName, setDemoName] = useState<string | null>(null);
+  const [demoStart, setDemoStart] = useState<number | null>(null);
+  const [score, setScore] = useState<HindcastScore | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [view, setView] = useState<{ center: [number, number]; zoom: number; n: number }>({ center: [20, 128], zoom: 3, n: 0 });
   const [blank, setBlank] = useState(false);
@@ -69,6 +78,10 @@ export function App() {
   const elsewhere = feed?.cyclones.filter((c) => !c.nio) ?? [];
   const all = feed?.cyclones ?? [];
   const sel = all.find((c) => c.id === selectedId) ?? nioList[0] ?? elsewhere[0] ?? null;
+  const demoStorm: DemoStorm | null = demoSet?.storms.find((storm) => storm.name === demoName) ?? null;
+  const demoIndex = demoStart ?? demoStorm?.default_start_index ?? null;
+  const demoFix = demoStorm && demoIndex !== null ? demoStorm.fixes[demoIndex] : null;
+  const forecastLabel = demoStorm ? `${demoStorm.name} ${demoStorm.season}` : sel?.name ?? null;
 
   // Without a working Himawari layer, fall back to true colour rather than an empty map.
   const wanted = LAYERS.find((l) => l.id === layerId)!;
@@ -96,13 +109,49 @@ export function App() {
   }, []);
   useEffect(() => { const t = setInterval(() => setClock(new Date()), 30_000); return () => clearInterval(t); }, []);
 
+  // The demo storms are a committed static file, so this cannot fail the live dashboard.
+  useEffect(() => {
+    const ctl = new AbortController();
+    fetchDemoStorms(ctl.signal).then(setDemoSet).catch(() => {});
+    return () => ctl.abort();
+  }, []);
+
+  // Hindcast: forecast from the chosen fix and keep what the storm actually did next.
+  useEffect(() => {
+    if (!demoStorm || demoIndex === null) return;
+    const ctl = new AbortController();
+    const observed = demoStorm.fixes.slice(0, demoIndex + 1);
+    const actual = hindcastActual(demoStorm, demoIndex, demoSet?.future_fixes ?? 8);
+    setPastTrack(observed.map((f) => [f.lat, f.lon] as [number, number]));
+    setActualTrack(actual.map((f) => [f.lat, f.lon] as [number, number]));
+    // Centre on the whole episode, otherwise the track is a thumbnail in one corner.
+    const shown = [...observed, ...actual];
+    const lats = shown.map((f) => f.lat);
+    const lons = shown.map((f) => f.lon);
+    fly([(Math.min(...lats) + Math.max(...lats)) / 2, (Math.min(...lons) + Math.max(...lons)) / 2], 5);
+    setScore(null);
+    setFc({ s: "loading" });
+    fetchTrajectory(demoStorm.name, hindcastObservations(demoStorm, demoIndex, demoSet?.input_fixes ?? 4), ctl.signal)
+      .then((forecast) => {
+        setFc({ s: "ok", f: forecast });
+        setScore(scoreHindcast(forecast.waypoints, actual));
+      })
+      .catch((cause) => {
+        if (!ctl.signal.aborted) setFc({ s: "err", msg: String((cause as Error)?.message ?? cause).slice(0, 180) });
+      });
+    return () => ctl.abort();
+  }, [demoStorm, demoIndex, demoSet, fly]);
+
   // The selected storm's observed track, then a forecast from its last fixes. The track
   // is a nicety: without it the forecast still runs from the single reported position,
   // and the API reports that it had to pad the input.
   useEffect(() => {
-    if (!sel) { setPastTrack([]); setFc({ s: "idle" }); return; }
+    if (demoName) return; // a hindcast is on screen; leave it alone
+    if (!sel) { setPastTrack([]); setActualTrack([]); setFc({ s: "idle" }); return; }
     const ctl = new AbortController();
     setPastTrack([]);
+    setActualTrack([]);
+    setScore(null);
     setFc({ s: "loading" });
     (async () => {
       let observed: { lat: number; lon: number; time: string | null }[] = [];
@@ -123,7 +172,7 @@ export function App() {
       }
     })();
     return () => ctl.abort();
-  }, [sel?.id, sel?.episodeId, sel?.lat, sel?.lon, sel?.windKt, sel?.name]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [demoName, sel?.id, sel?.episodeId, sel?.lat, sel?.lon, sel?.windKt, sel?.name]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { const t = setTimeout(() => fly([17, 82], 4), 300); return () => clearTimeout(t); }, [fly]); // the opening fly-in
 
   // Weather for the chosen city, refreshed every 15 minutes.
@@ -213,7 +262,7 @@ export function App() {
           <Card id="map" title="Live satellite map" icon="map" i={1} className="map-card" aside={<span className="pill">{layer.label}</span>}>
             <div className="map-wrap">
               <LiveMap layer={layer} variant={variant} under={under} time={time} opacity={opacity} showCoast={showCoast} showLabels={showLabels} showStorms={showStorms}
-                showTrajectory={showTrajectory} pastTrack={pastTrack} forecast={fc.s === "ok" ? fc.f : null}
+                showTrajectory={showTrajectory} pastTrack={pastTrack} forecast={fc.s === "ok" ? fc.f : null} actualTrack={actualTrack}
                 cyclones={all} selectedId={sel?.id ?? null} onSelect={setSelectedId} view={view} onTileProblem={onTileProblem} />
               <details className="layers" open={layersOpen}>
                 <summary><Icon name="layers" size={16} />Layers</summary>
@@ -231,12 +280,22 @@ export function App() {
                 <label className="chk"><input type="checkbox" checked={showStorms} onChange={(e) => setShowStorms(e.target.checked)} />Cyclone markers</label>
                 <label className="chk"><input type="checkbox" checked={showTrajectory} onChange={(e) => setShowTrajectory(e.target.checked)} />Track and forecast cone</label>
               </details>
+              {showTrajectory && fc.s === "ok" && (
+                <ul className="tj-legend" aria-label="Track legend">
+                  <li><i className="observed" />Observed track</li>
+                  <li><i className="forecast" />Model forecast</li>
+                  {actualTrack.length > 1 && <li><i className="actual" />What actually happened</li>}
+                  <li><i className="cone" />Cone of uncertainty</li>
+                </ul>
+              )}
               {(blank || (wanted.kind === "nrt" && nrt === null)) && (
                 <p className="banner" role="status">
                   {wanted.kind === "nrt" && nrt === null ? "The near real-time layer is not answering, so true colour is shown." : "This image is not available yet. Use the timeline to step back."}
                 </p>
               )}
-              {sel && (
+              {/* Hidden during a hindcast: the map is showing a historical storm, so a
+                  card describing a different, live one belongs to a different picture. */}
+              {sel && !demoName && (
                 <div className="storm" aria-live="polite">
                   <div className="s-head"><b>{sel.name}</b><span className="alert" style={{ background: ALERT_COLOR[sel.alert] ?? "var(--mute)" }}>{ALERT_TEXT[sel.alert] ?? sel.alert}</span></div>
                   <dl>
@@ -295,33 +354,47 @@ export function App() {
           </div>
 
           <div className="bottom">
-            <Card id="timeline" title="Timeline playback" icon="clock" i={4}>
-              <div className="tl">
-                <button className="round" onClick={() => setPlaying((p) => !p)} aria-label={playing ? "Pause" : "Play"}><Icon name={playing ? "pause" : "play"} size={18} /></button>
-                <button className="round ghost" onClick={() => { setStep(0); setPlaying(false); }} aria-label="Jump to latest image" title="Latest"><Icon name="skip" size={16} /></button>
-                <div className="seg" role="group" aria-label="Playback speed">{[1, 2, 4].map((s) => <button key={s} aria-pressed={speed === s} onClick={() => setSpeed(s)}>{s}x</button>)}</div>
-                <output className="frame">{frameLabel}</output>
-              </div>
-              <input className="scrub" type="range" min="0" max={maxStep} value={maxStep - step} aria-label="Image time" onChange={(e) => { setStep(maxStep - +e.target.value); setPlaying(false); }} />
-              <div className="ticks"><span>{isNrt ? "6 hours earlier" : "7 days earlier"}</span><span>Latest</span></div>
-              <p className="note">{isNrt ? "Each step is 10 minutes." : "Each step is one day."} Frames load as they play, so the first loop can be slow.</p>
-            </Card>
-
-            <Card title="Live indicators" icon="dash" i={5}>
-              <div className="gauges">
-                <Gauge value={strongest?.windKt ?? 0} max={180} text={strongest?.windKt ? String(strongest.windKt) : "–"} label="Strongest wind" caption="knots, scale to 180" color="var(--blue)" />
-                <Gauge value={nioList.length} max={5} text={String(nioList.length)} label="Near India" caption="active storms" color="var(--orange)" />
-                <Gauge value={all.length} max={10} text={String(all.length)} label="Worldwide" caption="active storms" color="var(--teal)" />
-                <Gauge value={isNrt ? delayMin : step} max={isNrt ? 360 : 7} text={isNrt ? `${delayMin}m` : `${step}d`} label="Image age" caption={isNrt ? "behind real time" : "days back"} color="var(--violet)" />
-              </div>
-            </Card>
-
             <Card id="trajectory" title="Trajectory and multi-metric forecast" icon="storm" i={7} className="tj-card"
               aside={fc.s === "ok" ? <span className="pill">{fc.f.source === "trained-sequence-model" ? "Trained model" : "Extrapolation"}</span> : undefined}>
-              {!sel && <p className="muted">Select a storm to forecast its track and intensity.</p>}
-              {sel && fc.s === "loading" && <p className="muted">Forecasting {sel.name}…</p>}
-              {sel && fc.s === "err" && (
-                <p className="warn">No forecast for {sel.name}.<small> Reason: {fc.msg}</small></p>
+              {demoSet && (
+                <div className="tj-demo">
+                  <div className="tj-demo-row" role="group" aria-label="Forecast subject">
+                    <button className={demoName ? "" : "on"} onClick={() => { setDemoName(null); setDemoStart(null); setScore(null); }}>
+                      Live storm
+                    </button>
+                    {demoSet.storms.map((storm) => (
+                      <button key={storm.name} className={demoName === storm.name ? "on" : ""}
+                        onClick={() => { setDemoName(storm.name); setDemoStart(storm.default_start_index); }}
+                        title={describeProvenance(storm.provenance)}
+                        aria-label={`${storm.name} ${storm.season}. ${describeProvenance(storm.provenance)}`}>
+                        {storm.name} <small>{storm.season}</small>
+                        {storm.provenance === "held-out" && <b className="unseen">unseen</b>}
+                      </button>
+                    ))}
+                  </div>
+                  {demoStorm && demoIndex !== null && (
+                    <label className="tj-demo-when">
+                      Forecast issued
+                      <select value={demoIndex} onChange={(e) => setDemoStart(+e.target.value)}>
+                        {demoStorm.fixes.map((f, i) => i >= demoStorm.usable_start_range[0] && i <= demoStorm.usable_start_range[1] ? (
+                          <option key={f.time} value={i}>{f.time.slice(0, 16).replace("T", " ")} UTC · {Math.round(f.wind_kt ?? 0)} kt</option>
+                        ) : null)}
+                      </select>
+                    </label>
+                  )}
+                  {demoStorm && (
+                    <p className="note">
+                      Historical storm from {demoSet.source}. The forecast below runs on the four fixes up to the
+                      time chosen; the amber line is what the storm actually did next, so the error is visible
+                      rather than claimed.
+                    </p>
+                  )}
+                </div>
+              )}
+              {!sel && !demoStorm && <p className="muted">No live storm is active. Pick a historical storm above to see a forecast.</p>}
+              {forecastLabel && fc.s === "loading" && <p className="muted">Forecasting {forecastLabel}…</p>}
+              {forecastLabel && fc.s === "err" && (
+                <p className="warn">No forecast for {forecastLabel}.<small> Reason: {fc.msg}</small></p>
               )}
               {fc.s === "ok" && (
                 <>
@@ -360,6 +433,39 @@ export function App() {
                       ))}
                     </tbody>
                   </table>
+                  {score && demoStorm && (
+                    <div className="tj-score">
+                      <h4>Forecast against what happened</h4>
+                      <p className={`tj-provenance ${demoStorm.provenance}`}>
+                        {describeProvenance(demoStorm.provenance)}
+                      </p>
+                      <table className="tj-table">
+                        <thead><tr><th scope="col">Lead</th><th scope="col">Forecast</th><th scope="col">Actual</th><th scope="col">Miss</th></tr></thead>
+                        <tbody>
+                          {score.leads.map((lead, i) => {
+                            const km = score.errorKm[i];
+                            const outcome = hindcastActual(demoStorm, demoIndex ?? 0, demoSet?.future_fixes ?? 8)[i];
+                            if (!outcome || km === null) return null;
+                            return (
+                              <tr key={lead}>
+                                <th scope="row">+{lead} h</th>
+                                <td>{formatPosition(fc.f.waypoints[i].lat, fc.f.waypoints[i].lon)}</td>
+                                <td>{formatPosition(outcome.lat, outcome.lon)}</td>
+                                <td className={km < 150 ? "good" : km < 300 ? "fair" : "poor"}>{Math.round(km)} km</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                      <p className="tj-score-sum">
+                        Mean track error {Math.round(score.meanErrorKm ?? 0)} km over the scored leads.
+                        {demoStorm.landfall_index !== null && demoIndex !== null && (
+                          <> Actual landfall was +{(demoStorm.landfall_index - demoIndex) * (demoSet?.step_hours ?? 6)} h
+                          at {formatPosition(demoStorm.fixes[demoStorm.landfall_index].lat, demoStorm.fixes[demoStorm.landfall_index].lon)}.</>
+                        )}
+                      </p>
+                    </div>
+                  )}
                   <p className="note">
                     {fc.f.model}. Started from {fc.f.observations_used} observed {fc.f.observations_used === 1 ? "fix" : "fixes"}.
                     {fc.f.inputs_imputed.length > 0 && ` Derived rather than observed: ${fc.f.inputs_imputed.join(", ")}.`}
@@ -367,6 +473,27 @@ export function App() {
                   </p>
                 </>
               )}
+            </Card>
+
+            <Card id="timeline" title="Timeline playback" icon="clock" i={4}>
+              <div className="tl">
+                <button className="round" onClick={() => setPlaying((p) => !p)} aria-label={playing ? "Pause" : "Play"}><Icon name={playing ? "pause" : "play"} size={18} /></button>
+                <button className="round ghost" onClick={() => { setStep(0); setPlaying(false); }} aria-label="Jump to latest image" title="Latest"><Icon name="skip" size={16} /></button>
+                <div className="seg" role="group" aria-label="Playback speed">{[1, 2, 4].map((s) => <button key={s} aria-pressed={speed === s} onClick={() => setSpeed(s)}>{s}x</button>)}</div>
+                <output className="frame">{frameLabel}</output>
+              </div>
+              <input className="scrub" type="range" min="0" max={maxStep} value={maxStep - step} aria-label="Image time" onChange={(e) => { setStep(maxStep - +e.target.value); setPlaying(false); }} />
+              <div className="ticks"><span>{isNrt ? "6 hours earlier" : "7 days earlier"}</span><span>Latest</span></div>
+              <p className="note">{isNrt ? "Each step is 10 minutes." : "Each step is one day."} Frames load as they play, so the first loop can be slow.</p>
+            </Card>
+
+            <Card title="Live indicators" icon="dash" i={5}>
+              <div className="gauges">
+                <Gauge value={strongest?.windKt ?? 0} max={180} text={strongest?.windKt ? String(strongest.windKt) : "–"} label="Strongest wind" caption="knots, scale to 180" color="var(--blue)" />
+                <Gauge value={nioList.length} max={5} text={String(nioList.length)} label="Near India" caption="active storms" color="var(--orange)" />
+                <Gauge value={all.length} max={10} text={String(all.length)} label="Worldwide" caption="active storms" color="var(--teal)" />
+                <Gauge value={isNrt ? delayMin : step} max={isNrt ? 360 : 7} text={isNrt ? `${delayMin}m` : `${step}d`} label="Image age" caption={isNrt ? "behind real time" : "days back"} color="var(--violet)" />
+              </div>
             </Card>
 
             <Card title="Storm strength" icon="storm" i={6} aside={<span className="pill">{alertCount("Red")} red · {alertCount("Orange")} orange · {alertCount("Green")} green</span>}>

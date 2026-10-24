@@ -9,7 +9,7 @@
     "lint": "echo 'Lint check passed'",
     "typecheck": "tsc --noEmit",
     "start": "node dist/server.cjs",
-    "test:web": "tsx --test tests/gdacs.test.ts tests/weather.test.ts tests/windProxy.test.ts tests/trajectoryProxy.test.ts tests/trajectory.test.ts"
+    "test:web": "tsx --test tests/gdacs.test.ts tests/weather.test.ts tests/windProxy.test.ts tests/trajectoryProxy.test.ts tests/trajectory.test.ts tests/hindcast.test.ts"
   },
   "dependencies": {
     "@fontsource-variable/bricolage-grotesque": "^5.3.0",

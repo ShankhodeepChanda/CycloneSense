@@ -37,7 +37,7 @@ endpoint runs its labelled extrapolation fallback. To train the real one on CPU 
 minutes (a global pre-train across all basins, then a North Indian Ocean fine-tune):
 
 ```bash
-pip install -r requirements-dev.txt
+pip install -r requirements-dev.txt  # full ML stack plus test tools
 python -m ml.train_trajectory --basins WP,SI,EP,SP --exclude-storms-in-basins NI \
     --epochs 45 --batch-size 64 --checkpoint models/bob_trajectory_global.pt
 python -m ml.train_trajectory --basins NI --epochs 200 --lr 5e-4 --patience 60 \
@@ -70,7 +70,7 @@ request and response shapes.
 Terra/Aqua chips (true colour + Band-31 IR) centred on each storm. Needs internet.
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements-ml.txt
 python data/build_dataset.py --check                    # one request per layer: confirms GIBS works
 python data/build_dataset.py --limit 50                 # small trial
 python data/build_dataset.py --start-year 2003 --workers 8 --kaggle-user YOUR_KAGGLE_USERNAME

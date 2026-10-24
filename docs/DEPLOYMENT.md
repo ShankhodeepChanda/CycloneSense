@@ -24,6 +24,11 @@ That is the whole deploy. `vercel.json` already describes it: Vite builds the fr
 | `/api/predict/trajectory` | **Python** | The trained forecast |
 | `/api/predict/wind` | Node | Returns 503 with an explanation (see below) |
 
+Vercel installs the function's Python dependencies from the **project root**
+`requirements.txt`, not from a file beside the entrypoint. That is why the root file is
+the minimal serving set (numpy) and the full stack lives in `requirements-ml.txt`: with
+torch and its CUDA dependencies, pip resolves to 5.8 GB against a 500 MB function limit.
+
 ### Why the forecast runs without PyTorch
 
 PyTorch is **534 MB** installed. A Vercel serverless function is capped at **250 MB**
@@ -45,6 +50,14 @@ To regenerate the exported weights after retraining:
 
 ```bash
 python -m ml.numpy_forecaster --checkpoint models/bob_trajectory_gru.pt
+```
+
+### Local install
+
+```bash
+pip install -r requirements.txt       # serving only: numpy
+pip install -r requirements-ml.txt    # training and the full FastAPI service
+pip install -r requirements-dev.txt   # the above plus pytest and linters
 ```
 
 ### What does not work on Vercel
