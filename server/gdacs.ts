@@ -9,7 +9,7 @@ export {
   type CycloneTrack,
   type CycloneTrackResult,
   type TrackPoint,
-} from "./gdacsTrack";
+} from "./gdacsTrack.js";
 
 export interface ActiveCyclone {
   id: string;

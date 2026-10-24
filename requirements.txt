@@ -1,16 +1,16 @@
-# CycloneSense AI - Core ML & Meteorological Processing Dependencies
-fastapi>=0.110.0
-uvicorn[standard]>=0.28.0
-pydantic>=2.6.0
+# Serving dependencies: what the deployed trajectory forecast actually needs.
+#
+# This file is deliberately minimal because Vercel installs Python dependencies for a
+# serverless function from the PROJECT ROOT requirements.txt (a file beside the
+# entrypoint is ignored). The full ML stack resolves to 5.8 GB with torch and its CUDA
+# dependencies, far past the 500 MB function limit, so it lives in requirements-ml.txt.
+#
+# The deployed forecast runs on numpy alone: ml/numpy_forecaster.py reproduces the
+# trained model's forward pass, and tests/test_numpy_forecaster.py pins it against
+# PyTorch and asserts the serving path imports neither torch nor pandas.
+#
+#   serving (this file):  pip install -r requirements.txt
+#   training and the full API:  pip install -r requirements-ml.txt
+#   development:  pip install -r requirements-dev.txt
+
 numpy>=1.26.0
-scipy>=1.12.0
-scikit-learn>=1.4.0
-torch>=2.2.0
-torchvision>=0.17.0
-pillow>=10.2.0
-netCDF4>=1.6.5
-xarray>=2024.2.0
-h5py>=3.10.0
-python-multipart>=0.0.9
-requests>=2.31.0
-pandas>=2.0.0
