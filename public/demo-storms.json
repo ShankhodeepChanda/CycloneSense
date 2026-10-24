@@ -1,0 +1,1552 @@
+{
+ "source": "NOAA IBTrACS best-track observations via kaggle_trial/tracks.csv",
+ "note": "Historical storms, not live data. The dashboard forecasts from a chosen fix and draws the track the storm actually took, so the forecast error is visible.",
+ "provenance_note": "trained-on: the model fitted this storm, so its error is in-sample and flatters the model. held-out: the model never saw it, so that error is the honest one.",
+ "input_fixes": 4,
+ "future_fixes": 8,
+ "step_hours": 6,
+ "storms": [
+  {
+   "id": "2020136N10088",
+   "name": "AMPHAN",
+   "provenance": "trained-on",
+   "season": 2020,
+   "basin": "NI",
+   "peak_wind_kt": 145.0,
+   "min_pressure_hpa": 901.0,
+   "fixes": [
+    {
+     "time": "2020-05-15T06:00:00",
+     "lat": 9.5,
+     "lon": 87.5,
+     "wind_kt": 20.0,
+     "pressure_hpa": 1007.0,
+     "dist2land_km": 662.0,
+     "category": "TD"
+    },
+    {
+     "time": "2020-05-15T12:00:00",
+     "lat": 9.5,
+     "lon": 87.0,
+     "wind_kt": 30.0,
+     "pressure_hpa": 1002.0,
+     "dist2land_km": 610.0,
+     "category": "TD"
+    },
+    {
+     "time": "2020-05-15T18:00:00",
+     "lat": 9.5,
+     "lon": 86.6,
+     "wind_kt": 30.0,
+     "pressure_hpa": 1001.0,
+     "dist2land_km": 569.0,
+     "category": "TD"
+    },
+    {
+     "time": "2020-05-16T00:00:00",
+     "lat": 9.8,
+     "lon": 86.4,
+     "wind_kt": 35.0,
+     "pressure_hpa": 999.0,
+     "dist2land_km": 562.0,
+     "category": "TS"
+    },
+    {
+     "time": "2020-05-16T06:00:00",
+     "lat": 10.3,
+     "lon": 86.1,
+     "wind_kt": 40.0,
+     "pressure_hpa": 997.0,
+     "dist2land_km": 557.0,
+     "category": "TS"
+    },
+    {
+     "time": "2020-05-16T12:00:00",
+     "lat": 10.6,
+     "lon": 86.2,
+     "wind_kt": 50.0,
+     "pressure_hpa": 992.0,
+     "dist2land_km": 581.0,
+     "category": "TS"
+    },
+    {
+     "time": "2020-05-16T18:00:00",
+     "lat": 10.9,
+     "lon": 86.1,
+     "wind_kt": 55.0,
+     "pressure_hpa": 987.0,
+     "dist2land_km": 586.0,
+     "category": "TS"
+    },
+    {
+     "time": "2020-05-17T00:00:00",
+     "lat": 11.2,
+     "lon": 86.1,
+     "wind_kt": 60.0,
+     "pressure_hpa": 982.0,
+     "dist2land_km": 603.0,
+     "category": "TS"
+    },
+    {
+     "time": "2020-05-17T06:00:00",
+     "lat": 11.5,
+     "lon": 86.2,
+     "wind_kt": 70.0,
+     "pressure_hpa": 978.0,
+     "dist2land_km": 630.0,
+     "category": "C1"
+    },
+    {
+     "time": "2020-05-17T12:00:00",
+     "lat": 11.9,
+     "lon": 86.2,
+     "wind_kt": 80.0,
+     "pressure_hpa": 970.0,
+     "dist2land_km": 654.0,
+     "category": "C1"
+    },
+    {
+     "time": "2020-05-17T18:00:00",
+     "lat": 12.5,
+     "lon": 86.4,
+     "wind_kt": 120.0,
+     "pressure_hpa": 932.0,
+     "dist2land_km": 636.0,
+     "category": "C4"
+    },
+    {
+     "time": "2020-05-18T00:00:00",
+     "lat": 13.2,
+     "lon": 86.4,
+     "wind_kt": 130.0,
+     "pressure_hpa": 919.0,
+     "dist2land_km": 582.0,
+     "category": "C4"
+    },
+    {
+     "time": "2020-05-18T06:00:00",
+     "lat": 13.4,
+     "lon": 86.2,
+     "wind_kt": 140.0,
+     "pressure_hpa": 911.0,
+     "dist2land_km": 551.0,
+     "category": "C5"
+    },
+    {
+     "time": "2020-05-18T12:00:00",
+     "lat": 14.1,
+     "lon": 86.4,
+     "wind_kt": 145.0,
+     "pressure_hpa": 901.0,
+     "dist2land_km": 520.0,
+     "category": "C5"
+    },
+    {
+     "time": "2020-05-18T18:00:00",
+     "lat": 14.9,
+     "lon": 86.6,
+     "wind_kt": 140.0,
+     "pressure_hpa": 910.0,
+     "dist2land_km": 464.0,
+     "category": "C5"
+    },
+    {
+     "time": "2020-05-19T00:00:00",
+     "lat": 15.6,
+     "lon": 86.8,
+     "wind_kt": 125.0,
+     "pressure_hpa": 925.0,
+     "dist2land_km": 416.0,
+     "category": "C4"
+    },
+    {
+     "time": "2020-05-19T06:00:00",
+     "lat": 16.5,
+     "lon": 87.0,
+     "wind_kt": 110.0,
+     "pressure_hpa": 941.0,
+     "dist2land_km": 361.0,
+     "category": "C3"
+    },
+    {
+     "time": "2020-05-19T12:00:00",
+     "lat": 17.3,
+     "lon": 87.1,
+     "wind_kt": 105.0,
+     "pressure_hpa": 946.0,
+     "dist2land_km": 298.0,
+     "category": "C3"
+    },
+    {
+     "time": "2020-05-19T18:00:00",
+     "lat": 18.3,
+     "lon": 87.2,
+     "wind_kt": 105.0,
+     "pressure_hpa": 945.0,
+     "dist2land_km": 197.0,
+     "category": "C3"
+    },
+    {
+     "time": "2020-05-20T00:00:00",
+     "lat": 19.2,
+     "lon": 87.5,
+     "wind_kt": 100.0,
+     "pressure_hpa": 947.0,
+     "dist2land_km": 145.0,
+     "category": "C3"
+    },
+    {
+     "time": "2020-05-20T06:00:00",
+     "lat": 20.6,
+     "lon": 88.0,
+     "wind_kt": 95.0,
+     "pressure_hpa": 953.0,
+     "dist2land_km": 104.0,
+     "category": "C2"
+    },
+    {
+     "time": "2020-05-20T12:00:00",
+     "lat": 22.1,
+     "lon": 88.4,
+     "wind_kt": 95.0,
+     "pressure_hpa": 954.0,
+     "dist2land_km": 0.0,
+     "category": "C2"
+    },
+    {
+     "time": "2020-05-20T18:00:00",
+     "lat": 23.5,
+     "lon": 89.1,
+     "wind_kt": 70.0,
+     "pressure_hpa": 974.0,
+     "dist2land_km": 0.0,
+     "category": "C1"
+    },
+    {
+     "time": "2020-05-21T00:00:00",
+     "lat": 24.6,
+     "lon": 89.6,
+     "wind_kt": 50.0,
+     "pressure_hpa": 984.0,
+     "dist2land_km": 0.0,
+     "category": "TS"
+    },
+    {
+     "time": "2020-05-21T06:00:00",
+     "lat": 25.4,
+     "lon": 90.1,
+     "wind_kt": 30.0,
+     "pressure_hpa": 1000.0,
+     "dist2land_km": 0.0,
+     "category": "TD"
+    }
+   ],
+   "landfall_index": 21,
+   "default_start_index": 13,
+   "usable_start_range": [
+    3,
+    16
+   ]
+  },
+  {
+   "id": "2019116N02090",
+   "name": "FANI",
+   "provenance": "trained-on",
+   "season": 2019,
+   "basin": "NI",
+   "peak_wind_kt": 150.0,
+   "min_pressure_hpa": 900.0,
+   "fixes": [
+    {
+     "time": "2019-04-25T18:00:00",
+     "lat": 1.9,
+     "lon": 90.2,
+     "wind_kt": 25.0,
+     "pressure_hpa": 1004.0,
+     "dist2land_km": 627.0,
+     "category": "TD"
+    },
+    {
+     "time": "2019-04-26T00:00:00",
+     "lat": 2.2,
+     "lon": 90.0,
+     "wind_kt": 25.0,
+     "pressure_hpa": 1003.0,
+     "dist2land_km": 646.0,
+     "category": "TD"
+    },
+    {
+     "time": "2019-04-26T06:00:00",
+     "lat": 2.5,
+     "lon": 89.7,
+     "wind_kt": 25.0,
+     "pressure_hpa": 1003.0,
+     "dist2land_km": 678.0,
+     "category": "TD"
+    },
+    {
+     "time": "2019-04-26T12:00:00",
+     "lat": 3.2,
+     "lon": 89.8,
+     "wind_kt": 25.0,
+     "pressure_hpa": 1003.0,
+     "dist2land_km": 643.0,
+     "category": "TD"
+    },
+    {
+     "time": "2019-04-26T18:00:00",
+     "lat": 3.8,
+     "lon": 89.5,
+     "wind_kt": 30.0,
+     "pressure_hpa": 1004.0,
+     "dist2land_km": 654.0,
+     "category": "TD"
+    },
+    {
+     "time": "2019-04-27T00:00:00",
+     "lat": 4.6,
+     "lon": 89.4,
+     "wind_kt": 35.0,
+     "pressure_hpa": 1003.0,
+     "dist2land_km": 647.0,
+     "category": "TS"
+    },
+    {
+     "time": "2019-04-27T06:00:00",
+     "lat": 5.1,
+     "lon": 89.4,
+     "wind_kt": 45.0,
+     "pressure_hpa": 998.0,
+     "dist2land_km": 642.0,
+     "category": "TS"
+    },
+    {
+     "time": "2019-04-27T12:00:00",
+     "lat": 6.0,
+     "lon": 89.2,
+     "wind_kt": 45.0,
+     "pressure_hpa": 996.0,
+     "dist2land_km": 665.0,
+     "category": "TS"
+    },
+    {
+     "time": "2019-04-27T18:00:00",
+     "lat": 6.6,
+     "lon": 88.5,
+     "wind_kt": 45.0,
+     "pressure_hpa": 996.0,
+     "dist2land_km": 730.0,
+     "category": "TS"
+    },
+    {
+     "time": "2019-04-28T00:00:00",
+     "lat": 7.1,
+     "lon": 88.1,
+     "wind_kt": 45.0,
+     "pressure_hpa": 998.0,
+     "dist2land_km": 684.0,
+     "category": "TS"
+    },
+    {
+     "time": "2019-04-28T06:00:00",
+     "lat": 7.4,
+     "lon": 88.1,
+     "wind_kt": 45.0,
+     "pressure_hpa": 998.0,
+     "dist2land_km": 686.0,
+     "category": "TS"
+    },
+    {
+     "time": "2019-04-28T12:00:00",
+     "lat": 8.0,
+     "lon": 87.6,
+     "wind_kt": 45.0,
+     "pressure_hpa": 996.0,
+     "dist2land_km": 638.0,
+     "category": "TS"
+    },
+    {
+     "time": "2019-04-28T18:00:00",
+     "lat": 8.2,
+     "lon": 87.5,
+     "wind_kt": 45.0,
+     "pressure_hpa": 995.0,
+     "dist2land_km": 631.0,
+     "category": "TS"
+    },
+    {
+     "time": "2019-04-29T00:00:00",
+     "lat": 8.6,
+     "lon": 87.4,
+     "wind_kt": 45.0,
+     "pressure_hpa": 989.0,
+     "dist2land_km": 627.0,
+     "category": "TS"
+    },
+    {
+     "time": "2019-04-29T06:00:00",
+     "lat": 9.3,
+     "lon": 87.2,
+     "wind_kt": 50.0,
+     "pressure_hpa": 985.0,
+     "dist2land_km": 624.0,
+     "category": "TS"
+    },
+    {
+     "time": "2019-04-29T12:00:00",
+     "lat": 10.2,
+     "lon": 87.1,
+     "wind_kt": 60.0,
+     "pressure_hpa": 987.0,
+     "dist2land_km": 651.0,
+     "category": "TS"
+    },
+    {
+     "time": "2019-04-29T18:00:00",
+     "lat": 10.9,
+     "lon": 86.8,
+     "wind_kt": 70.0,
+     "pressure_hpa": 981.0,
+     "dist2land_km": 655.0,
+     "category": "C1"
+    },
+    {
+     "time": "2019-04-30T00:00:00",
+     "lat": 11.8,
+     "lon": 86.5,
+     "wind_kt": 85.0,
+     "pressure_hpa": 971.0,
+     "dist2land_km": 676.0,
+     "category": "C2"
+    },
+    {
+     "time": "2019-04-30T06:00:00",
+     "lat": 12.7,
+     "lon": 85.8,
+     "wind_kt": 90.0,
+     "pressure_hpa": 967.0,
+     "dist2land_km": 576.0,
+     "category": "C2"
+    },
+    {
+     "time": "2019-04-30T12:00:00",
+     "lat": 13.3,
+     "lon": 84.8,
+     "wind_kt": 95.0,
+     "pressure_hpa": 964.0,
+     "dist2land_km": 456.0,
+     "category": "C2"
+    },
+    {
+     "time": "2019-04-30T18:00:00",
+     "lat": 13.5,
+     "lon": 84.4,
+     "wind_kt": 105.0,
+     "pressure_hpa": 955.0,
+     "dist2land_km": 413.0,
+     "category": "C3"
+    },
+    {
+     "time": "2019-05-01T00:00:00",
+     "lat": 13.9,
+     "lon": 84.1,
+     "wind_kt": 105.0,
+     "pressure_hpa": 952.0,
+     "dist2land_km": 358.0,
+     "category": "C3"
+    },
+    {
+     "time": "2019-05-01T06:00:00",
+     "lat": 14.2,
+     "lon": 84.0,
+     "wind_kt": 105.0,
+     "pressure_hpa": 951.0,
+     "dist2land_km": 324.0,
+     "category": "C3"
+    },
+    {
+     "time": "2019-05-01T12:00:00",
+     "lat": 14.9,
+     "lon": 84.1,
+     "wind_kt": 105.0,
+     "pressure_hpa": 951.0,
+     "dist2land_km": 278.0,
+     "category": "C3"
+    },
+    {
+     "time": "2019-05-01T18:00:00",
+     "lat": 15.2,
+     "lon": 84.2,
+     "wind_kt": 105.0,
+     "pressure_hpa": 951.0,
+     "dist2land_km": 256.0,
+     "category": "C3"
+    },
+    {
+     "time": "2019-05-02T00:00:00",
+     "lat": 15.9,
+     "lon": 84.6,
+     "wind_kt": 110.0,
+     "pressure_hpa": 941.0,
+     "dist2land_km": 241.0,
+     "category": "C3"
+    },
+    {
+     "time": "2019-05-02T06:00:00",
+     "lat": 16.8,
+     "lon": 84.8,
+     "wind_kt": 120.0,
+     "pressure_hpa": 934.0,
+     "dist2land_km": 183.0,
+     "category": "C4"
+    },
+    {
+     "time": "2019-05-02T12:00:00",
+     "lat": 17.6,
+     "lon": 84.8,
+     "wind_kt": 150.0,
+     "pressure_hpa": 900.0,
+     "dist2land_km": 107.0,
+     "category": "C5"
+    },
+    {
+     "time": "2019-05-02T18:00:00",
+     "lat": 18.3,
+     "lon": 85.0,
+     "wind_kt": 145.0,
+     "pressure_hpa": 905.0,
+     "dist2land_km": 69.0,
+     "category": "C5"
+    },
+    {
+     "time": "2019-05-03T00:00:00",
+     "lat": 19.1,
+     "lon": 85.5,
+     "wind_kt": 135.0,
+     "pressure_hpa": 918.0,
+     "dist2land_km": 54.0,
+     "category": "C4"
+    },
+    {
+     "time": "2019-05-03T06:00:00",
+     "lat": 20.2,
+     "lon": 85.9,
+     "wind_kt": 115.0,
+     "pressure_hpa": 942.0,
+     "dist2land_km": 0.0,
+     "category": "C4"
+    },
+    {
+     "time": "2019-05-03T12:00:00",
+     "lat": 21.2,
+     "lon": 86.5,
+     "wind_kt": 75.0,
+     "pressure_hpa": 971.0,
+     "dist2land_km": 0.0,
+     "category": "C1"
+    },
+    {
+     "time": "2019-05-03T18:00:00",
+     "lat": 22.1,
+     "lon": 87.4,
+     "wind_kt": 55.0,
+     "pressure_hpa": 985.0,
+     "dist2land_km": 0.0,
+     "category": "TS"
+    },
+    {
+     "time": "2019-05-04T00:00:00",
+     "lat": 23.2,
+     "lon": 88.5,
+     "wind_kt": 40.0,
+     "pressure_hpa": 993.0,
+     "dist2land_km": 0.0,
+     "category": "TS"
+    },
+    {
+     "time": "2019-05-04T06:00:00",
+     "lat": 24.4,
+     "lon": 89.5,
+     "wind_kt": 30.0,
+     "pressure_hpa": 999.0,
+     "dist2land_km": 0.0,
+     "category": "TD"
+    }
+   ],
+   "landfall_index": 30,
+   "default_start_index": 22,
+   "usable_start_range": [
+    3,
+    26
+   ]
+  },
+  {
+   "id": "2018281N14088",
+   "name": "TITLI",
+   "provenance": "trained-on",
+   "season": 2018,
+   "basin": "NI",
+   "peak_wind_kt": 105.0,
+   "min_pressure_hpa": 944.0,
+   "fixes": [
+    {
+     "time": "2018-10-08T00:00:00",
+     "lat": 14.2,
+     "lon": 88.4,
+     "wind_kt": 20.0,
+     "pressure_hpa": 1007.0,
+     "dist2land_km": 649.0,
+     "category": "TD"
+    },
+    {
+     "time": "2018-10-08T06:00:00",
+     "lat": 14.1,
+     "lon": 88.3,
+     "wind_kt": 25.0,
+     "pressure_hpa": 1005.0,
+     "dist2land_km": 649.0,
+     "category": "TD"
+    },
+    {
+     "time": "2018-10-08T12:00:00",
+     "lat": 14.3,
+     "lon": 87.9,
+     "wind_kt": 30.0,
+     "pressure_hpa": 1002.0,
+     "dist2land_km": 604.0,
+     "category": "TD"
+    },
+    {
+     "time": "2018-10-08T18:00:00",
+     "lat": 14.5,
+     "lon": 87.5,
+     "wind_kt": 30.0,
+     "pressure_hpa": 1000.0,
+     "dist2land_km": 558.0,
+     "category": "TD"
+    },
+    {
+     "time": "2018-10-09T00:00:00",
+     "lat": 14.7,
+     "lon": 87.1,
+     "wind_kt": 35.0,
+     "pressure_hpa": 996.0,
+     "dist2land_km": 514.0,
+     "category": "TS"
+    },
+    {
+     "time": "2018-10-09T06:00:00",
+     "lat": 14.8,
+     "lon": 86.8,
+     "wind_kt": 40.0,
+     "pressure_hpa": 993.0,
+     "dist2land_km": 486.0,
+     "category": "TS"
+    },
+    {
+     "time": "2018-10-09T12:00:00",
+     "lat": 15.1,
+     "lon": 86.6,
+     "wind_kt": 45.0,
+     "pressure_hpa": 997.0,
+     "dist2land_km": 446.0,
+     "category": "TS"
+    },
+    {
+     "time": "2018-10-09T18:00:00",
+     "lat": 15.6,
+     "lon": 86.3,
+     "wind_kt": 50.0,
+     "pressure_hpa": 985.0,
+     "dist2land_km": 382.0,
+     "category": "TS"
+    },
+    {
+     "time": "2018-10-10T00:00:00",
+     "lat": 16.1,
+     "lon": 86.0,
+     "wind_kt": 65.0,
+     "pressure_hpa": 974.0,
+     "dist2land_km": 318.0,
+     "category": "C1"
+    },
+    {
+     "time": "2018-10-10T06:00:00",
+     "lat": 17.0,
+     "lon": 85.6,
+     "wind_kt": 75.0,
+     "pressure_hpa": 976.0,
+     "dist2land_km": 223.0,
+     "category": "C1"
+    },
+    {
+     "time": "2018-10-10T12:00:00",
+     "lat": 17.6,
+     "lon": 85.3,
+     "wind_kt": 90.0,
+     "pressure_hpa": 956.0,
+     "dist2land_km": 146.0,
+     "category": "C2"
+    },
+    {
+     "time": "2018-10-10T18:00:00",
+     "lat": 18.3,
+     "lon": 85.0,
+     "wind_kt": 105.0,
+     "pressure_hpa": 944.0,
+     "dist2land_km": 69.0,
+     "category": "C3"
+    },
+    {
+     "time": "2018-10-11T00:00:00",
+     "lat": 18.8,
+     "lon": 84.4,
+     "wind_kt": 100.0,
+     "pressure_hpa": 948.0,
+     "dist2land_km": 0.0,
+     "category": "C3"
+    },
+    {
+     "time": "2018-10-11T06:00:00",
+     "lat": 19.2,
+     "lon": 83.9,
+     "wind_kt": 80.0,
+     "pressure_hpa": 963.0,
+     "dist2land_km": 0.0,
+     "category": "C1"
+    },
+    {
+     "time": "2018-10-11T12:00:00",
+     "lat": 19.7,
+     "lon": 83.8,
+     "wind_kt": 65.0,
+     "pressure_hpa": 974.0,
+     "dist2land_km": 0.0,
+     "category": "C1"
+    },
+    {
+     "time": "2018-10-11T18:00:00",
+     "lat": 20.1,
+     "lon": 84.2,
+     "wind_kt": 55.0,
+     "pressure_hpa": 982.0,
+     "dist2land_km": 0.0,
+     "category": "TS"
+    },
+    {
+     "time": "2018-10-12T00:00:00",
+     "lat": 20.5,
+     "lon": 84.7,
+     "wind_kt": 40.0,
+     "pressure_hpa": 993.0,
+     "dist2land_km": 0.0,
+     "category": "TS"
+    },
+    {
+     "time": "2018-10-12T06:00:00",
+     "lat": 20.9,
+     "lon": 85.3,
+     "wind_kt": 30.0,
+     "pressure_hpa": 1000.0,
+     "dist2land_km": 0.0,
+     "category": "TD"
+    }
+   ],
+   "landfall_index": 12,
+   "default_start_index": 4,
+   "usable_start_range": [
+    3,
+    9
+   ]
+  },
+  {
+   "id": "2020327N08086",
+   "name": "NIVAR",
+   "provenance": "trained-on",
+   "season": 2020,
+   "basin": "NI",
+   "peak_wind_kt": 70.0,
+   "min_pressure_hpa": 982.0,
+   "fixes": [
+    {
+     "time": "2020-11-22T06:00:00",
+     "lat": 7.8,
+     "lon": 86.1,
+     "wind_kt": 20.0,
+     "pressure_hpa": 1007.0,
+     "dist2land_km": 472.0,
+     "category": "TD"
+    },
+    {
+     "time": "2020-11-22T12:00:00",
+     "lat": 8.5,
+     "lon": 85.6,
+     "wind_kt": 20.0,
+     "pressure_hpa": 1007.0,
+     "dist2land_km": 430.0,
+     "category": "TD"
+    },
+    {
+     "time": "2020-11-22T18:00:00",
+     "lat": 9.0,
+     "lon": 85.1,
+     "wind_kt": 25.0,
+     "pressure_hpa": 1008.0,
+     "dist2land_km": 395.0,
+     "category": "TD"
+    },
+    {
+     "time": "2020-11-23T00:00:00",
+     "lat": 9.3,
+     "lon": 84.6,
+     "wind_kt": 30.0,
+     "pressure_hpa": 1005.0,
+     "dist2land_km": 360.0,
+     "category": "TD"
+    },
+    {
+     "time": "2020-11-23T06:00:00",
+     "lat": 9.6,
+     "lon": 84.0,
+     "wind_kt": 30.0,
+     "pressure_hpa": 1005.0,
+     "dist2land_km": 315.0,
+     "category": "TD"
+    },
+    {
+     "time": "2020-11-23T12:00:00",
+     "lat": 9.9,
+     "lon": 83.6,
+     "wind_kt": 30.0,
+     "pressure_hpa": 1005.0,
+     "dist2land_km": 303.0,
+     "category": "TD"
+    },
+    {
+     "time": "2020-11-23T18:00:00",
+     "lat": 10.0,
+     "lon": 83.5,
+     "wind_kt": 35.0,
+     "pressure_hpa": 1004.0,
+     "dist2land_km": 291.0,
+     "category": "TS"
+    },
+    {
+     "time": "2020-11-24T00:00:00",
+     "lat": 9.8,
+     "lon": 83.2,
+     "wind_kt": 35.0,
+     "pressure_hpa": 1003.0,
+     "dist2land_km": 257.0,
+     "category": "TS"
+    },
+    {
+     "time": "2020-11-24T06:00:00",
+     "lat": 9.8,
+     "lon": 83.0,
+     "wind_kt": 40.0,
+     "pressure_hpa": 1000.0,
+     "dist2land_km": 232.0,
+     "category": "TS"
+    },
+    {
+     "time": "2020-11-24T12:00:00",
+     "lat": 10.0,
+     "lon": 82.8,
+     "wind_kt": 45.0,
+     "pressure_hpa": 995.0,
+     "dist2land_km": 228.0,
+     "category": "TS"
+    },
+    {
+     "time": "2020-11-24T18:00:00",
+     "lat": 10.2,
+     "lon": 82.6,
+     "wind_kt": 50.0,
+     "pressure_hpa": 994.0,
+     "dist2land_km": 221.0,
+     "category": "TS"
+    },
+    {
+     "time": "2020-11-25T00:00:00",
+     "lat": 10.6,
+     "lon": 82.2,
+     "wind_kt": 60.0,
+     "pressure_hpa": 988.0,
+     "dist2land_km": 211.0,
+     "category": "TS"
+    },
+    {
+     "time": "2020-11-25T06:00:00",
+     "lat": 11.1,
+     "lon": 81.4,
+     "wind_kt": 60.0,
+     "pressure_hpa": 990.0,
+     "dist2land_km": 163.0,
+     "category": "TS"
+    },
+    {
+     "time": "2020-11-25T12:00:00",
+     "lat": 11.5,
+     "lon": 80.9,
+     "wind_kt": 70.0,
+     "pressure_hpa": 982.0,
+     "dist2land_km": 114.0,
+     "category": "C1"
+    },
+    {
+     "time": "2020-11-25T18:00:00",
+     "lat": 12.0,
+     "lon": 80.4,
+     "wind_kt": 60.0,
+     "pressure_hpa": 989.0,
+     "dist2land_km": 44.0,
+     "category": "TS"
+    },
+    {
+     "time": "2020-11-26T00:00:00",
+     "lat": 12.5,
+     "lon": 80.0,
+     "wind_kt": 50.0,
+     "pressure_hpa": 993.0,
+     "dist2land_km": 0.0,
+     "category": "TS"
+    },
+    {
+     "time": "2020-11-26T06:00:00",
+     "lat": 13.0,
+     "lon": 79.6,
+     "wind_kt": 45.0,
+     "pressure_hpa": 996.0,
+     "dist2land_km": 0.0,
+     "category": "TS"
+    },
+    {
+     "time": "2020-11-26T12:00:00",
+     "lat": 13.5,
+     "lon": 79.8,
+     "wind_kt": 40.0,
+     "pressure_hpa": 1001.0,
+     "dist2land_km": 0.0,
+     "category": "TS"
+    },
+    {
+     "time": "2020-11-26T18:00:00",
+     "lat": 13.8,
+     "lon": 80.3,
+     "wind_kt": 35.0,
+     "pressure_hpa": 1000.0,
+     "dist2land_km": 0.0,
+     "category": "TS"
+    },
+    {
+     "time": "2020-11-27T00:00:00",
+     "lat": 14.0,
+     "lon": 80.7,
+     "wind_kt": 30.0,
+     "pressure_hpa": 1005.0,
+     "dist2land_km": 48.0,
+     "category": "TD"
+    },
+    {
+     "time": "2020-11-27T06:00:00",
+     "lat": 14.4,
+     "lon": 80.5,
+     "wind_kt": 25.0,
+     "pressure_hpa": 1004.0,
+     "dist2land_km": 39.0,
+     "category": "TD"
+    },
+    {
+     "time": "2020-11-27T12:00:00",
+     "lat": 15.0,
+     "lon": 80.1,
+     "wind_kt": 20.0,
+     "pressure_hpa": 1009.0,
+     "dist2land_km": 10.0,
+     "category": "TD"
+    }
+   ],
+   "landfall_index": 15,
+   "default_start_index": 7,
+   "usable_start_range": [
+    3,
+    13
+   ]
+  },
+  {
+   "id": "2018314N12093",
+   "name": "GAJA",
+   "provenance": "held-out",
+   "season": 2018,
+   "basin": "NI",
+   "peak_wind_kt": 80.0,
+   "min_pressure_hpa": 963.0,
+   "fixes": [
+    {
+     "time": "2018-11-10T12:00:00",
+     "lat": 12.7,
+     "lon": 90.7,
+     "wind_kt": 30.0,
+     "pressure_hpa": 1004.0,
+     "dist2land_km": 527.0,
+     "category": "TD"
+    },
+    {
+     "time": "2018-11-10T18:00:00",
+     "lat": 13.1,
+     "lon": 89.8,
+     "wind_kt": 35.0,
+     "pressure_hpa": 1000.0,
+     "dist2land_km": 574.0,
+     "category": "TS"
+    },
+    {
+     "time": "2018-11-11T00:00:00",
+     "lat": 13.4,
+     "lon": 89.2,
+     "wind_kt": 35.0,
+     "pressure_hpa": 996.0,
+     "dist2land_km": 611.0,
+     "category": "TS"
+    },
+    {
+     "time": "2018-11-11T06:00:00",
+     "lat": 13.4,
+     "lon": 88.5,
+     "wind_kt": 35.0,
+     "pressure_hpa": 996.0,
+     "dist2land_km": 673.0,
+     "category": "TS"
+    },
+    {
+     "time": "2018-11-11T12:00:00",
+     "lat": 13.3,
+     "lon": 87.7,
+     "wind_kt": 35.0,
+     "pressure_hpa": 996.0,
+     "dist2land_km": 679.0,
+     "category": "TS"
+    },
+    {
+     "time": "2018-11-11T18:00:00",
+     "lat": 13.1,
+     "lon": 87.3,
+     "wind_kt": 35.0,
+     "pressure_hpa": 1004.0,
+     "dist2land_km": 665.0,
+     "category": "TS"
+    },
+    {
+     "time": "2018-11-12T00:00:00",
+     "lat": 12.9,
+     "lon": 87.2,
+     "wind_kt": 35.0,
+     "pressure_hpa": 1004.0,
+     "dist2land_km": 670.0,
+     "category": "TS"
+    },
+    {
+     "time": "2018-11-12T06:00:00",
+     "lat": 12.6,
+     "lon": 87.3,
+     "wind_kt": 35.0,
+     "pressure_hpa": 996.0,
+     "dist2land_km": 700.0,
+     "category": "TS"
+    },
+    {
+     "time": "2018-11-12T12:00:00",
+     "lat": 12.8,
+     "lon": 87.6,
+     "wind_kt": 30.0,
+     "pressure_hpa": 1000.0,
+     "dist2land_km": 711.0,
+     "category": "TD"
+    },
+    {
+     "time": "2018-11-12T18:00:00",
+     "lat": 13.3,
+     "lon": 87.6,
+     "wind_kt": 30.0,
+     "pressure_hpa": 1000.0,
+     "dist2land_km": 673.0,
+     "category": "TD"
+    },
+    {
+     "time": "2018-11-13T00:00:00",
+     "lat": 13.6,
+     "lon": 87.2,
+     "wind_kt": 30.0,
+     "pressure_hpa": 1000.0,
+     "dist2land_km": 619.0,
+     "category": "TD"
+    },
+    {
+     "time": "2018-11-13T06:00:00",
+     "lat": 13.7,
+     "lon": 86.6,
+     "wind_kt": 30.0,
+     "pressure_hpa": 1000.0,
+     "dist2land_km": 564.0,
+     "category": "TD"
+    },
+    {
+     "time": "2018-11-13T12:00:00",
+     "lat": 13.5,
+     "lon": 86.1,
+     "wind_kt": 30.0,
+     "pressure_hpa": 1000.0,
+     "dist2land_km": 535.0,
+     "category": "TD"
+    },
+    {
+     "time": "2018-11-13T18:00:00",
+     "lat": 13.3,
+     "lon": 85.7,
+     "wind_kt": 35.0,
+     "pressure_hpa": 1003.0,
+     "dist2land_km": 519.0,
+     "category": "TS"
+    },
+    {
+     "time": "2018-11-14T00:00:00",
+     "lat": 13.1,
+     "lon": 85.4,
+     "wind_kt": 40.0,
+     "pressure_hpa": 1001.0,
+     "dist2land_km": 514.0,
+     "category": "TS"
+    },
+    {
+     "time": "2018-11-14T06:00:00",
+     "lat": 12.8,
+     "lon": 85.0,
+     "wind_kt": 45.0,
+     "pressure_hpa": 989.0,
+     "dist2land_km": 512.0,
+     "category": "TS"
+    },
+    {
+     "time": "2018-11-14T12:00:00",
+     "lat": 12.4,
+     "lon": 84.4,
+     "wind_kt": 50.0,
+     "pressure_hpa": 985.0,
+     "dist2land_km": 456.0,
+     "category": "TS"
+    },
+    {
+     "time": "2018-11-14T18:00:00",
+     "lat": 12.0,
+     "lon": 83.9,
+     "wind_kt": 50.0,
+     "pressure_hpa": 985.0,
+     "dist2land_km": 406.0,
+     "category": "TS"
+    },
+    {
+     "time": "2018-11-15T00:00:00",
+     "lat": 11.5,
+     "lon": 83.1,
+     "wind_kt": 55.0,
+     "pressure_hpa": 982.0,
+     "dist2land_km": 341.0,
+     "category": "TS"
+    },
+    {
+     "time": "2018-11-15T06:00:00",
+     "lat": 11.3,
+     "lon": 82.2,
+     "wind_kt": 65.0,
+     "pressure_hpa": 974.0,
+     "dist2land_km": 251.0,
+     "category": "C1"
+    },
+    {
+     "time": "2018-11-15T12:00:00",
+     "lat": 10.9,
+     "lon": 81.2,
+     "wind_kt": 70.0,
+     "pressure_hpa": 970.0,
+     "dist2land_km": 142.0,
+     "category": "C1"
+    },
+    {
+     "time": "2018-11-15T18:00:00",
+     "lat": 10.6,
+     "lon": 80.3,
+     "wind_kt": 80.0,
+     "pressure_hpa": 963.0,
+     "dist2land_km": 43.0,
+     "category": "C1"
+    },
+    {
+     "time": "2018-11-16T00:00:00",
+     "lat": 10.5,
+     "lon": 79.1,
+     "wind_kt": 70.0,
+     "pressure_hpa": 970.0,
+     "dist2land_km": 0.0,
+     "category": "C1"
+    },
+    {
+     "time": "2018-11-16T06:00:00",
+     "lat": 10.5,
+     "lon": 77.6,
+     "wind_kt": 55.0,
+     "pressure_hpa": 982.0,
+     "dist2land_km": 0.0,
+     "category": "TS"
+    },
+    {
+     "time": "2018-11-16T12:00:00",
+     "lat": 10.0,
+     "lon": 76.3,
+     "wind_kt": 45.0,
+     "pressure_hpa": 989.0,
+     "dist2land_km": 0.0,
+     "category": "TS"
+    },
+    {
+     "time": "2018-11-16T18:00:00",
+     "lat": 9.8,
+     "lon": 75.3,
+     "wind_kt": 40.0,
+     "pressure_hpa": 993.0,
+     "dist2land_km": 101.0,
+     "category": "TS"
+    },
+    {
+     "time": "2018-11-17T00:00:00",
+     "lat": 9.7,
+     "lon": 74.2,
+     "wind_kt": 40.0,
+     "pressure_hpa": 1004.0,
+     "dist2land_km": 221.0,
+     "category": "TS"
+    },
+    {
+     "time": "2018-11-17T06:00:00",
+     "lat": 9.8,
+     "lon": 73.0,
+     "wind_kt": 40.0,
+     "pressure_hpa": 1005.0,
+     "dist2land_km": 336.0,
+     "category": "TS"
+    },
+    {
+     "time": "2018-11-17T12:00:00",
+     "lat": 10.0,
+     "lon": 71.8,
+     "wind_kt": 40.0,
+     "pressure_hpa": 1003.0,
+     "dist2land_km": 433.0,
+     "category": "TS"
+    },
+    {
+     "time": "2018-11-17T18:00:00",
+     "lat": 10.2,
+     "lon": 70.7,
+     "wind_kt": 35.0,
+     "pressure_hpa": 1007.0,
+     "dist2land_km": 529.0,
+     "category": "TS"
+    },
+    {
+     "time": "2018-11-18T00:00:00",
+     "lat": 10.4,
+     "lon": 69.8,
+     "wind_kt": 30.0,
+     "pressure_hpa": 1006.0,
+     "dist2land_km": 607.0,
+     "category": "TD"
+    },
+    {
+     "time": "2018-11-18T06:00:00",
+     "lat": 10.5,
+     "lon": 69.1,
+     "wind_kt": 25.0,
+     "pressure_hpa": 1009.0,
+     "dist2land_km": 672.0,
+     "category": "TD"
+    },
+    {
+     "time": "2018-11-18T12:00:00",
+     "lat": 10.6,
+     "lon": 68.5,
+     "wind_kt": 20.0,
+     "pressure_hpa": 1008.0,
+     "dist2land_km": 729.0,
+     "category": "TD"
+    },
+    {
+     "time": "2018-11-18T18:00:00",
+     "lat": 10.7,
+     "lon": 67.5,
+     "wind_kt": 20.0,
+     "pressure_hpa": 1010.0,
+     "dist2land_km": 829.0,
+     "category": "TD"
+    },
+    {
+     "time": "2018-11-19T00:00:00",
+     "lat": 10.8,
+     "lon": 66.6,
+     "wind_kt": 20.0,
+     "pressure_hpa": 1010.0,
+     "dist2land_km": 920.0,
+     "category": "TD"
+    },
+    {
+     "time": "2018-11-19T06:00:00",
+     "lat": 11.0,
+     "lon": 65.8,
+     "wind_kt": 20.0,
+     "pressure_hpa": 1010.0,
+     "dist2land_km": 990.0,
+     "category": "TD"
+    }
+   ],
+   "landfall_index": 22,
+   "default_start_index": 14,
+   "usable_start_range": [
+    3,
+    27
+   ]
+  },
+  {
+   "id": "2020335N06090",
+   "name": "BUREVI",
+   "provenance": "held-out",
+   "season": 2020,
+   "basin": "NI",
+   "peak_wind_kt": 45.0,
+   "min_pressure_hpa": 999.0,
+   "fixes": [
+    {
+     "time": "2020-11-29T12:00:00",
+     "lat": 6.4,
+     "lon": 90.4,
+     "wind_kt": 10.0,
+     "pressure_hpa": 1014.0,
+     "dist2land_km": 538.0,
+     "category": "TD"
+    },
+    {
+     "time": "2020-11-29T18:00:00",
+     "lat": 6.9,
+     "lon": 89.1,
+     "wind_kt": 20.0,
+     "pressure_hpa": 1008.0,
+     "dist2land_km": 690.0,
+     "category": "TD"
+    },
+    {
+     "time": "2020-11-30T00:00:00",
+     "lat": 7.5,
+     "lon": 87.8,
+     "wind_kt": 15.0,
+     "pressure_hpa": 1008.0,
+     "dist2land_km": 653.0,
+     "category": "TD"
+    },
+    {
+     "time": "2020-11-30T06:00:00",
+     "lat": 7.6,
+     "lon": 87.4,
+     "wind_kt": 25.0,
+     "pressure_hpa": 1006.0,
+     "dist2land_km": 610.0,
+     "category": "TD"
+    },
+    {
+     "time": "2020-11-30T12:00:00",
+     "lat": 7.5,
+     "lon": 87.1,
+     "wind_kt": 25.0,
+     "pressure_hpa": 1005.0,
+     "dist2land_km": 576.0,
+     "category": "TD"
+    },
+    {
+     "time": "2020-11-30T18:00:00",
+     "lat": 7.5,
+     "lon": 86.8,
+     "wind_kt": 30.0,
+     "pressure_hpa": 1006.0,
+     "dist2land_km": 543.0,
+     "category": "TD"
+    },
+    {
+     "time": "2020-12-01T00:00:00",
+     "lat": 7.4,
+     "lon": 86.1,
+     "wind_kt": 30.0,
+     "pressure_hpa": 1005.0,
+     "dist2land_km": 465.0,
+     "category": "TD"
+    },
+    {
+     "time": "2020-12-01T06:00:00",
+     "lat": 7.5,
+     "lon": 85.4,
+     "wind_kt": 30.0,
+     "pressure_hpa": 1003.0,
+     "dist2land_km": 390.0,
+     "category": "TD"
+    },
+    {
+     "time": "2020-12-01T12:00:00",
+     "lat": 7.7,
+     "lon": 84.9,
+     "wind_kt": 35.0,
+     "pressure_hpa": 1002.0,
+     "dist2land_km": 340.0,
+     "category": "TS"
+    },
+    {
+     "time": "2020-12-01T18:00:00",
+     "lat": 8.0,
+     "lon": 84.3,
+     "wind_kt": 40.0,
+     "pressure_hpa": 1001.0,
+     "dist2land_km": 279.0,
+     "category": "TS"
+    },
+    {
+     "time": "2020-12-02T00:00:00",
+     "lat": 8.5,
+     "lon": 83.3,
+     "wind_kt": 45.0,
+     "pressure_hpa": 999.0,
+     "dist2land_km": 193.0,
+     "category": "TS"
+    },
+    {
+     "time": "2020-12-02T06:00:00",
+     "lat": 8.7,
+     "lon": 82.6,
+     "wind_kt": 40.0,
+     "pressure_hpa": 1002.0,
+     "dist2land_km": 135.0,
+     "category": "TS"
+    },
+    {
+     "time": "2020-12-02T12:00:00",
+     "lat": 8.8,
+     "lon": 81.9,
+     "wind_kt": 40.0,
+     "pressure_hpa": 1002.0,
+     "dist2land_km": 70.0,
+     "category": "TS"
+    },
+    {
+     "time": "2020-12-02T18:00:00",
+     "lat": 9.0,
+     "lon": 81.2,
+     "wind_kt": 40.0,
+     "pressure_hpa": 1001.0,
+     "dist2land_km": 24.0,
+     "category": "TS"
+    },
+    {
+     "time": "2020-12-03T00:00:00",
+     "lat": 9.0,
+     "lon": 80.5,
+     "wind_kt": 40.0,
+     "pressure_hpa": 1000.0,
+     "dist2land_km": 0.0,
+     "category": "TS"
+    },
+    {
+     "time": "2020-12-03T06:00:00",
+     "lat": 9.3,
+     "lon": 80.1,
+     "wind_kt": 30.0,
+     "pressure_hpa": 1004.0,
+     "dist2land_km": 0.0,
+     "category": "TD"
+    },
+    {
+     "time": "2020-12-03T12:00:00",
+     "lat": 9.4,
+     "lon": 79.6,
+     "wind_kt": 35.0,
+     "pressure_hpa": 1001.0,
+     "dist2land_km": 54.0,
+     "category": "TS"
+    },
+    {
+     "time": "2020-12-03T18:00:00",
+     "lat": 9.3,
+     "lon": 79.3,
+     "wind_kt": 35.0,
+     "pressure_hpa": 1000.0,
+     "dist2land_km": 32.0,
+     "category": "TS"
+    },
+    {
+     "time": "2020-12-04T00:00:00",
+     "lat": 9.2,
+     "lon": 79.3,
+     "wind_kt": 35.0,
+     "pressure_hpa": 1000.0,
+     "dist2land_km": 34.0,
+     "category": "TS"
+    },
+    {
+     "time": "2020-12-04T06:00:00",
+     "lat": 9.2,
+     "lon": 79.3,
+     "wind_kt": 35.0,
+     "pressure_hpa": 1003.0,
+     "dist2land_km": 34.0,
+     "category": "TS"
+    },
+    {
+     "time": "2020-12-04T12:00:00",
+     "lat": 9.4,
+     "lon": 79.4,
+     "wind_kt": 25.0,
+     "pressure_hpa": 1002.0,
+     "dist2land_km": 45.0,
+     "category": "TD"
+    },
+    {
+     "time": "2020-12-04T18:00:00",
+     "lat": 9.2,
+     "lon": 79.2,
+     "wind_kt": 25.0,
+     "pressure_hpa": 1002.0,
+     "dist2land_km": 24.0,
+     "category": "TD"
+    },
+    {
+     "time": "2020-12-05T00:00:00",
+     "lat": 9.1,
+     "lon": 79.4,
+     "wind_kt": 25.0,
+     "pressure_hpa": 1003.0,
+     "dist2land_km": 49.0,
+     "category": "TD"
+    },
+    {
+     "time": "2020-12-05T06:00:00",
+     "lat": 9.5,
+     "lon": 80.1,
+     "wind_kt": 20.0,
+     "pressure_hpa": 1005.0,
+     "dist2land_km": 10.0,
+     "category": "TD"
+    }
+   ],
+   "landfall_index": 14,
+   "default_start_index": 6,
+   "usable_start_range": [
+    3,
+    15
+   ]
+  }
+ ]
+}

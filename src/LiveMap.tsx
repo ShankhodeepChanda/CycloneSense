@@ -54,6 +54,9 @@ const ALERT_COLOR: Record<string, string> = { Red: "#ef4444", Orange: "#f97316",
 const TRACK_PAST = "#22d3ee";
 const TRACK_FUTURE = "#f472b6";
 const CONE_FILL = "#f472b6";
+// Amber for what the storm actually did, in the hindcast demo. Distinct from the cyan
+// observed track and the pink forecast, and legible on bright cloud and dark infrared.
+const TRACK_ACTUAL = "#fbbf24";
 const esc = (value: string) => value.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
 interface Props {
@@ -73,11 +76,13 @@ interface Props {
   pastTrack: [number, number][];
   /** Model forecast for the selected storm, or null while it loads or fails. */
   forecast: TrajectoryForecast | null;
+  /** In the hindcast demo, the track the storm actually took after the forecast point. */
+  actualTrack: [number, number][];
   view: { center: [number, number]; zoom: number; n: number }; // n changes to re-trigger the same view
   onTileProblem: (problem: boolean) => void;
 }
 
-export function LiveMap({ layer, variant, under, time, opacity, showCoast, showLabels, showStorms, showTrajectory, cyclones, selectedId, onSelect, pastTrack, forecast, view, onTileProblem }: Props) {
+export function LiveMap({ layer, variant, under, time, opacity, showCoast, showLabels, showStorms, showTrajectory, cyclones, selectedId, onSelect, pastTrack, forecast, actualTrack, view, onTileProblem }: Props) {
   const el = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
   const sat = useRef<L.TileLayer | null>(null);
@@ -228,6 +233,18 @@ export function LiveMap({ layer, variant, under, time, opacity, showCoast, showL
       }
     }
 
+    if (actualTrack.length > 1) {
+      const fromForecastPoint: [number, number][] = [origin, ...actualTrack];
+      L.polyline(fromForecastPoint, { color: "#0b1220", weight: 5, opacity: 0.45, interactive: false }).addTo(group);
+      L.polyline(fromForecastPoint, { color: TRACK_ACTUAL, weight: 2.5, opacity: 0.95, interactive: false })
+        .addTo(group)
+        .bindTooltip("What the storm actually did", { sticky: true });
+      const landed = actualTrack[actualTrack.length - 1];
+      L.circleMarker(landed, { radius: 5, color: "#0b1220", weight: 1.5, fillColor: TRACK_ACTUAL, fillOpacity: 1 })
+        .addTo(group)
+        .bindTooltip("Actual position at the end of the forecast window", { direction: "top" });
+    }
+
     const landfall = forecast.landfall_estimate;
     if (landfall.projected && landfall.lat !== null && landfall.lon !== null) {
       L.circleMarker([landfall.lat, landfall.lon], {
@@ -245,7 +262,7 @@ export function LiveMap({ layer, variant, under, time, opacity, showCoast, showL
           { direction: "top" },
         );
     }
-  }, [pastTrack, forecast, showTrajectory]);
+  }, [pastTrack, forecast, actualTrack, showTrajectory]);
 
   useEffect(() => {
     const m = map.current;
