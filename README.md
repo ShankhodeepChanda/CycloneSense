@@ -4,9 +4,9 @@ A live dashboard that works on live satellite data to show the incoming cyclones
 
 It is deployed on [⬤CycloneSense](https://cyclonesense.vercel.app)
 
-> Research project. Not an official warning system. Follow IMD (https://mausam.imd.gov.in/) for warnings
+> Research project. Not an official warning system. Follow IMD (https://mausam.imd.gov.in/) for warnings.
 >
-> .<img width="1900" height="947" alt="image" src="https://github.com/user-attachments/assets/c129437e-22bc-465b-b044-8b6c1e82f254" />
+> <img width="1900" height="947" alt="image" src="https://github.com/user-attachments/assets/c129437e-22bc-465b-b044-8b6c1e82f254" />
 
 
 ## 1. Website (simple, public)
