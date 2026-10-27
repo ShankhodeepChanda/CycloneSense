@@ -1,7 +1,8 @@
 # CycloneSense
 
-A live satellite map of the Bay of Bengal and Arabian Sea, plus a pipeline that builds a real
-tropical-cyclone dataset (for Kaggle) and trains an intensity model on it.
+A live dashboard that works on live satellite data to show the incoming cyclones and predict their most probable path.
+
+It is deployed on [⬤](https://cyclonesense.vercel.app)
 
 > Research project. Not an official warning system. Follow IMD (https://mausam.imd.gov.in/) for warnings.
 
