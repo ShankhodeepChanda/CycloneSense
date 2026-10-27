@@ -2,7 +2,7 @@
 
 A live dashboard that works on live satellite data to show the incoming cyclones and predict their most probable path.
 
-It is deployed on [⬤](https://cyclonesense.vercel.app)
+It is deployed on [⬤CycloneSense](https://cyclonesense.vercel.app)
 
 > Research project. Not an official warning system. Follow IMD (https://mausam.imd.gov.in/) for warnings.
 
